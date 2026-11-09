@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Roster</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;--bg-elev:#ffffff;--bg-soft:#f2efe8;--border:#e4ded2;--border-strong:#d4cdbd;
+  --text:#1f2428;--text-dim:#5a6269;--text-muted:#8b8f93;
+  --warn-text:#8a5a1a;--warn-soft:#fbf1e3;--danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg)}
+body{color:var(--text);font-family:'Syne',sans-serif}
+.wrap{max-width:480px;margin:0 auto;padding:18px 16px 60px}
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+h1{font-size:26px;font-weight:800;margin:0 0 4px}
+.sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:16px}
+.weeknav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.weeknav button{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-elev);font:700 18px 'Syne',sans-serif;color:var(--text);cursor:pointer}
+.weeknav .wk{font-size:15px;font-weight:800;text-align:center}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:var(--bg-soft);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{height:40px;border:none;border-radius:9px;background:transparent;font:700 14px 'Syne',sans-serif;color:var(--text-dim);cursor:pointer}
+.seg button.on{background:var(--bg-elev);color:var(--text);font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.day{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.day.today{border:2px solid var(--accent)}
+.day h2{font-size:16px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline}
+.day h2 small{font:500 12px 'DM Mono',monospace;color:var(--accent-text)}
+.row{display:flex;gap:10px;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+.code{font:500 12px 'DM Mono',monospace;color:var(--accent-text);width:38px;flex:none;padding-top:2px}
+.people{flex:1;display:flex;flex-direction:column;gap:7px;font-size:14px}
+.note{font-size:13px;color:var(--text-dim);line-height:1.45;margin-top:2px}
+.tag{font:500 11px 'DM Mono',monospace;color:var(--warn-text);background:var(--warn-soft);border-radius:6px;padding:2px 6px;margin-left:4px}
+.me{font-weight:800}
+.empty{font-size:14px;color:var(--text-dim);text-align:center;padding:24px 12px;background:var(--bg-elev);border:1.5px dashed var(--border-strong);border-radius:16px;margin-bottom:12px}
+.info{font-size:13px;color:var(--text-dim);line-height:1.5;background:var(--bg-soft);border-radius:12px;padding:12px 14px;margin-top:4px}
+.shift{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;display:flex;flex-direction:column;gap:7px}
+.shift.today{border:2px solid var(--accent)}
+.shift .top{display:flex;justify-content:space-between;align-items:baseline}
+.shift .when{font-size:17px;font-weight:800}
+.shift .time{font-size:15px}
+.shift .also{font-size:13px;color:var(--text-dim)}
+.shift .changed{font:400 11px 'DM Mono',monospace;color:var(--warn-text);background:var(--warn-soft);border-radius:8px;padding:6px 8px}
+.cal{align-self:flex-start;height:44px;padding:0 14px;border-radius:10px;border:1.5px solid var(--border-strong);background:var(--bg-elev);font:700 13px 'Syne',sans-serif;color:var(--text);cursor:pointer}
+.err{color:var(--danger-text);font-size:13px;margin:8px 0}
+.label{font:700 11px 'DM Mono',monospace;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:6px 0 10px}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+  <a class="back-home" href="/help#roster" style="margin-left:6px">? Help</a>
+  <h1>Roster</h1>
+  <div class="sub" id="sub">Loading…</div>
+  <div class="seg" role="tablist">
+    <button id="tabAll" class="on" onclick="setTab('all')">Whole team</button>
+    <button id="tabMe" onclick="setTab('me')">My shifts</button>
+  </div>
+  <div class="weeknav" id="weeknav">
+    <button aria-label="Previous week" onclick="moveWeek(-7)">‹</button>
+    <div class="wk" id="wk"></div>
+    <button aria-label="Next week" onclick="moveWeek(7)">›</button>
+  </div>
+  <div id="out"></div>
+  <div class="err" id="err"></div>
+  <div class="info">Rosters are set by the manager. Can't make a shift, or something looks wrong? Let the manager know. A shift marked "changed" has been updated since the roster was emailed.</div>
+</div>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+const $ = id => document.getElementById(id), esc = Ops.esc;
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dObj = iso => new Date(iso + 'T00:00:00');
+const showDate = iso => { const d = dObj(iso); return DAYS[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + MON[d.getMonth()]; };
+const t12 = t => { if (t === 'close') return 'close'; const [h, m] = t.split(':').map(Number); return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? 'am' : 'pm'); };
+const span = s => t12(s.start) + '–' + t12(s.end);
+const mondayOf = iso => { const d = dObj(iso); return Ops.addDaysISO(iso, -((d.getDay() + 6) % 7)); };
+let tab = location.hash === '#mine' ? 'me' : 'all', weekStart = mondayOf(Ops.todayISO()), data = null;
+
+function setTab(t) { tab = t; history.replaceState(null, '', t === 'me' ? '#mine' : '#'); render(); load(); }
+function moveWeek(n) { weekStart = Ops.addDaysISO(weekStart, n); load(); }
+async function load() {
+  // My shifts shows this week and next; Whole team shows one week at a time.
+  const start = tab === 'me' ? mondayOf(Ops.todayISO()) : weekStart, days = tab === 'me' ? 14 : 7;
+  try { data = await Ops.get({ view: 'roster', start, days }); $('err').textContent = ''; if (data.locations) Locs.set(data.locations); }
+  catch (e) { $('err').textContent = '✗ ' + e.message; }
+  render();
+}
+function render() {
+  $('tabAll').className = tab === 'all' ? 'on' : ''; $('tabMe').className = tab === 'me' ? 'on' : '';
+  $('weeknav').style.display = tab === 'all' ? 'flex' : 'none';
+  if (!data) return;
+  const me = Team.me();
+  const sent = (data.weeks || []).find(w => w.week === weekStart);
+  $('sub').textContent = tab === 'me' ? (me ? 'Showing shifts for ' + me.name + ' · not you? Tap your initials at the top' : 'Tap "Who are you?" at the top to see your own shifts')
+    : (sent && sent.emailedAt ? 'Emailed ' + new Date(sent.emailedAt).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Not emailed yet');
+  $('wk').textContent = showDate(data.from) + ' – ' + showDate(data.to);
+  tab === 'me' ? renderMine(me) : renderAll(me);
+}
+function renderAll(me) {
+  const byDate = {};
+  for (const s of data.shifts) (byDate[s.date] = byDate[s.date] || []).push(s);
+  const dates = Object.keys(byDate).sort();
+  if (!dates.length) { $('out').innerHTML = '<div class="empty">No shifts rostered for this week yet.</div>'; return; }
+  $('out').innerHTML = dates.map(date => {
+    const bySite = {};
+    for (const s of byDate[date]) (bySite[s.kind === 'na' ? 'N/A' : s.site] = bySite[s.kind === 'na' ? 'N/A' : s.site] || []).push(s);
+    const isToday = date === data.today;
+    return '<section class="day' + (isToday ? ' today' : '') + '"><h2>' + showDate(date) + (isToday ? '<small>TODAY</small>' : '') + '</h2>' +
+      Object.entries(bySite).map(([site, list]) => '<div class="row"><div class="code" title="' + esc(site === 'N/A' ? 'Not available' : Locs.name(site)) + '">' + esc(site) + '</div><div class="people">' +
+        list.map(s => '<div><span class="' + (me && me.id === s.memberId ? 'me' : '') + '">' + esc(s.name) + '</span> ' + (s.kind === 'na' ? 'not available' : span(s)) + (s.changed ? '<span class="tag">changed</span>' : '') +
+          (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + '</div>').join('') + '</div></div>').join('') + '</section>';
+  }).join('');
+}
+function renderMine(me) {
+  if (!me) { $('out').innerHTML = '<div class="empty">Choose your name first: tap "Who are you?" at the top of the page.</div>'; return; }
+  const mine = data.shifts.filter(s => s.memberId === me.id && s.date >= data.today);
+  if (!mine.length) { $('out').innerHTML = '<div class="label">This week and next</div><div class="empty">No shifts for you in the next two weeks.</div>'; return; }
+  $('out').innerHTML = '<div class="label">This week and next</div>' + mine.map(s => {
+    const isToday = s.date === data.today;
+    if (s.kind === 'na') return '<article class="shift"><div class="top"><div class="when">' + (isToday ? 'Today · ' : '') + showDate(s.date) + '</div><div class="code" style="width:auto">N/A</div></div>' +
+      '<div class="time">Not available</div>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + (s.changed ? '<div class="changed">Changed since the roster was emailed</div>' : '') + '</article>';
+    const others = data.shifts.filter(o => o.date === s.date && o.id !== s.id && o.kind !== 'na').map(o => o.name + (o.site !== s.site ? ' at ' + o.site : '') + ' ' + span(o));
+    return '<article class="shift' + (isToday ? ' today' : '') + '"><div class="top"><div class="when">' + (isToday ? 'Today · ' : '') + showDate(s.date) + '</div><div class="code" style="width:auto">' + esc(s.site) + '</div></div>' +
+      '<div class="time">' + span(s) + ' · ' + esc(Locs.name(s.site)) + '</div>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') +
+      (s.changed ? '<div class="changed">Changed since the roster was emailed</div>' : '') +
+      (others.length ? '<div class="also">Also on: ' + esc(others.join(', ')) + '</div>' : '') +
+      '<button class="cal" onclick="addToCalendar(\'' + s.id + '\')">Add to my calendar</button></article>';
+  }).join('');
+}
+// A calendar file for one shift, in local time, which the phone opens in its own calendar.
+function addToCalendar(id) {
+  const s = data.shifts.find(x => x.id === id); if (!s) return;
+  const stamp = (date, t) => date.replace(/-/g, '') + 'T' + t.replace(':', '') + '00';
+  const icsText = v => String(v).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//' + Brand.name() + '//Operations Tools//EN', 'BEGIN:VEVENT',
+    'UID:' + s.id + '@sa-ebikes-ops', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
+    // "Until close" has no set finish: the calendar shows 5:30 pm, and the title says until close.
+    'DTSTART:' + stamp(s.date, s.start), 'DTEND:' + stamp(s.date, s.end === 'close' ? '17:30' : s.end),
+    'SUMMARY:' + icsText(Brand.name() + ' shift · ' + Locs.name(s.site) + (s.end === 'close' ? ' (until close)' : '')), 'LOCATION:' + icsText(Locs.name(s.site)),
+    ...(s.note ? ['DESCRIPTION:' + icsText(s.note)] : []), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  Ops.downloadText(ics, Brand.file() + '-shift-' + s.date + '.ics', 'text/calendar');
+}
+Team.onChange(() => render());
+load();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>

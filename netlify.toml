@@ -1,0 +1,114 @@
+# SA eBikes Operations Tools v3.10
+[build]
+  publish   = "public"
+  functions = "netlify/functions"
+
+# Pin the Node version Netlify builds and runs functions with, so builds are repeatable.
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/scanner"
+  to = "/scanner.html"
+  status = 200
+
+[[redirects]]
+  from = "/contacts"
+  to = "/contacts.html"
+  status = 200
+
+[[redirects]]
+  from = "/manifest"
+  to = "/manifest.html"
+  status = 200
+
+[[redirects]]
+  from = "/issues"
+  to = "/issues.html"
+  status = 200
+
+[[redirects]]
+  from = "/fleet"
+  to = "/fleet.html"
+  status = 200
+
+[[redirects]]
+  from = "/lost"
+  to = "/lost.html"
+  status = 200
+
+[[redirects]]
+  from = "/qr"
+  to = "/qr.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/report"
+  to = "/report.html"
+  status = 200
+
+[[redirects]]
+  from = "/config"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/bike"
+  to = "/bike.html"
+  status = 200
+
+[[redirects]]
+  from = "/checklists"
+  to = "/checklists.html"
+  status = 200
+
+[[redirects]]
+  from = "/roster"
+  to = "/roster.html"
+  status = 200
+
+[[redirects]]
+  from = "/help"
+  to = "/help.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"
+    Permissions-Policy = "camera=(self), geolocation=(), microphone=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+# Shared script changes with each release, so don't let phones cache an old copy for long
+[[headers]]
+  for = "/assets/ops-client.js"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+# v3.10: the shared theme is on every page; phones may keep it for five minutes between checks.
+[[headers]]
+  for = "/assets/theme.*"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+# The bundled heading font never changes under the same name.
+[[headers]]
+  for = "/assets/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

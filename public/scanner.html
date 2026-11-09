@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Group Scanner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;
+  --bg-elev:#ffffff;
+  --bg-soft:#f2efe8;
+  --border:#e4ded2;
+  --border-strong:#d4cdbd;
+  --text:#1f2428;
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  --warn:#d48a2f;
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+  --danger-strong:#b23a35;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+.group-selector{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.group-chip{padding:7px 13px;border-radius:100px;cursor:pointer;font-size:13px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;white-space:nowrap;font-family:'Syne',sans-serif}
+.group-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.group-chip.done{opacity:.7}
+.ret-group.ready{border-color:var(--accent);background:var(--accent-soft)}
+.progress{font:700 15px 'Syne',sans-serif;margin:6px 0}
+.progress.complete{color:var(--accent-text)}
+.equip{display:inline-block;font:700 12px 'DM Mono',monospace;color:#8a5a1a;background:rgba(212,138,47,.14);border-radius:8px;padding:3px 8px;margin:0 6px 6px 0}
+#issueBar .btn{margin-top:10px}
+#issueBar .hint{font-size:12px;color:var(--text-dim);margin-top:6px;text-align:center}
+.group-chip.add{border-style:dashed;color:var(--accent-text);background:transparent}
+#reader{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader video{border-radius:12px}
+#reader img{display:none!important}
+#reader__scan_region{background:transparent!important}
+#reader__dashboard{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-muted);min-height:200px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes oosShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.btn{width:100%;padding:15px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border:none;transition:all .15s;letter-spacing:.3px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-sm{padding:10px;font-size:13px}
+.manual-entry{display:flex;gap:8px;margin-top:12px}
+.manual-input{flex:1;padding:13px 14px;border-radius:14px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+.manual-add{padding:0 18px;border-radius:14px;background:var(--accent);color:#fff;border:none;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;cursor:pointer}
+.manual-add:active{background:var(--accent-dark)}
+.list-header{display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px}
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+.clear-btn{background:none;border:none;color:var(--text-muted);font-size:12px;font-family:'DM Mono',monospace;cursor:pointer}
+.bike-item{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:14px;background:var(--bg-elev);border:1.5px solid var(--border);margin-bottom:8px;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.bike-item.oos{border-color:var(--danger);background:var(--danger-soft);animation:slideIn .2s ease, oosShake .35s ease-in-out}
+.bike-item.oos .bike-code{color:var(--danger-text)}
+.oos-tag{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(201,74,69,.12);color:var(--danger-text);border:1px solid rgba(201,74,69,.3);letter-spacing:.5px;margin-left:8px;white-space:nowrap}
+.bike-code{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:var(--accent-text);letter-spacing:1px}
+.bike-meta{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'DM Mono',monospace}
+.bike-remove{background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:4px 6px;line-height:1}
+.bike-remove:active{color:var(--danger)}
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+.group-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.group-card-header{display:flex;align-items:flex-start;justify-content:space-between}
+.group-name-text{font-size:16px;font-weight:800;color:var(--text)}
+.group-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:3px}
+.active-badge{font-size:10px;color:var(--accent-text);font-family:'DM Mono',monospace;font-weight:700;padding-top:2px}
+.bike-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.bike-tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.bike-tag.oos{background:rgba(201,74,69,.1);color:var(--danger-text);border-color:rgba(201,74,69,.3)}
+.bike-model{font-size:13px;font-weight:700;color:var(--text);margin-top:2px}
+.bike-model.unknown{font-weight:400;font-style:italic;color:var(--warn-text);font-size:12px}
+.bike-rows{margin-top:12px;border-top:1px solid var(--border)}
+.bike-row{display:flex;gap:10px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--border);font-size:13px}
+.bike-row .code{font-family:'DM Mono',monospace;font-weight:600;color:var(--accent-text);letter-spacing:.5px;min-width:76px}
+.bike-row .model{color:var(--text);flex:1}
+.bike-row .model.unknown{color:var(--warn-text);font-style:italic;font-size:12px}
+.bike-row.oos .code,.bike-row.oos .model{color:var(--danger-text)}
+.removed-rows{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--bg-soft);border:1px dashed var(--border-strong)}
+.removed-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.removed-row{font-size:12px;color:var(--text-dim);padding:3px 0;line-height:1.4}
+.removed-row .code{font-family:'DM Mono',monospace;font-weight:600;text-decoration:line-through;margin-right:6px}
+.removed-row .why{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.reason-btn{margin-bottom:8px;text-align:left;padding:13px 16px}
+.reason-btn small{display:block;font-weight:400;font-size:12px;color:var(--text-dim);margin-top:2px}
+.site-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(29,158,117,.1);color:#085041;border:1.5px solid rgba(29,158,117,.3);margin:0 6px 10px 0}
+.site-badge.DEL{background:rgba(239,159,39,.12);color:#633806;border-color:rgba(239,159,39,.5)}
+.group-card.delivery{border-color:rgba(239,159,39,.7)}
+.modal-select{width:100%;padding:13px 14px;border-radius:14px;background:var(--bg-soft);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;margin-bottom:12px}
+.modal-lbl{display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin:0 0 5px}
+.modal-opt{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin:-6px 0 10px}
+.walk-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-4px 0 10px;font-size:12px}
+.walk-row .who{color:var(--text-dim)}
+.walk-row .nophone{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text)}
+.walk-row button,.walk-row select{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:5px 10px;border-radius:9px;border:1.5px solid var(--border-strong);background:var(--bg-elev);color:var(--accent-text);cursor:pointer}
+.walk-row select.need{border-color:var(--warn);color:var(--warn-text)}
+.msg-last{font-size:11px;font-weight:700;margin:-4px 0 10px;color:var(--accent-text)}
+.msg-last.opened{color:var(--warn-text)}.msg-last.not-sent{color:var(--danger-text)}
+.loc-pick{display:block;width:100%;text-align:left;padding:13px 14px;margin-bottom:8px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-elev);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);cursor:pointer}
+.loc-pick.primary{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.loc-pick small{display:block;font-weight:400;font-size:12px;color:var(--text-dim);margin-top:2px}
+.sort-switch{display:flex;gap:6px;align-items:center;margin:-4px 0 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.sort-switch button{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:5px 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.sort-switch button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.sec-head{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px}
+.sec-head.attn{color:var(--danger-text)}
+.mc-tag{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--warn-text);white-space:nowrap}
+.mc-item{font-family:'Syne',sans-serif;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);font-size:14px}
+.mc-item .tog{display:flex;gap:4px;flex:none}
+.mc-item .tog button{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:7px 11px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-muted);cursor:pointer}
+.mc-item .tog button.ok.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.mc-item .tog button.bad.on{border-color:var(--danger);background:rgba(201,74,69,.1);color:var(--danger-text)}
+.mc-item.fault{background:rgba(201,74,69,.05)}
+.mc-field{width:100%;margin-top:8px;font-family:'Syne',sans-serif;font-size:14px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.mc-due{padding:9px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;cursor:pointer;font-size:13px}
+.mc-due .code{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text)}
+.btn-fault{background:var(--danger,#c94a45);color:#fff;border:none}
+.mc-opt{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);margin-top:8px}
+.phone-loc{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.phone-loc select{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;padding:7px 10px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.phone-loc select.unset{border-color:var(--warn);background:rgba(212,138,47,.1);color:var(--warn-text)}
+.overdue-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(201,74,69,.1);color:var(--danger-text);border:1.5px solid rgba(201,74,69,.4);margin:0 6px 10px 0}
+.day-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;background:var(--bg-soft);padding:4px;border-radius:12px;border:1px solid var(--border)}
+.day-switch button{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;padding:9px 6px;border:none;border-radius:9px;background:transparent;color:var(--text-dim);cursor:pointer}
+.day-switch button.on{background:var(--bg-elev);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.prev-note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin:-6px 0 12px}
+.mode-toggle{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px;background:var(--bg-soft);padding:4px;border-radius:12px;border:1px solid var(--border)}
+.mode-toggle button{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;padding:10px 6px;border:none;border-radius:9px;background:transparent;color:var(--text-dim);cursor:pointer}
+.mode-toggle button.on{background:var(--bg-elev);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.mode-toggle button.on.ret{color:var(--accent-text)}
+.day-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(80,120,200,.1);color:#2d4f8f;border:1.5px solid rgba(80,120,200,.3);margin:0 6px 10px 0}
+.special{font-size:11px;color:var(--text-dim);line-height:1.4;margin:-2px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;white-space:pre-wrap}
+.special.open{display:block;-webkit-line-clamp:unset}
+.in-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.in-count.all{color:var(--accent-text);font-weight:700}
+.bike-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0}
+label.bike-row{cursor:pointer}
+.bike-row.in .code,.bike-row.in .model{color:var(--text-muted)}
+.bike-row .in-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent-text);white-space:nowrap}
+.exc-rows{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(212,138,47,.07);border:1px dashed rgba(212,138,47,.45);font-size:12px;color:var(--warn-text)}
+.exc-row{margin:3px 0}
+.exc-row .code{font-family:'DM Mono',monospace;font-weight:700;margin-right:6px}
+.status-badge.overnight{background:rgba(80,120,200,.1);color:#2d4f8f;border:1.5px solid rgba(80,120,200,.3)}
+.btn-overnight{background:rgba(80,120,200,.08);color:#2d4f8f;border:1.5px solid rgba(80,120,200,.3)}
+.hire-sel{font-family:'DM Mono',monospace;font-size:11px;padding:6px 6px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim)}
+.ret-group{padding:10px 0;border-bottom:1px solid var(--border)}
+.ret-group .head{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:14px}
+.ret-group .left{font-family:'DM Mono',monospace;font-size:11px;color:var(--warn-text);margin-top:3px}
+.exc-item{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px}
+.exc-item .code{font-family:'DM Mono',monospace;font-weight:700}
+.exc-item select,.exc-item input{width:100%;margin-top:6px;font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.no-bikes{font-size:12px;color:var(--text-muted);font-style:italic}
+.card-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.card-actions .btn{flex:1;min-width:80px}
+.status-badge{display:inline-block;padding:4px 12px;border-radius:100px;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;margin-bottom:10px;letter-spacing:.5px}
+.status-badge.out{background:rgba(212,138,47,.15);color:var(--warn-text);border:1.5px solid rgba(212,138,47,.4)}
+.status-badge.returned{background:var(--accent-soft);color:var(--accent-text);border:1.5px solid var(--accent-line)}
+.btn-out{background:rgba(212,138,47,.12);color:var(--warn-text);border:1.5px solid rgba(212,138,47,.4)}
+.btn-out:active{background:rgba(212,138,47,.25)}
+.btn-returned{background:var(--accent-soft);color:var(--accent-text);border:1.5px solid var(--accent-line)}
+.btn-returned:active{background:var(--accent-line)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.summary-group{margin-bottom:20px}
+.summary-group-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.summary-group-name{font-weight:800;font-size:15px}
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:16px;color:var(--text)}
+.modal-input{width:100%;padding:14px 16px;border-radius:14px;background:var(--bg-soft);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:16px;outline:none;margin-bottom:14px}
+.modal-input:focus{border-color:var(--accent)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;max-width:calc(100% - 32px);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.last-scans{margin:0 0 12px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-elev)}
+.ls-row{display:grid;grid-template-columns:58px 74px minmax(0,1fr);gap:8px;align-items:baseline;padding:7px 11px;font-size:12px;border-top:1px solid var(--border)}
+.ls-row:first-child{border-top:none}
+.ls-row .t{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)}
+.ls-row .c{font-family:'DM Mono',monospace;font-weight:700}
+.ls-row.ok .c{color:var(--accent-text)}.ls-row.ok{box-shadow:inset 4px 0 0 var(--bright)}.ls-row.warn{background:var(--warn-soft)}.ls-row.warn .c{color:var(--warn-text)}
+.ls-row.bad{background:var(--danger-soft)}.ls-row.bad .c{color:var(--danger-text)}
+.ls-row:not(:first-child){opacity:.6}
+.scan-opts{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-4px 0 10px;font-size:12px}
+.scan-opts button{font:inherit;font-size:12px;font-weight:700;background:none;border:none;color:var(--text-dim);padding:4px 0;cursor:pointer}
+.type-hint{display:none;margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--bg-soft);border:1.5px dashed var(--border);font-size:12px;color:var(--text-dim);cursor:pointer;text-align:center}
+.drop-list{font-family:'DM Mono',monospace;font-size:12px;line-height:1.7;margin:4px 0 12px;max-height:40vh;overflow-y:auto}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+.oos-banner{position:fixed;top:0;left:0;right:0;background:var(--danger);color:#fff;z-index:10000;padding:14px 16px;font-family:'Syne',sans-serif;font-weight:800;text-align:center;transform:translateY(-100%);transition:transform .25s;font-size:14px;box-shadow:0 4px 16px rgba(201,74,69,.4)}
+.oos-banner.show{transform:translateY(0);animation:oosShake .4s ease-in-out}
+.oos-banner small{display:block;font-family:'DM Mono',monospace;font-weight:400;font-size:11px;margin-top:4px;opacity:.95}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+.site-badge.need-loc{background:rgba(212,138,47,.14);color:#8a5a1a;border-color:rgba(212,138,47,.5)}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#group-scanner" style="margin-left:6px">? Help</a>
+<a class="back-home" href="/qr" style="margin-left:6px">🔳 QR</a>
+<div class="app">
+  <div class="flash" id="flash"></div>
+  <div class="oos-banner" id="oosBanner"></div>
+
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Group Scanner</div>
+    </div>
+    <div class="sync-indicator">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">connecting…</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" id="tab-scan" onclick="switchTab('scan')">📷 Scan</button>
+    <button class="tab" id="tab-groups" onclick="switchTab('groups')">📋 Groups</button>
+    <button class="tab" id="tab-summary" onclick="switchTab('summary')">📊 Summary</button>
+  </nav>
+
+  <main>
+    <div id="view-scan">
+      <div class="mode-toggle" role="tablist">
+        <button id="mode-issue" onclick="setMode('issue')">🚴 Issuing</button>
+        <button id="mode-return" class="ret" onclick="setMode('return')">✓ Checking in</button>
+        <button id="mode-mcheck" onclick="setMode('mcheck')">🔧 M-check</button>
+      </div>
+      <div id="issueOnly">
+        <div class="section-label">Active Group</div>
+        <div class="group-selector" id="groupChips"></div>
+        <div id="activeInfo"></div>
+      </div>
+      <div id="returnHint" style="display:none;margin:0 0 12px">
+        <div class="phone-loc">📍 This phone is at <select id="phoneLoc" onchange="setPhoneLoc(this.value)"></select></div>
+        <div class="special" style="-webkit-line-clamp:unset;font-size:12px;margin:6px 0 0">Scan each bike as it comes back. It's ticked in on whichever group has it out, and moved to this phone's location.</div>
+        <label class="mc-opt"><input type="checkbox" id="mcAfterIn" onchange="setMcAfterIn(this.checked)"> M-check each bike as it's checked in</label>
+      </div>
+      <div id="mcheckHint" class="special" style="display:none;-webkit-line-clamp:unset;font-size:12px;margin:0 0 12px">Scan or type a bike, check each item in order, and sign off. A fault logs an issue in the Issue Reporter. Bikes due an M-check are listed below; tap one to start.</div>
+      <div class="last-scans" id="lastScans" style="display:none" aria-live="polite"></div>
+      <div id="reader" style="display:none"></div>
+      <div class="type-hint" id="typeHint" onclick="$('manualInput').focus()">Can't read it? Type the bike ID below ↓</div>
+      <div class="camera-ph" id="cameraPlaceholder">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <p>Tap <strong style="color:var(--accent-text)">Start Scanning</strong><br>to activate camera</p>
+      </div>
+      <button class="btn btn-primary" id="scanBtn" onclick="toggleScan()">Start Scanning</button>
+      <div class="scan-opts"><span id="camNote"></span><button id="soundBtn" onclick="toggleSound()"></button></div>
+      <div class="manual-entry">
+        <input class="manual-input" id="manualInput" placeholder="Enter bike ID manually…" maxlength="30"
+          onkeydown="if(event.key==='Enter')doManual()">
+        <button class="manual-add" onclick="doManual()">+</button>
+      </div>
+      <div class="list-header" id="issueListHeader">
+        <div class="section-label" style="margin-bottom:0">
+          Scanned Bikes <span class="count-badge" id="bikeCount">0</span>
+        </div>
+        <button class="clear-btn" onclick="clearGroup()">Clear all</button>
+      </div>
+      <div class="list-header" id="returnListHeader" style="display:none">
+        <div class="section-label" style="margin-bottom:0">Still out</div>
+      </div>
+      <div class="list-header" id="mcheckListHeader" style="display:none">
+        <div class="section-label" style="margin-bottom:0">Due for an M-check <span class="count-badge" id="mcDueCount">0</span></div>
+      </div>
+      <div id="bikeList"></div>
+      <div id="issueBar"></div>
+    </div>
+
+    <div id="view-groups" style="display:none">
+      <div class="day-switch"><button class="ds-today on" onclick="setShowPrev(false)">Today</button><button class="ds-prev" onclick="setShowPrev(true)">Previous day</button></div>
+      <div class="prev-note" id="prevNoteG" style="display:none"></div>
+      <div class="sort-switch">Order <button class="so-time" onclick="setSort('time')">By time</button><button class="so-loc" onclick="setSort('location')">By location</button></div>
+      <button class="btn btn-secondary" id="weatherBtn" style="margin-bottom:12px" onclick="weatherWarning()">🌦 Weather warning to groups out</button>
+      <div class="section-label">All Groups</div>
+      <div id="groupsList"></div>
+      <button class="btn btn-secondary" id="newGroupBtn" style="margin-top:8px" onclick="openModal()">+ New Group</button>
+    </div>
+
+    <div id="view-summary" style="display:none">
+      <div class="day-switch"><button class="ds-today on" onclick="setShowPrev(false)">Today</button><button class="ds-prev" onclick="setShowPrev(true)">Previous day</button></div>
+      <div class="prev-note" id="prevNoteS" style="display:none"></div>
+      <div class="sort-switch">Order <button class="so-time" onclick="setSort('time')">By time</button><button class="so-loc" onclick="setSort('location')">By location</button></div>
+      <div class="section-label">Fleet Summary</div>
+      <div id="summaryContent"></div>
+      <div class="export-section">
+        <div class="section-label">Export & Share</div>
+        <div class="export-card">
+          <div class="export-card-title">📤 Share with Team</div>
+          <div class="export-card-desc">Sends a formatted summary via SMS, WhatsApp, email or any messaging app.</div>
+          <button class="btn btn-primary" onclick="shareReport()">Share Report</button>
+        </div>
+        <div class="export-card">
+          <div class="export-card-title">📄 Download CSV</div>
+          <div class="export-card-desc">Saves a spreadsheet record with all groups, bike IDs and scan times.</div>
+          <button class="btn btn-secondary" onclick="downloadCSV()">Download CSV</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-danger" onclick="resetAll()">Reset All Data</button>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>New Group</h3>
+    <label class="modal-lbl" for="newGroupName">Group name</label>
+    <input class="modal-input" id="newGroupName" placeholder="e.g. Walk-in Lee (x2)" maxlength="40">
+    <label class="modal-lbl" for="newGroupSite">Hire location</label>
+    <select class="modal-select" id="newGroupSite"></select>
+    <label class="modal-lbl" for="newGroupLen">Hire length</label>
+    <select class="modal-select" id="newGroupLen"><option value="day">Full day</option><option value="4h">4 hours</option></select>
+    <label class="modal-lbl" for="newGroupContact">Contact (optional, can be added later)</label>
+    <input class="modal-input" id="newGroupContact" placeholder="Name" maxlength="80" style="margin-bottom:8px">
+    <input class="modal-input" id="newGroupPhone" placeholder="Phone, e.g. 0411 382 221" maxlength="30" inputmode="tel">
+    <div class="modal-opt">Start time is set to now.</div>
+    <button class="btn btn-primary" onclick="createGroup()">Create Group</button>
+  </div>
+</div>
+
+ <div class="modal-backdrop" id="contactModal" onclick="if(event.target===this)closeContact()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="contactTitle">Contact</h3>
+    <label class="modal-lbl" for="ctName">Name</label>
+    <input class="modal-input" id="ctName" maxlength="80">
+    <label class="modal-lbl" for="ctPhone">Phone</label>
+    <input class="modal-input" id="ctPhone" maxlength="30" inputmode="tel" placeholder="e.g. 0411 382 221">
+    <div class="modal-opt">Local numbers are saved with +61. The number is checked before saving.</div>
+    <button class="btn btn-primary" onclick="saveContact()">Save contact</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="removeModal" onclick="if(event.target===this)closeRemove()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="removeTitle">Take bike off group</h3>
+    <button class="btn btn-secondary reason-btn" onclick="confirmRemove('swap')">🔁 Swapping for another bike<small>Customer wants a different bike. Scan the replacement next.</small></button>
+    <button class="btn btn-secondary reason-btn" onclick="confirmRemove('fault')">🔧 Fault found<small>Also log it in the Issue Reporter.</small></button>
+    <button class="btn btn-secondary reason-btn" onclick="confirmRemove('mistake')">✕ Scanned by mistake<small>This bike never went out with the group.</small></button>
+    <button class="btn btn-stop" style="margin-top:6px" onclick="closeRemove()">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="excModal" onclick="if(event.target===this)closeExceptions()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="excTitle">Return with exception</h3>
+    <p class="special" style="-webkit-line-clamp:unset;font-size:12px;margin:0 0 12px">These bikes haven't been checked in. Give a reason for each one to close the group. The reasons are kept on the group's record.</p>
+    <div id="excList"></div>
+    <button class="btn btn-returned" onclick="confirmExceptions()">Close group with these reasons</button>
+    <button class="btn btn-stop" style="margin-top:6px" onclick="closeExceptions()">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="mcModal" onclick="if(event.target===this)closeCheck()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="mcTitle">M-check</h3>
+    <div class="special" id="mcSub" style="-webkit-line-clamp:unset;font-size:12px;margin:0 0 8px"></div>
+    <div id="mcItems"></div>
+    <textarea class="mc-field" id="mcNote" rows="2" maxlength="1000" placeholder="Notes (what's wrong, what you adjusted)"></textarea>
+    <div style="display:flex;gap:8px">
+      <input class="mc-field" id="mcOdo" inputmode="numeric" maxlength="9" placeholder="Odometer km (optional)">
+      <input class="mc-field" id="mcBy" maxlength="5" placeholder="Your initials" style="text-transform:uppercase;max-width:130px">
+    </div>
+    <select class="mc-field" id="mcPrio" style="display:none">
+      <option value="5">Fault priority: P5 · Out of service</option><option value="4">P4 · High</option><option value="3">P3 · Medium</option><option value="2">P2 · Low</option><option value="1">P1 · Minor</option>
+    </select>
+    <button class="btn btn-returned" id="mcSubmit" style="margin-top:12px" onclick="submitCheck()">✓ All good · sign off</button>
+    <button class="btn btn-stop" style="margin-top:6px" onclick="closeCheck()">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="locModal" onclick="if(event.target===this)closeLocSheet()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="locTitle">Where are you checking in?</h3>
+    <div class="special" id="locSub" style="-webkit-line-clamp:unset;font-size:12px;margin:0 0 12px"></div>
+    <div id="locOptions"></div>
+    <button class="btn btn-stop" style="margin-top:6px" onclick="closeLocSheet()">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="unregModal" onclick="if(event.target===this)closeUnreg()">
+  <div class="modal"><div class="modal-handle"></div>
+    <h3 id="unregTitle">Not a registered bike</h3>
+    <div class="modal-sub" id="unregSub"></div>
+    <button class="btn btn-secondary" onclick="closeUnreg()" style="margin-top:12px">Cancel</button>
+    <button class="btn btn-primary" id="unregAdd" onclick="confirmUnreg()" style="margin-top:8px">Add anyway</button>
+  </div>
+</div>
+<div class="modal-backdrop" id="dropModal" onclick="if(event.target===this)closeDrop()">
+  <div class="modal"><div class="modal-handle"></div>
+    <h3 id="dropTitle">Drop-off</h3>
+    <div id="dropBody"></div>
+    <button class="btn btn-secondary" onclick="closeDrop()" style="margin-top:6px">Cancel</button>
+    <button class="btn btn-primary" id="dropGo" onclick="confirmDrop()" style="margin-top:8px">Confirm</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+
+<script src="/assets/vendor/html5-qrcode.min.js"></script>
+<script src="/assets/scan.js"></script>
+<script src="/assets/vendor/libphonenumber-min.js"></script>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+// Group Scanner v3.2
+// Each change (add bike, new group…) is sent as its own small action and
+// queued on this phone until the server confirms it. If the signal drops,
+// scans wait in the queue (and survive a page reload) and are sent when the
+// connection returns. Nothing is overwritten by another phone's save.
+// ─────────────────────────────────────────────────────────────────
+const POLL_MS = 8000;              // groups + fleet status in one request
+const PENDING_KEY = 'saebikes_scanner_pending_v1';
+const ACTIVE_KEY  = 'saebikes_active_group_v1';
+const $ = id => document.getElementById(id);
+const esc = Ops.esc, uid = Ops.uid;
+
+const SNAPSHOT_KEY = 'saebikes_scanner_snapshot_v1';
+// Last known server state, kept on the phone so the scanner still works after a reload with no signal.
+let server = (() => { try { return JSON.parse(localStorage.getItem(SNAPSHOT_KEY)) || null; } catch { return null; } })()
+  || { rev: -1, groups: [], oos: [], openIssueBikes: [], manifestDateDisplay: '' };
+if (server && server.locations && window.Locs) Locs.set(server.locations); // the last saved list, until the first update
+let oosBikes = new Set(), openIssueBikes = new Set();
+let pending = loadPending();
+oosBikes = new Set(server.oos || []); openIssueBikes = new Set(server.openIssueBikes || []);
+let activeId = localStorage.getItem(ACTIVE_KEY) || '';
+let flushing = false, flushRetryTimer = null, lastError = '';
+
+function loadPending() { try { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); } catch { return []; } }
+function savePending() { try { localStorage.setItem(PENDING_KEY, JSON.stringify(pending)); } catch {} }
+
+// Server snapshot + this phone's unconfirmed changes = what we show.
+function applyOp(groups, op) {
+  const p = op.payload, g = groups.find(x => x.id === p.groupId);
+  switch (op.action) {
+    case 'createGroup': if (!g) groups.push({ id: p.groupId, name: p.name, status: '', bikes: [], walkin: true, site: p.site, ptime: p.ptime, startAt: p.startAt, startDate: server.manifestDate,
+      hireLength: p.hireLength === '4h' ? '4h' : undefined, contactName: p.contact ? p.contact.name : undefined, contactPhone: p.contact ? p.contact.phoneDisplay || p.contact.phone : undefined }); break;
+    case 'setGroupSite': if (g) g.site = p.site; break;
+    case 'dropOff': if (g) {
+      g.bikes.forEach(b => { if (!b.inAt) { b.inAt = p.at; b.droppedAt = p.location; } });
+      g.status = 'returned'; g.droppedAt = p.location; g.exceptions = [];
+    } break;
+    case 'undoDropOff': if (g && g.droppedAt) {
+      g.bikes.forEach(b => { if (b.droppedAt === g.droppedAt) { delete b.inAt; delete b.droppedAt; } });
+      g.status = 'out'; delete g.droppedAt;
+    } break;
+    case 'setGroupContact': if (g) { g.contactName = p.contact.name; g.contactPhone = p.contact.phoneDisplay || p.contact.phone || ''; } break;
+    case 'deleteGroup': return groups.filter(x => x.id !== p.groupId);
+    case 'setGroupStatus': if (g) {
+      if (p.status === 'returned') g.exceptions = (p.exceptions || []).map(e => ({ ...e, code: (g.bikes.find(b => b.id === e.bikeId) || {}).code }));
+      else if (g.status === 'returned') g.exceptions = [];
+      g.status = p.status;
+    } break;
+    case 'checkIn': if (g) {
+      const b = g.bikes.find(x => x.id === p.bikeId);
+      if (b) { if (p.in === false) delete b.inAt; else if (!b.inAt) b.inAt = p.at || Date.now(); }
+    } break;
+    case 'setHireDays': if (g) g.hireDays = p.hireDays; break;
+    case 'addBike': if (g && !g.bikes.some(b => b.id === p.bike.id)) g.bikes.push({ ...p.bike, pending: true }); break;
+    case 'removeBike': if (g) {
+      const b = g.bikes.find(x => x.id === p.bikeId);
+      if (b) { g.bikes = g.bikes.filter(x => x.id !== p.bikeId); g.removed = [...(g.removed || []), { ...b, removedAt: p.removedAt, reason: p.reason, pending: true }]; }
+    } break;
+    case 'clearGroup': if (g) { g.removed = [...(g.removed || []), ...g.bikes.map(b => ({ ...b, removedAt: p.removedAt, reason: 'cleared', pending: true }))]; g.bikes = []; } break;
+    case 'resetDay': return [];
+  }
+  return groups;
+}
+function groupsView() {
+  let groups = JSON.parse(JSON.stringify(server.groups || []));
+  for (const op of pending) groups = applyOp(groups, op);
+  return groups;
+}
+function activeGroup() {
+  const groups = groupsView();
+  let g = groups.find(x => x.id === activeId);
+  if (!g && groups.length) { g = groups[0]; activeId = g.id; localStorage.setItem(ACTIVE_KEY, activeId); }
+  return g || null;
+}
+
+function acceptView(v) {
+  if (!v) return;
+  if (v.locations) Locs.set(v.locations);
+  if (typeof v.rev === 'number' && v.rev >= server.rev) {
+    server = v;
+    try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(v)); } catch {}
+  }
+  oosBikes = new Set(v.oos || []);
+  openIssueBikes = new Set(v.openIssueBikes || []);
+  applyStartFresh();
+}
+
+// Brand and model for a scanned bike: the current register first, then what was recorded at scan time.
+function bikeWhat(b) {
+  const info = (server.bikeInfo || {})[b.code] || b;
+  return [info.brand, info.model].filter(Boolean).join(' ');
+}
+const registerLoaded = () => Object.keys(server.bikeInfo || {}).length > 0;
+function modelHTML(b, cls, tag = 'div') {
+  const w = bikeWhat(b);
+  const gone = ((server.bikeInfo || {})[b.code] || {}).disposed;
+  if (gone) return '<' + tag + ' class="' + cls + ' unknown">' + esc(w ? w + ' · ' : '') + 'disposed ' + gone.split('-').reverse().join('/') + '</' + tag + '>';
+  if (w) return '<' + tag + ' class="' + cls + '">' + esc(w) + '</' + tag + '>';
+  // Registered but with no brand or model recorded: nothing to show. Only unknown barcodes get the warning.
+  if ((server.bikeInfo || {})[b.code]) return '';
+  return registerLoaded() ? '<' + tag + ' class="' + cls + ' unknown">Not in asset register</' + tag + '>' : '';
+}
+// One line per bike: barcode, then brand and model. Used on the Groups and Summary tabs.
+// With a group, each bike gets a tick box for checking it in (disabled once the group is Returned).
+function bikeRowsHTML(bikes, emptyText, g) {
+  if (!bikes.length) return '<span class="no-bikes">' + emptyText + '</span>';
+  return '<div class="bike-rows">' + bikes.map(b => {
+    const isOos = oosBikes.has(b.code);
+    const inner = '<span class="code">' + (isOos ? '🚫 ' : '') + esc(b.code) + '</span>' + modelHTML(b, 'model', 'span') +
+      (b.mcheckDue && !b.inAt ? '<span class="mc-tag">⚠ no M-check</span>' : '') +
+      (b.inAt ? '<span class="in-time">in ' + fmtShort(b.inAt) + (b.inBy ? ' · ' + esc(b.inBy) : '') + '</span>' : '');
+    const cls = 'bike-row' + (isOos ? ' oos' : '') + (b.inAt ? ' in' : '');
+    if (!g) return '<div class="' + cls + '">' + (b.inAt ? '✓ ' : '') + inner + '</div>';
+    return '<label class="' + cls + '"><input type="checkbox"' + (b.inAt ? ' checked' : '') + (g.status === 'returned' ? ' disabled' : '') +
+      ' onchange="toggleIn(\'' + g.id + '\',\'' + b.id + '\',this.checked)" aria-label="' + esc(b.code) + ' checked in">' + inner + '</label>';
+  }).join('') + '</div>';
+}
+
+// ── multi-day hires, special requirements, check-in ─────────────
+const hireDaysOf = g => g.hireDays || 1;
+const dayOf = (g, date = server.manifestDate) => (g.startDate && date ? Math.round((Date.parse(date) - Date.parse(g.startDate)) / 864e5) : 0) + 1;
+const isLastDay = (g, date) => dayOf(g, date) >= hireDaysOf(g);
+const isOverdue = (g, date) => g.status !== 'returned' && dayOf(g, date) > hireDaysOf(g);
+const fmtDay = iso => iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+const inCount = g => g.bikes.filter(b => b.inAt).length;
+function dayBadgeHTML(g, date) {
+  if (isOverdue(g, date)) return '<span class="overdue-badge">⚠ OVERDUE · out since ' + fmtDay(g.startDate) + '</span>';
+  return hireDaysOf(g) > 1 ? '<span class="day-badge">📅 Day ' + dayOf(g, date) + ' of ' + g.hireDays + '</span>' : '';
+}
+// Where the hire is, from the pickup manifest, with the start time.
+function siteHTML(g) {
+  const due = g.hireLength === '4h' && g.startAt ? ' · DUE BACK ' + esc(nowTime(new Date(g.startAt + 4 * 3600e3))) : '';
+  const t = (g.ptime ? ' · ' + esc(g.ptime) : '') + due;
+  if (!g.site) return '<span class="site-badge need-loc">⚠ NO LOCATION · set it below</span>';
+  return '<span class="site-badge' + (Locs.isDelivery(g.site) ? ' DEL' : '') + '">' + Locs.icon(g.site) + ' ' + esc(Locs.name(g.site).toUpperCase()) + t + '</span>' +
+    (g.droppedAt ? '<span class="site-badge">↩ DROPPED AT ' + esc(Locs.name(g.droppedAt).toUpperCase()) + '</span>' : '');
+}
+const isDeliveryGroup = g => Locs.isDelivery(g.site);
+// Options for a hire-location menu: hire sites, then home delivery.
+const siteOptions = sel => Locs.hire().map(l => '<option value="' + esc(l.code) + '"' + (l.code === sel ? ' selected' : '') + '>' + (l.kind === 'delivery' ? '🚚 ' : '📍 ') + esc(l.name) + '</option>').join('');
+// Groups added by hand: their contact (added now or later), and a location menu for any group without one.
+function walkinRowHTML(g) {
+  const bits = [];
+  if (!g.site) bits.push('<select class="need" aria-label="Set location" onchange="setGroupSite(\'' + g.id + '\', this.value)"><option value="">📍 Set location…</option>' + siteOptions('') + '</select>');
+  // Bikes left at a collection point (Dandelion) at the end of the hire.
+  if (g.status === 'returned' && g.droppedAt) bits.push('<button onclick="correctDrop(\'' + g.id + '\')">↶ Undo drop-off</button>');
+  if (g.status !== 'returned' && g.bikes.some(b => !b.inAt)) Locs.collection().forEach(l => bits.push('<button onclick="dropOff(\'' + g.id + '\',\'' + esc(l.code) + '\')">↩ Dropped at ' + esc(l.name) + '</button>'));
+  if (g.walkin) {
+    if (g.contactName) bits.push('<span class="who">👤 ' + esc(g.contactName) + (g.contactPhone ? ' · ' + esc(g.contactPhone) : '') + '</span>');
+    if (!g.contactPhone && g.bikes.some(b => !b.inAt)) bits.push('<span class="nophone">No phone yet</span>');
+    bits.push('<button onclick="openContact(\'' + g.id + '\')">' + (g.contactName || g.contactPhone ? 'Edit contact' : '+ Add contact') + '</button>');
+  }
+  // Message the guest (late for pickup, late returning, weather, a link), and the latest message sent.
+  const ci = groupContact(g);
+  if (ci && ci.phone && g.status !== 'returned') bits.push('<button onclick="messageGroup(\'' + g.id + '\')">💬 Message</button>');
+  const last = ci && ci.last ? '<div class="msg-last ' + ci.last.status + '">💬 ' + esc(ci.last.label) + ' · ' + MSG_STATUS[ci.last.status] + ' ' + fmtShort(ci.last.at) + (ci.last.by ? ' · ' + esc(ci.last.by) : '') + '</div>' : '';
+  return (bits.length ? '<div class="walk-row">' + bits.join('') + '</div>' : '') + last;
+}
+const MSG_STATUS = { opened: 'not confirmed', sent: 'sent', 'not-sent': 'NOT sent' };
+const groupContact = g => g.code ? (server.contactInfo || {})[g.code] || null : null;
+const msgContact = g => { const ci = groupContact(g) || {}; return { code: g.code, name: ci.name || g.contactName || g.name, phone: ci.phone || '', site: g.site, ptime: g.ptime, groupName: g.name }; };
+const refreshSoon = () => setTimeout(() => poll.now(), 300);
+// Suggest "late for pickup" if the start time has passed with nothing scanned out; otherwise "late returning".
+function messageGroup(groupId) {
+  const g = groupsView().find(x => x.id === groupId); if (!g) return;
+  const started = g.ptime && timeMins(g.ptime) < new Date().getHours() * 60 + new Date().getMinutes();
+  Msg.open(msgContact(g), { suggest: !g.bikes.length && started ? 'late-pickup' : 'late-return', onChange: refreshSoon });
+}
+// Weather warning: every group with bikes out, ticked by default.
+function weatherWarning() {
+  const out = groupsView().filter(g => g.status !== 'returned' && g.bikes.some(b => !b.inAt));
+  Msg.broadcast(out.map(msgContact), { onChange: refreshSoon });
+}
+function specialHTML(g) {
+  return (g.special ? '<div class="special" onclick="this.classList.toggle(\'open\')">' + esc(g.special) + '</div>' : '') +
+    (g.dropoff ? '<div class="special">Drop-off: ' + esc(g.dropoff) + '</div>' : '');
+}
+function inCountHTML(g) {
+  if (!g.bikes.length) return '';
+  const n = inCount(g);
+  return '<span class="in-count' + (n === g.bikes.length ? ' all' : '') + '"> · ' + n + ' of ' + g.bikes.length + ' checked in</span>';
+}
+const EXC_LABEL = { collect: 'Left at location, to collect', damaged: 'Damaged, issue logged', missing: 'Missing', other: 'Other' };
+function exceptionsHTML(g) {
+  const list = g.exceptions || [];
+  if (!list.length) return '';
+  return '<div class="exc-rows"><div class="removed-label" style="color:var(--warn-text)">Returned without these bikes</div>' +
+    list.map(e => '<div class="exc-row"><span class="code">' + esc(e.code || '') + '</span>' + esc(EXC_LABEL[e.reason] || 'Other') + (e.note ? ': ' + esc(e.note) : '') + (e.by ? ' · ' + esc(e.by) : '') + '</div>').join('') + '</div>';
+}
+// Ticking a bike in on the Groups tab goes through the same location checks as scanning it in.
+function toggleIn(groupId, bikeId, on) {
+  if (!on) {
+    // v3.9: unticking later is a correction: initials and a reason, and the bike moves back.
+    const g0 = groupsView().find(x => x.id === groupId), b0 = g0 && g0.bikes.find(x => x.id === bikeId);
+    renderGroups();
+    Correct.ask({ title: 'Untick ' + ((b0 && b0.code) || 'this bike') + '?', sub: 'It goes back to being out with ' + ((g0 && g0.name) || 'the group') + ', and moves back to where it was before it was checked in.', action: 'Untick it',
+      onOK: (by, reason) => enqueue('checkIn', { groupId, bikeId, in: false, at: Date.now(), location: '', by, reason }) });
+    return;
+  }
+  const g = groupsView().find(x => x.id === groupId), b = g && g.bikes.find(x => x.id === bikeId);
+  if (!g || !b) return;
+  withCheckinLoc(g, loc => doCheckIn(g, b, loc, false), () => renderGroups());
+}
+
+// ── check-in location safeguards ─────────────────────────────────
+// 1. The phone's location is confirmed once a day before the first check-in.
+// 2. Every check-in confirmation names the location the bike is going to.
+// 3. If a group was hired from somewhere else, staff are asked which is right (once per group).
+const todayLocal = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const locConfirmedToday = () => !!phoneLoc && localStorage.getItem('saeb-phone-location-confirmed') === todayLocal();
+function markLocConfirmed() { try { localStorage.setItem('saeb-phone-location-confirmed', todayLocal()); } catch {} }
+const locName = code => ((server.locations || []).find(l => l.code === code) || {}).name || code;
+const locExists = code => (server.locations || []).some(l => l.code === code);
+// Where a group's bikes would normally come back to, from where it was hired.
+// Where a group's bikes would normally come back to: its hire site, or the trailer for a delivery.
+const expectedLoc = g => !g.site ? '' : isDeliveryGroup(g) ? 'TRA' : g.site;
+const groupLoc = {}; // this session's answer for a group: check its bikes in here
+let locSheetDone = null, locSheetCancel = null;
+function openLocSheet(title, sub, options, onPick, onCancel) {
+  $('locTitle').textContent = title; $('locSub').textContent = sub;
+  locSheetDone = onPick; locSheetCancel = onCancel || null;
+  $('locOptions').innerHTML = options.map(o => '<button class="loc-pick' + (o.primary ? ' primary' : '') + '" data-code="' + esc(o.code) + '">' + esc(o.label) + (o.note ? '<small>' + esc(o.note) + '</small>' : '') + '</button>').join('');
+  $('locOptions').querySelectorAll('.loc-pick').forEach(el => el.onclick = () => { const f = locSheetDone; locSheetDone = locSheetCancel = null; $('locModal').classList.remove('open'); f && f(el.dataset.code); });
+  $('locModal').classList.add('open');
+}
+function closeLocSheet() { const c = locSheetCancel; locSheetDone = locSheetCancel = null; $('locModal').classList.remove('open'); c && c(); }
+function askPhoneLoc(then, cancel) {
+  const locs = server.locations || [];
+  const opts = locs.map(l => ({ code: l.code, label: (l.code === phoneLoc ? '✓ ' : '') + l.code + ' · ' + l.name, primary: l.code === phoneLoc, note: l.code === phoneLoc ? 'Where this phone was last set' : '' }));
+  opts.sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0));
+  openLocSheet(phoneLoc ? 'Checking in at ' + phoneLoc + '?' : 'Where are you checking in?', 'Bikes you check in today are moved to this location. You\'ll be asked once a day.', opts,
+    code => { phoneLoc = code; try { localStorage.setItem('saeb-phone-location', code); } catch {} markLocConfirmed(); renderScan(); then && then(); }, cancel);
+}
+function withCheckinLoc(g, cb, cancel) {
+  if (!locConfirmedToday()) { askPhoneLoc(() => withCheckinLoc(g, cb, cancel), cancel); return; }
+  if (groupLoc[g.id]) return cb(groupLoc[g.id]);
+  const exp = expectedLoc(g);
+  if (exp && exp !== phoneLoc && locExists(exp)) {
+    openLocSheet('Checking in ' + g.name, g.name + (isDeliveryGroup(g) ? ' was a home delivery' : ' was hired from ' + Locs.name(g.site)) + '. Where are its bikes going?', [
+      { code: phoneLoc, label: 'Here, ' + phoneLoc + ' · ' + locName(phoneLoc), note: 'Where this phone is', primary: true },
+      { code: exp, label: exp + ' · ' + locName(exp), note: isDeliveryGroup(g) ? 'Onto the trailer' : 'Where it was hired from' },
+    ], code => { groupLoc[g.id] = code; cb(code); }, cancel);
+    return;
+  }
+  cb(phoneLoc);
+}
+function doCheckIn(g, b, loc, fromScan) {
+  enqueue('checkIn', { groupId: g.id, bikeId: b.id, in: true, at: Date.now(), location: loc });
+  if (window.UndoBar) setTimeout(() => UndoBar.show(b.code + ' checked in' + (loc ? ' at ' + loc : ''), () => {
+    enqueue('checkIn', { groupId: g.id, bikeId: b.id, in: false, undo: true, at: Date.now(), location: '' });
+    feedback('warn', b.code, 'check-in undone' + (loc ? ': moved back from ' + loc : ''));
+  }), 0);
+  if (mcAfterIn) setTimeout(() => openCheck(b.code), 600);
+  const n = inCount(g) + 1, total = g.bikes.length, to = loc ? ' · → ' + loc : '';
+  if (fromScan && g._alsoOn) feedback('warn', b.code, 'in on ' + g.name + ', but also listed on ' + g._alsoOn);
+  else feedback('ok', b.code, 'in · ' + g.name + ' · ' + n + ' of ' + total + (loc ? ' · → ' + loc : ''));
+  if (fromScan && g._alsoOn) showToast('⚠ ' + b.code + ' checked in on ' + g.name + to + ', but it is also listed on ' + g._alsoOn, 'warning');
+  else if (n === total) showToast('✓ ' + b.code + ' in · ' + g.name + ' all back' + to + '. Tap Mark returned below.', 'success');
+  else showToast('✓ ' + b.code + ' in · ' + g.name + ' · ' + n + ' of ' + total + to, 'success');
+}
+
+// Where this phone is (VIC, OXB, TRA…). Bikes checked in on it move there. Remembered per phone.
+let phoneLoc = localStorage.getItem('saeb-phone-location') || '';
+function setPhoneLoc(v) {
+  phoneLoc = v;
+  try { localStorage.setItem('saeb-phone-location', v); } catch {}
+  if (v) markLocConfirmed(); // choosing it here counts as today's confirmation
+  renderScan();
+  if (v) showToast('📍 This phone is at ' + v, 'success');
+}
+function renderPhoneLoc() {
+  const locs = server.locations || [];
+  if (phoneLoc && locs.length && !locs.some(l => l.code === phoneLoc)) phoneLoc = ''; // retired or renamed code
+  $('phoneLoc').innerHTML = '<option value="">Choose…</option>' + locs.map(l => '<option value="' + esc(l.code) + '"' + (l.code === phoneLoc ? ' selected' : '') + '>' + esc(l.code) + ' · ' + esc(l.name) + '</option>').join('');
+  $('phoneLoc').classList.toggle('unset', !phoneLoc);
+}
+function setHireDays(groupId, v) {
+  const g = groupsView().find(x => x.id === groupId); if (!g) return;
+  const n = parseInt(v, 10) || 1;
+  if (n < dayOf(g)) { showToast('This hire is already on day ' + dayOf(g), 'warning'); renderGroups(); return; }
+  enqueue('setHireDays', { groupId, hireDays: n });
+}
+
+// Issuing (scan onto the active group) or checking in (scan ticks the bike in on whichever group has it).
+// The mode chosen is kept for the rest of the day; each new day starts in Issuing (v3.5).
+const modeToday = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+let mode = localStorage.getItem('saeb-scan-mode-day') === modeToday() && ['return', 'mcheck'].includes(localStorage.getItem('saeb-scan-mode')) ? localStorage.getItem('saeb-scan-mode') : 'issue';
+function setMode(m) {
+  mode = m; try { localStorage.setItem('saeb-scan-mode', m); localStorage.setItem('saeb-scan-mode-day', modeToday()); } catch {}
+  renderScan();
+  if (m === 'return' && !locConfirmedToday()) askPhoneLoc();
+}
+// ── M-checks ─────────────────────────────────────────────────────
+let mcAfterIn = localStorage.getItem('saeb-mc-after-in') === '1';
+function setMcAfterIn(on) { mcAfterIn = on; try { localStorage.setItem('saeb-mc-after-in', on ? '1' : '0'); } catch {} }
+// Due for an M-check, less any passes still waiting to send.
+function mcDue() {
+  const due = new Set(server.mcheckDue || []);
+  for (const op of pending) if (op.action === 'mcheck' && !(op.payload.check.failed || []).length) due.delete(String(op.payload.check.bike).toUpperCase());
+  return due;
+}
+let mcBike = null, mcFaults = new Set(), mcCheckId = null;
+function openCheck(code) {
+  code = String(code).trim().toUpperCase();
+  const known = Object.keys(server.bikeInfo || {});
+  if (registerLoaded() && !known.includes(code)) { feedback('warn', code, 'not in the register: no M-check'); showToast('⚠ ' + code + ' isn\'t in the asset register', 'warning'); return; }
+  feedback('ok', code, 'M-check opened');
+  mcBike = code; mcFaults = new Set(); mcCheckId = uid();
+  $('mcTitle').textContent = 'M-check ' + code;
+  const w = bikeWhat({ code });
+  $('mcSub').textContent = (w ? w + ' · ' : '') + (mcDue().has(code) ? 'due since its last ride' : 'already signed off since its last ride');
+  $('mcNote').value = ''; $('mcOdo').value = '';
+  $('mcBy').value = window.Team ? Team.initials() : '';
+  $('mcBy').style.display = $('mcBy').value ? 'none' : '';
+  renderCheckItems();
+  $('mcModal').classList.add('open');
+}
+function renderCheckItems() {
+  $('mcItems').innerHTML = MCheck.items.map(it =>
+    '<div class="mc-item' + (mcFaults.has(it.key) ? ' fault' : '') + '"><span>' + esc(it.label) + '</span><span class="tog">' +
+    '<button class="ok' + (!mcFaults.has(it.key) ? ' on' : '') + '" onclick="setFault(\'' + it.key + '\',false)">✓ OK</button>' +
+    '<button class="bad' + (mcFaults.has(it.key) ? ' on' : '') + '" onclick="setFault(\'' + it.key + '\',true)">✗ Fault</button></span></div>').join('');
+  const fault = mcFaults.size > 0;
+  $('mcPrio').style.display = fault ? '' : 'none';
+  $('mcSubmit').textContent = fault ? '✗ Log ' + mcFaults.size + ' fault' + (mcFaults.size > 1 ? 's' : '') + ' · sign off' : '✓ All good · sign off';
+  $('mcSubmit').className = 'btn ' + (fault ? 'btn-fault' : 'btn-returned');
+}
+function setFault(key, on) {
+  on ? mcFaults.add(key) : mcFaults.delete(key);
+  // A critical item suggests out of service; staff can lower it.
+  $('mcPrio').value = [...mcFaults].some(k => (MCheck.items.find(i => i.key === k) || {}).critical) ? '5' : '3';
+  renderCheckItems();
+}
+function closeCheck() { $('mcModal').classList.remove('open'); mcBike = null; }
+function submitCheck() {
+  if (!mcBike) return;
+  const by = $('mcBy').value.trim().toUpperCase();
+  if (!by) { showToast('Enter your initials to sign off', 'warning'); $('mcBy').style.display = ''; $('mcBy').focus(); return; }
+  const failed = [...mcFaults];
+  if (failed.length && !$('mcNote').value.trim() && !confirm('Log the fault without a note?')) return;
+  const code = mcBike;
+  const mcCheckIdDone = mcCheckId;
+  enqueue('mcheck', { check: { id: mcCheckId, bike: code, failed, note: $('mcNote').value.trim(), odometer: $('mcOdo').value.trim(),
+    priority: failed.length ? $('mcPrio').value : '', issueId: failed.length ? uid() : undefined }, by });
+  closeCheck();
+  if (failed.length) { doFlash('var(--warn)'); showToast('✗ ' + code + ' fault logged in the Issue Reporter', 'warning'); }
+  else {
+    doFlash('var(--bright)'); showToast('✓ ' + code + ' M-checked · ' + by, 'success');
+    const checkId = mcCheckIdDone;
+    if (window.UndoBar) UndoBar.show(code + ' M-check signed off', () => { enqueue('voidMcheck', { checkId, undo: true, by }); feedback('warn', code, 'M-check sign-off undone: due again'); });
+  }
+}
+function mcheckListHTML() {
+  const due = [...mcDue()].filter(c => !groupsView().some(g => g.status !== 'returned' && g.bikes.some(b => b.code === c && !b.inAt)));
+  $('mcDueCount').textContent = due.length;
+  if (!due.length) return '<div class="empty-state"><div class="icon">🔧</div><p>Every bike at the rack has been M-checked since its last ride.</p></div>';
+  return due.map(c => '<div class="mc-due" onclick="openCheck(\'' + esc(c) + '\')"><span><span class="code">' + esc(c) + '</span> ' + esc(bikeWhat({ code: c })) + '</span><span class="in-count">Tap to check ›</span></div>').join('');
+}
+
+function checkInCode(code) {
+  code = String(code).trim().toUpperCase();
+  if (!code) return;
+  const groups = groupsView().filter(g => g.status !== 'returned');
+  const hits = groups.filter(g => g.bikes.some(b => b.code === code && !b.inAt));
+  if (!hits.length) {
+    const done = groups.find(g => g.bikes.some(b => b.code === code));
+    feedback('warn', code, done ? 'already checked in (' + done.name + ')' : 'isn\'t out with any group');
+    showToast(done ? code + ' is already checked in (' + done.name + ')' : '⚠ ' + code + ' isn\'t out with any group', 'warning');
+    return;
+  }
+  const g = hits[0], b = g.bikes.find(x => x.code === code && !x.inAt);
+  g._alsoOn = hits.length > 1 ? hits[1].name : '';
+  withCheckinLoc(g, loc => doCheckIn(g, b, loc, true));
+}
+function returnListHTML() {
+  const all = groupsView();
+  // Every bike back: mark the group returned here, without going to the Groups tab (v3.5).
+  const ready = all.filter(g => g.status !== 'returned' && g.bikes.length && g.bikes.every(b => b.inAt));
+  const readyHTML = ready.map(g => '<div class="ret-group ready"><div class="head"><span>✓ ' + esc(g.name) + '</span><span class="in-count">all ' + g.bikes.length + ' back</span></div>' +
+    '<button class="btn btn-returned" style="margin-top:8px" onclick="setGroupStatus(\'' + g.id + '\',\'returned\')">Mark ' + esc(g.name) + ' returned</button></div>').join('');
+  const out = all.filter(g => g.status !== 'returned' && g.bikes.some(b => !b.inAt));
+  if (!out.length) return readyHTML + (ready.length ? '' : '<div class="empty-state"><div class="icon">✓</div><p>Every scanned bike is checked in.</p></div>');
+  return readyHTML + out.map(g => {
+    const left = g.bikes.filter(b => !b.inAt);
+    return '<div class="ret-group"><div class="head"><span>' + esc(g.name) + '</span><span class="in-count">' + inCount(g) + ' of ' + g.bikes.length + ' in</span></div>' +
+      (isOverdue(g) ? '<div class="in-count" style="color:var(--danger-text)">⚠ Overdue, out since ' + fmtDay(g.startDate) + '</div>'
+        : hireDaysOf(g) > 1 && !isLastDay(g) ? '<div class="in-count">📅 Day ' + dayOf(g) + ' of ' + g.hireDays + ', not due back today</div>' : '') +
+      '<div class="left">Still out: ' + left.map(b => esc(b.code)).join(', ') + '</div></div>';
+  }).join('');
+}
+
+// Return with exception: a reason for each bike not checked in.
+let excGroupId = null;
+function openExceptions(g) {
+  excGroupId = g.id;
+  $('excTitle').textContent = 'Return ' + g.name;
+  $('excList').innerHTML = g.bikes.filter(b => !b.inAt).map(b =>
+    '<div class="exc-item" data-bike="' + b.id + '"><span class="code">' + esc(b.code) + '</span> ' + esc(bikeWhat(b)) +
+    '<select><option value="">Why isn\'t it back?</option>' + Object.entries(EXC_LABEL).map(([k, v]) => '<option value="' + k + '">' + v + '</option>').join('') + '</select>' +
+    '<input maxlength="300" placeholder="Note (where it is, what happened)"></div>').join('');
+  $('excModal').classList.add('open');
+}
+function closeExceptions() { $('excModal').classList.remove('open'); excGroupId = null; }
+function confirmExceptions() {
+  const exceptions = [];
+  for (const el of document.querySelectorAll('#excList .exc-item')) {
+    const reason = el.querySelector('select').value, note = el.querySelector('input').value.trim();
+    const code = el.querySelector('.code').textContent;
+    if (!reason) { showToast('Choose a reason for ' + code, 'warning'); return; }
+    if (reason === 'other' && !note) { showToast('Add a note for ' + code, 'warning'); el.querySelector('input').focus(); return; }
+    exceptions.push({ bikeId: el.dataset.bike, reason, note });
+  }
+  const id = excGroupId; closeExceptions();
+  enqueue('setGroupStatus', { groupId: id, status: 'returned', exceptions, at: Date.now() });
+  showToast('✓ Group closed with ' + exceptions.length + ' exception' + (exceptions.length > 1 ? 's' : ''), 'success');
+}
+
+// Bikes that came off a group stay on its record: barcode, model, times and reason.
+const REASON_LABEL = { swap: 'swapped', fault: 'fault', mistake: 'scanned by mistake', cleared: 'group cleared', undone: 'undone', other: 'removed' };
+// v3.9: this group's undos and corrections today.
+const COR_WHAT = { 'check-in': c => c.code + ' check-in', 'drop-off': c => 'drop-off at ' + c.location, status: c => (c.from || 'no status') + ' → ' + (c.to || 'no status'), 'restore-group': () => 'group restored' };
+function correctionsHTML(g) {
+  const list = (server.corrections || []).filter(c => c.groupId === g.id);
+  return list.length && window.Correct ? '<div style="margin-top:6px">' + list.map(c => Correct.line(c, (COR_WHAT[c.kind] || (() => c.kind))(c))).join('') + '</div>' : '';
+}
+function deletedHTML() {
+  const list = server.deletedGroups || [];
+  if (!list.length) return '';
+  return '<div class="section-label" style="margin-top:18px">Deleted today</div>' + list.map(d => '<div class="group-card" style="opacity:.8"><div class="group-card-header"><div><div class="group-name-text">' + esc(d.name) + '</div>' +
+    '<div class="group-count">' + d.bikes + ' bike' + (d.bikes === 1 ? '' : 's') + ' · deleted ' + fmtShort(d.deletedAt) + '</div></div>' +
+    '<button class="btn btn-secondary btn-sm" style="width:auto;flex:none" onclick="restoreGroup(\'' + d.id + '\')">↶ Restore</button></div></div>').join('');
+}
+function restoreGroup(id) {
+  const d = (server.deletedGroups || []).find(x => x.id === id); if (!d) return;
+  Correct.ask({ title: 'Restore ' + d.name + '?', sub: 'It comes back as it was. Any of its bikes that have since gone out with another group stay with that group.', action: 'Restore the group',
+    onOK: (by, reason) => enqueue('restoreGroup', { groupId: id, by, reason }) });
+}
+function removedHTML(g) {
+  const list = g.removed || [];
+  if (!list.length) return '';
+  return '<div class="removed-rows"><div class="removed-label">Taken off this group</div>' + list.map(b => {
+    const w = bikeWhat(b);
+    return '<div class="removed-row"><span class="code">' + esc(b.code) + '</span>' + (w ? esc(w) + ' ' : '') +
+      '<span class="why">· on ' + fmtShort(b.ts) + ', off ' + fmtShort(b.removedAt) + ' · ' + esc(REASON_LABEL[b.reason] || 'removed') + (b.removedBy ? ' · ' + esc(b.removedBy) : '') + (b.pending ? ' · saving…' : '') + '</span></div>';
+  }).join('') + '</div>';
+}
+// What the record says about a bike's M-check when it went out.
+const mcText = b => b.mcheckDue ? 'NOT CHECKED since last ride' + (b.mcheck ? ' (last ' + fmtDateTime(b.mcheck.at) + ' ' + b.mcheck.by + ', ' + b.mcheck.result + ')' : '')
+  : b.mcheck ? fmtDateTime(b.mcheck.at) + ' ' + b.mcheck.by : '';
+function fmtShort(t) { return t ? new Date(t).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }) : '?'; }
+
+function setSyncStatus(status, label) { $('syncDot').className = 'sync-dot ' + status; $('syncLabel').textContent = label; }
+function refreshSyncLabel() {
+  if (pending.length) {
+    setSyncStatus(lastError ? 'error' : 'syncing', lastError ? pending.length + ' unsaved · retrying' : 'saving ' + pending.length + '…');
+  } else if (lastError) setSyncStatus('error', lastError);
+  else if (refused.length) setSyncStatus('error', refused.length + ' not saved · tap');
+  else setSyncStatus('synced', 'live ✓');
+}
+// Changes the server refused are listed here (on this phone) until someone has read them,
+// instead of only flashing past in a message that's easy to miss at the rack.
+const REFUSED_KEY = 'saebikes_refused_v1';
+let refused = (() => { try { return JSON.parse(localStorage.getItem(REFUSED_KEY)) || []; } catch { return []; } })();
+function saveRefused() { try { localStorage.setItem(REFUSED_KEY, JSON.stringify(refused.slice(-30))); } catch {} }
+function describeOp(op) {
+  const p = op.payload || {}, g = server && (server.groups || []).find(x => x.id === p.groupId);
+  const gn = g ? ' (' + g.name + ')' : '';
+  const names = { addBike: 'Scan ' + (p.bike && p.bike.code), removeBike: 'Take a bike off', checkIn: 'Check in ' + (p.code || ''), deleteGroup: 'Delete group', clearGroup: 'Clear all',
+    resetDay: 'Reset day', setGroupStatus: 'Mark ' + (p.status || 'status'), createGroup: 'Add group ' + (p.name || ''), dropOff: 'Drop-off', mcheck: 'M-check ' + ((p.check && p.check.bike) || ''),
+    undoDropOff: 'Undo drop-off', restoreGroup: 'Restore group', voidMcheck: 'Void M-check' };
+  return (names[op.action] || op.action) + gn;
+}
+function showRefused() {
+  if (!refused.length) return false;
+  const list = refused.map(r => '• ' + new Date(r.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }) + '  ' + r.what + ': ' + r.why).join('\n');
+  if (confirm(refused.length + ' change' + (refused.length > 1 ? 's were' : ' was') + ' not saved:\n\n' + list + '\n\nOK clears this list.')) { refused = []; saveRefused(); refreshSyncLabel(); }
+  return true;
+}
+
+function rerender() {
+  renderScan();
+  const activeTab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
+  if (activeTab === 'groups') renderGroups();
+  if (activeTab === 'summary') renderSummary();
+  refreshSyncLabel();
+}
+
+// ── sending changes ─────────────────────────────────────────────
+function enqueue(action, payload) {
+  // Whoever is using this phone goes with every change.
+  if (window.Team && payload && payload.by === undefined) payload = { ...payload, by: Team.initials() };
+  pending.push({ opId: uid(), action, payload });
+  savePending();
+  rerender();
+  flush();
+}
+
+async function flush() {
+  if (flushing) return;
+  flushing = true;
+  clearTimeout(flushRetryTimer);
+  try {
+    while (pending.length) {
+      const op = pending[0];
+      try {
+        const res = await Ops.act(op.action, op.payload, { retry: false });
+        pending.shift(); savePending();
+        lastError = '';
+        acceptView(res.view);
+        afterConfirmed(op, res);
+      } catch (e) {
+        if (e.isFinal) {                 // server said no — drop it and explain
+          pending.shift(); savePending();
+          acceptView(e.data && e.data.view);
+          onRejected(op, e);
+          poll.now();
+        } else {                         // offline / PIN / server hiccup — keep it and retry
+          lastError = e.isAuth ? 'PIN needed · tap here' : 'offline';
+          flushRetryTimer = setTimeout(flush, 8000);
+          break;
+        }
+      }
+      rerender();
+    }
+  } finally { flushing = false; rerender(); }
+}
+
+function afterConfirmed(op, res) {
+  if (op.action === 'addBike' && res.alsoIn) showToast('⚠ ' + op.payload.bike.code + ' is also in ' + res.alsoIn, 'warning');
+}
+function onRejected(op, e) {
+  refused.push({ at: Date.now(), what: describeOp(op), why: e.code === 'day-changed' ? 'a new day was loaded before this phone sent it' : e.message });
+  saveRefused();
+  if (e.code === 'oos') {
+    doFlash('var(--danger)'); showOosBanner(op.payload.bike.code);
+    showToast('🚫 ' + op.payload.bike.code + ' IS OUT OF SERVICE — removed', 'error');
+  } else if (e.code === 'out-elsewhere') {
+    feedback('bad', op.payload.bike.code, 'refused: ' + e.message);
+    showToast('🚫 ' + e.message, 'error');
+  } else if (e.code === 'duplicate') {
+    showToast('⚠ ' + e.message, 'warning');
+  } else if (e.code === 'no-group') {
+    showToast('Group no longer exists — change not saved', 'error');
+  } else if (e.code === 'day-changed') {
+    showToast(describeOp(op) + ' was not applied: a new day has been loaded since', 'error');
+  } else {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── reading ─────────────────────────────────────────────────────
+async function pullState(interactive) {
+  try {
+    acceptView(await Ops.view('scanner', { interactive: !!interactive }));
+    if (!pending.length) lastError = '';
+  } catch (e) {
+    lastError = e.isAuth ? 'PIN needed · tap here' : 'offline';
+    rerender();
+    throw e;
+  }
+  rerender();
+  if (pending.length && !flushing) flush();
+}
+const poll = Ops.poller(() => pullState(false), { interval: POLL_MS, idleInterval: 60000 });
+
+document.querySelector('.sync-indicator').addEventListener('click', () => {
+  if (!pending.length && !lastError && showRefused()) return;
+  if (lastError.startsWith('PIN')) Ops.forgetPin();
+  pullState(true).catch(() => {});
+  flush();
+});
+document.querySelector('.sync-indicator').style.cursor = 'pointer';
+
+// ── UI ──────────────────────────────────────────────────────────
+function switchTab(name) {
+  if (name !== 'scan' && scanning) stopScan();
+  ['scan', 'groups', 'summary'].forEach(t => {
+    $('view-' + t).style.display = t === name ? '' : 'none';
+    $('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'groups') renderGroups();
+  if (name === 'summary') renderSummary();
+}
+
+function renderScan() {
+  const groups = groupsView();
+  const active = activeGroup();
+  const ret = mode === 'return', mc = mode === 'mcheck';
+  $('mode-issue').classList.toggle('on', mode === 'issue'); $('mode-return').classList.toggle('on', ret); $('mode-mcheck').classList.toggle('on', mc);
+  $('issueOnly').style.display = ret || mc ? 'none' : '';
+  $('returnHint').style.display = ret ? '' : 'none';
+  $('mcheckHint').style.display = mc ? '' : 'none';
+  $('issueListHeader').style.display = ret || mc ? 'none' : '';
+  $('returnListHeader').style.display = ret ? '' : 'none';
+  $('mcheckListHeader').style.display = mc ? '' : 'none';
+  $('mcAfterIn').checked = mcAfterIn;
+  $('manualInput').placeholder = ret ? 'Enter returning bike ID…' : mc ? 'Enter bike ID to M-check…' : 'Enter bike ID manually…';
+  $('issueBar').innerHTML = '';
+  if (mc) { $('bikeList').innerHTML = mcheckListHTML(); return; }
+  $('activeInfo').innerHTML = active ? progressHTML(active) + siteHTML(active) + dayBadgeHTML(active) + specialHTML(active) : '';
+  if (ret) { renderPhoneLoc(); $('bikeList').innerHTML = returnListHTML(); return; }
+  // Groups still waiting to go out, by start time; groups already out or back are behind Show all.
+  const ordered = sectioned(groups).filter(it => it.g).map(it => it.g);
+  const shown = showAllChips ? ordered : ordered.filter(g => isWaiting(g) || (active && g.id === active.id));
+  const hidden = ordered.length - shown.length;
+  $('groupChips').innerHTML =
+    shown.map(g => {
+      const q = bookedQty(g);
+      return `<div class="group-chip${active && g.id === active.id ? ' active' : ''}${isWaiting(g) ? '' : ' done'}" onclick="setActive('${g.id}')">
+        ${g.ptime ? '<span style="opacity:.7">' + esc(g.ptime) + '</span> ' : ''}${esc(g.name)} <span style="opacity:.65">${q ? g.bikes.length + '/' + q : '(' + g.bikes.length + ')'}</span>${g.status === 'out' || g.status === 'overnight' ? ' 🚴' : g.status === 'returned' ? ' ✓' : ''}
+      </div>`;
+    }).join('') +
+    (hidden || showAllChips ? `<div class="group-chip add" onclick="showAllChips=!showAllChips;renderScan()">${showAllChips ? 'Show waiting only' : 'Show all (' + hidden + ' out or back)'}</div>` : '') +
+    `<div class="group-chip add" onclick="openModal()">+ New</div>`;
+  renderIssueBar(active);
+
+  const bikes = active ? active.bikes : [];
+  $('bikeCount').textContent = bikes.length;
+  $('bikeList').innerHTML = !groups.length
+    ? `<div class="empty-state"><div class="icon">📤</div>
+        <p>No groups yet.<br>Load today's manifest, or tap <strong>+ New</strong> to add a group.</p></div>`
+    : !bikes.length
+    ? `<div class="empty-state"><div class="icon">🚴</div>
+        <p>No bikes scanned yet.<br>Start scanning or enter IDs manually.</p></div>`
+    : [...bikes].reverse().map(b => {
+        const isOos = oosBikes.has(b.code);
+        return `<div class="bike-item${isOos ? ' oos' : ''}">
+          <div>
+            <div class="bike-code">${esc(b.code)}${isOos ? '<span class="oos-tag">🚫 OUT OF SERVICE</span>' : ''}</div>
+            ${modelHTML(b, 'bike-model')}
+            <div class="bike-meta">${fmtTime(b.ts)}${b.pending ? ' · saving…' : ''}</div>
+          </div>
+          <button class="bike-remove" onclick="removeBike('${b.id}')" aria-label="Remove ${esc(b.code)}">×</button>
+        </div>`;
+      }).join('');
+  if (active) $('bikeList').innerHTML += removedHTML(active);
+}
+
+function fmtTime(ts) { return new Date(ts).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+function fmtDateTime(ts) { return new Date(ts).toLocaleString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+// ── issuing: progress, Mark out, and on to the next group (v3.5) ───────────
+let showAllChips = false;
+// Bikes booked: from the manifest, or the "(x2)" in the group's name.
+const bookedQty = g => g.qty || (() => { const m = /\(x(\d+)\)/i.exec(g.name || ''); return m ? +m[1] : 0; })();
+// Still to go out: not marked out, overnight or returned.
+const isWaiting = g => !g.status;
+function progressHTML(g) {
+  const q = bookedQty(g), n = g.bikes.length;
+  const equip = (g.equip || []).map(e => '<span class="equip">Needs ' + esc(e) + '</span>').join('');
+  if (!q) return equip;
+  return '<div class="progress' + (n >= q ? ' complete' : '') + '">' + (n >= q ? '✓ ' : '') + n + ' of ' + q + ' bike' + (q === 1 ? '' : 's') + ' scanned' + (n > q ? ' (more than booked)' : '') + '</div>' + equip;
+}
+function renderIssueBar(g) {
+  const el = $('issueBar');
+  if (!g || mode !== 'issue') { el.innerHTML = ''; return; }
+  if (!isWaiting(g)) {
+    el.innerHTML = '<div class="hint">' + esc(g.name) + ' is ' + (g.status === 'returned' ? 'back' : 'out') + '. Choose the next group above.</div>';
+    return;
+  }
+  if (!g.bikes.length) { el.innerHTML = ''; return; }
+  const q = bookedQty(g), done = !q || g.bikes.length >= q;
+  el.innerHTML = '<button class="btn ' + (done ? 'btn-primary' : 'btn-secondary') + '" onclick="markOut()">🚴 Mark ' + esc(g.name) + ' out</button>' +
+    (done ? '' : '<div class="hint">' + (q - g.bikes.length) + ' more to scan before this booking is complete</div>');
+}
+// The next group to issue: the first still waiting, by start time.
+function nextWaiting(exceptId) {
+  return sectioned(groupsView()).filter(it => it.g).map(it => it.g).find(g => isWaiting(g) && g.id !== exceptId) || null;
+}
+function markOut() {
+  const g = activeGroup(); if (!g) return;
+  const q = bookedQty(g);
+  if (q && g.bikes.length < q && !confirm('Only ' + g.bikes.length + ' of ' + q + ' bikes are scanned for ' + g.name + '.\n\nMark it out anyway?')) return;
+  setGroupStatus(g.id, 'out');
+  // On to the next group: it becomes active, and the camera stays on. Nothing else is changed.
+  const next = nextWaiting(g.id);
+  if (next) { setActive(next.id); showToast('✓ ' + g.name + ' out · Next: ' + next.name + (next.ptime ? ', ' + next.ptime : ''), 'success'); }
+  else showToast('✓ ' + g.name + ' out · No more groups waiting', 'success');
+}
+// Arriving from Load Manifest (#start): Issuing, with the first group due active.
+let startFresh = location.hash === '#start';
+if (startFresh) { mode = 'issue'; try { localStorage.setItem('saeb-scan-mode', 'issue'); localStorage.setItem('saeb-scan-mode-day', modeToday()); } catch {} history.replaceState(null, '', location.pathname); }
+function applyStartFresh() {
+  if (!startFresh || !(server.groups || []).length) return;
+  startFresh = false;
+  const first = nextWaiting(null);
+  if (first) { activeId = first.id; try { localStorage.setItem(ACTIVE_KEY, first.id); } catch {} }
+}
+
+function setActive(id) { activeId = id; localStorage.setItem(ACTIVE_KEY, id); renderScan(); }
+
+function addBike(code, opts = {}) {
+  code = String(code).trim().toUpperCase();
+  if (!code) return;
+  const group = activeGroup();
+  if (!group) { showToast('Add or select a group first', 'error'); return; }
+  if (code.length > 30) { showToast('That code is too long to be a bike ID', 'error'); return; }
+  if (group.bikes.some(b => b.code === code)) { feedback('warn', code, 'already in ' + group.name); showToast('⚠ ' + code + ' already in group', 'warning'); return; }
+  if (oosBikes.has(code)) {
+    feedback('bad', code, 'OUT OF SERVICE: do not hire');
+    showOosBanner(code);
+    showToast('🚫 ' + code + ' IS OUT OF SERVICE — do NOT hire', 'error');
+    return;
+  }
+  // v3.8: a bike still out with another group is refused on the spot.
+  const other = groupsView().find(g => g.id !== group.id && g.status !== 'returned' && g.bikes.some(b => b.code === code && !b.inAt));
+  if (other) {
+    feedback('bad', code, 'still out with ' + other.name + ': not added');
+    showToast('🚫 ' + code + ' is still out with ' + other.name + '. Check it in, or take it off that group, first.', 'error');
+    return;
+  }
+  if (!opts.force && registerLoaded() && !(server.bikeInfo || {})[code]) { askUnregistered(code, group); return; }
+  const entryId = uid();
+  enqueue('addBike', { groupId: group.id, bike: { id: entryId, code, ts: Date.now() } });
+  // v3.9: 10 seconds to undo it, no reason needed.
+  if (window.UndoBar) UndoBar.show(code + ' added to ' + group.name, () => {
+    enqueue('removeBike', { groupId: group.id, bikeId: entryId, reason: 'undone', removedAt: Date.now() });
+    feedback('warn', code, 'undone: taken off ' + group.name);
+  });
+  const what = bikeWhat({ code });
+  const disposed = ((server.bikeInfo || {})[code] || {}).disposed;
+  if (disposed) {
+    feedback('warn', code, 'added, but recorded as disposed: check the ID');
+    showToast('⚠ ' + code + ' added — but it is recorded as disposed (' + disposed.split('-').reverse().join('/') + '). Check the ID.', 'warning');
+  } else if (openIssueBikes.has(code)) {
+    feedback('warn', code, 'added, has an open issue');
+    showToast('⚠ ' + code + ' added — has open issue logged', 'warning');
+  } else if (!(server.bikeInfo || {})[code] && registerLoaded()) {
+    feedback('warn', code, 'added, not in the register');
+    showToast('⚠ ' + code + ' added — not in asset register', 'warning');
+  } else if (mcDue().has(code)) {
+    feedback('warn', code, 'added, not M-checked since its last ride');
+    showToast('⚠ ' + code + ' added — not M-checked since its last ride', 'warning');
+  } else {
+    feedback('ok', code, (what ? what + ', ' : '') + 'added to ' + group.name);
+    showToast('✓ ' + code + (what ? ' · ' + what : '') + ' added', 'success');
+  }
+}
+
+// ── scan feedback (v3.8): sound, vibration, flash, and the last three results kept on screen ──
+const lastScans = [];
+const FLASH = { ok: 'var(--bright)', warn: 'var(--warn)', bad: 'var(--danger)' };
+function feedback(kind, code, text) {
+  doFlash(FLASH[kind]);
+  if (window.OpsScan) OpsScan.feedback(kind);
+  lastScans.unshift({ kind, code, text, at: Date.now() });
+  lastScans.length = Math.min(lastScans.length, 3);
+  const el = $('lastScans');
+  el.style.display = 'block';
+  el.innerHTML = lastScans.map(x => '<div class="ls-row ' + x.kind + '"><span class="t">' + new Date(x.at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) +
+    '</span><span class="c">' + esc(x.code) + '</span><span>' + esc(x.text) + '</span></div>').join('');
+}
+function drawSoundBtn() { const on = !window.OpsScan || OpsScan.sound.on(); $('soundBtn').textContent = on ? '🔊 Sounds on' : '🔇 Sounds off'; }
+function toggleSound() { OpsScan.sound.set(!OpsScan.sound.on()); drawSoundBtn(); }
+
+// An unregistered barcode asks before it's added (v3.8).
+let unregCode = null;
+function askUnregistered(code, group) {
+  unregCode = code;
+  $('unregTitle').textContent = code + ' isn\'t a registered bike';
+  $('unregSub').textContent = 'It\'s not in the Asset Register. Check the label and the ID. Add it to ' + group.name + ' anyway?';
+  $('unregModal').classList.add('open');
+  feedback('warn', code, 'not in the register: add anyway?');
+}
+function closeUnreg() { $('unregModal').classList.remove('open'); unregCode = null; }
+function confirmUnreg() { const c = unregCode; closeUnreg(); if (c) addBike(c, { force: true }); }
+
+let oosBannerTimer;
+function showOosBanner(code) {
+  const el = $('oosBanner');
+  el.innerHTML = '🚫 ' + esc(code) + ' — OUT OF SERVICE<small>Do not hire this bike. Check the Issue Reporter for details.</small>';
+  el.classList.add('show');
+  clearTimeout(oosBannerTimer);
+  oosBannerTimer = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+// Taking a bike off asks why, then records it against the group. The bike is free to be issued again.
+// Even a bike still waiting to save goes through the server, so it appears in the trail too.
+let removing = null;
+function removeBike(bikeId) {
+  const g = activeGroup(); if (!g) return;
+  const b = g.bikes.find(x => x.id === bikeId); if (!b) return;
+  removing = { groupId: g.id, bikeId, code: b.code };
+  $('removeTitle').textContent = 'Take ' + b.code + ' off ' + g.name + '?';
+  $('removeModal').classList.add('open');
+}
+function closeRemove() { $('removeModal').classList.remove('open'); removing = null; }
+function confirmRemove(reason) {
+  if (!removing) return;
+  const r = removing; closeRemove();
+  enqueue('removeBike', { groupId: r.groupId, bikeId: r.bikeId, reason, removedAt: Date.now() });
+  if (reason === 'swap') showToast('↺ ' + r.code + ' off — scan the replacement', 'success');
+  else if (reason === 'fault') {
+    showToast('🔧 ' + r.code + ' off. Scan the replacement, then log the fault.', 'warning');
+    if (confirm(r.code + ' is off the group.\n\nLog the fault now? The Issue Reporter opens with ' + r.code + ' filled in, and comes back here when it\'s logged.\n\n(Cancel to scan the replacement first.)')) {
+      location.href = '/issues?bike=' + encodeURIComponent(r.code) + '&from=scanner';
+    }
+  }
+  else showToast(r.code + ' taken off', 'success');
+}
+function clearGroup() {
+  const g = activeGroup(); if (!g || !g.bikes.length) return;
+  if (!confirm('Clear all ' + g.bikes.length + ' bike(s) from "' + g.name + '"?\n\nThey stay on the group\'s record as "group cleared".')) return;
+  enqueue('clearGroup', { groupId: g.id, removedAt: Date.now(), dayOf: server.manifestDate || '' });
+}
+// Typed IDs don't need leading zeros: "12" finds EB-012 when it's the only match.
+function doManual() {
+  const inp = $('manualInput'); const typed = inp.value.trim(); if (!typed) return;
+  if (window.OpsScan) OpsScan.unlockSound();
+  readTimers();
+  const known = [...Object.keys(server.bikeInfo || {}), ...groupsView().flatMap(g => g.bikes.map(b => b.code))];
+  const m = window.BikeIds ? BikeIds.match(typed, known) : { id: typed };
+  if (m.ambiguous) { showToast(typed + ' could be ' + m.ambiguous.slice(0, 4).join(', ') + '. Type more of the ID.', 'warning'); return; }
+  (mode === 'return' ? checkInCode : mode === 'mcheck' ? openCheck : addBike)(m.id); inp.value = '';
+}
+
+let scanning = false, html5QrCode = null, lastCode = null, lastTime = 0;
+// v3.8 camera handling: a 6-second "type it" hint, a stop after 3 minutes without a scan (battery),
+// a stop when the page is hidden and a restart when it's back, and plain error messages.
+const HINT_AFTER = 6000, IDLE_STOP = 3 * 60000;
+let hintTimer = null, idleTimer = null, resumeOnShow = false;
+function readTimers() {
+  clearTimeout(hintTimer); clearTimeout(idleTimer); $('typeHint').style.display = 'none';
+  if (!scanning) return;
+  hintTimer = setTimeout(() => { if (scanning) $('typeHint').style.display = 'block'; }, HINT_AFTER);
+  idleTimer = setTimeout(() => { if (scanning) { stopScan(); camMessage('The camera stopped after 3 minutes without a scan, to save battery. Tap Start Scanning to carry on.'); } }, IDLE_STOP);
+}
+function camMessage(text) {
+  const ph = $('cameraPlaceholder').querySelector('p');
+  ph.innerHTML = text ? esc(text) : 'Tap <strong style="color:var(--accent-text)">Start Scanning</strong><br>to activate camera';
+}
+async function toggleScan() { scanning ? stopScan() : startScan(); }
+async function startScan() {
+  if (mode === 'issue' && !activeGroup()) { showToast('Add or select a group first', 'error'); return; }
+  if (typeof Html5Qrcode === 'undefined') { showToast('Scanner loading — try again', 'error'); return; }
+  if (window.OpsScan) OpsScan.unlockSound();
+  camMessage('');
+  try {
+    $('reader').style.display = 'block'; $('cameraPlaceholder').style.display = 'none';
+    $('scanBtn').textContent = 'Stop Scanning'; $('scanBtn').className = 'btn btn-stop';
+    scanning = true;
+    html5QrCode = OpsScan.make('reader');
+    await html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.333, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] },
+      (code) => {
+        readTimers();
+        // While a form is open (an M-check, taking a bike off, a return), scans are ignored, so a bike
+        // in view of the camera can't be checked in behind it or replace the bike being M-checked.
+        if (document.querySelector('.modal-backdrop.open')) return;
+        const now = Date.now(); if (code !== lastCode || now - lastTime > 2000) { lastCode = code; lastTime = now;
+        if (mode === 'mcheck') openCheck(code); else (mode === 'return' ? checkInCode : addBike)(code); } },
+      () => {}
+    );
+    if (!scanning) { stopScan(); return; } // stopped while it was starting
+    readTimers();
+  } catch (e) {
+    console.error(e); stopScan();
+    const msg = window.OpsScan ? OpsScan.cameraError(e) : 'Camera error — try again';
+    camMessage(msg);
+    if (window.OpsScan) OpsScan.feedback('bad');
+  }
+}
+async function stopScan() {
+  scanning = false;
+  clearTimeout(hintTimer); clearTimeout(idleTimer); $('typeHint').style.display = 'none';
+  if (html5QrCode) { try { if (html5QrCode.isScanning) await html5QrCode.stop(); html5QrCode.clear(); } catch {} html5QrCode = null; }
+  $('reader').style.display = 'none'; $('reader').innerHTML = '';
+  $('cameraPlaceholder').style.display = 'flex';
+  $('scanBtn').textContent = 'Start Scanning'; $('scanBtn').className = 'btn btn-primary';
+}
+// Leaving the page (a call, another app, the lock screen) stops the camera; coming back starts it
+// again, so it never comes back frozen.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (scanning) { resumeOnShow = true; stopScan(); } }
+  else if (resumeOnShow) { resumeOnShow = false; startScan(); }
+});
+
+// ── order: by time or by location ────────────────────────────────
+// Overdue groups and multi-day hires carried over from earlier days always come first.
+let sortMode = localStorage.getItem('saeb-sort') === 'location' ? 'location' : 'time';
+function setSort(m) { sortMode = m; try { localStorage.setItem('saeb-sort', m); } catch {} rerender(); }
+// "9:00 AM", "10:30 am", "14:00" → minutes after midnight. No time sorts last.
+function timeMins(t) {
+  const m = String(t || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!m) return 1e9;
+  let h = parseInt(m[1], 10) % 24; const min = parseInt(m[2] || '0', 10), ap = (m[3] || '').toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12; if (ap === 'am' && h === 12) h = 0;
+  return h * 60 + min;
+}
+const surnameOf = g => String(g.name || '').split(' (')[0];
+const byTime = (a, b) => timeMins(a.ptime) - timeMins(b.ptime) || surnameOf(a).localeCompare(surnameOf(b));
+// One section per hire location in list order, then any other location in use, then groups with none.
+function siteSections(groups) {
+  const codes = Locs.hire().map(l => l.code);
+  groups.forEach(g => { if (g.site && !codes.includes(g.site)) codes.push(g.site); });
+  return [...codes.map(c => [c, Locs.name(c)]), ['', 'No location']];
+}
+// The list as {head} and {g} items, ready to render with headings between sections.
+function sectioned(groups, date = server.manifestDate) {
+  const carried = g => g.startDate && date && g.startDate < date;
+  const attn = groups.filter(g => g.status !== 'returned' && (isOverdue(g, date) || carried(g))).sort(byTime);
+  const rest = groups.filter(g => !attn.includes(g)).sort(byTime);
+  const items = [];
+  if (attn.length) { items.push({ head: 'Carried over · ' + attn.length, attn: true }); attn.forEach(g => items.push({ g })); }
+  if (sortMode === 'location') {
+    for (const [k, label] of siteSections(rest)) {
+      const list = rest.filter(g => (g.site || '') === k);
+      if (!list.length) continue;
+      items.push({ head: label + ' · ' + list.length }); list.forEach(g => items.push({ g }));
+    }
+  } else {
+    if (attn.length && rest.length) items.push({ head: 'Today · ' + rest.length });
+    rest.forEach(g => items.push({ g }));
+  }
+  return items;
+}
+function withHeads(groups, card, date) {
+  document.querySelectorAll('.so-time').forEach(b => b.classList.toggle('on', sortMode === 'time'));
+  document.querySelectorAll('.so-loc').forEach(b => b.classList.toggle('on', sortMode === 'location'));
+  return sectioned(groups, date).map(it => it.head ? '<div class="sec-head' + (it.attn ? ' attn' : '') + '">' + esc(it.head) + '</div>' : card(it.g)).join('');
+}
+
+function renderGroups() {
+  if (showPrev) { $('groupsList').innerHTML = prevCardsHTML(); return; }
+  const groups = groupsView(), active = activeGroup();
+  if (!groups.length) { $('groupsList').innerHTML = '<div class="empty-state"><p>No groups yet. Load today\'s manifest or add one below.</p></div>' + deletedHTML(); return; }
+  const card = g => {
+    const statusBadge = g.status === 'out' ? '<span class="status-badge out">🚴 OUT</span> '
+      : g.status === 'overnight' ? '<span class="status-badge overnight">🌙 OUT OVERNIGHT</span> '
+      : g.status === 'returned' ? '<span class="status-badge returned">✓ RETURNED' + (g.returnedBy ? ' · ' + esc(g.returnedBy) : '') + '</span> ' : '';
+    const isActive = active && g.id === active.id;
+    const notIn = g.bikes.filter(b => !b.inAt).length;
+    const returnLabel = g.status === 'returned' ? '↩ Undo Returned' : notIn ? '✓ Returned (' + notIn + ' not in)' : '✓ Returned';
+    return `
+    <div class="group-card${isDeliveryGroup(g) ? ' delivery' : ''}">
+      <div class="group-card-header">
+        <div><div class="group-name-text">${esc(g.name)}</div>
+        <div class="group-count">${g.bikes.length} bike${g.bikes.length !== 1 ? 's' : ''}${inCountHTML(g)}</div></div>
+        ${isActive ? '<div class="active-badge">ACTIVE ON THIS PHONE</div>' : ''}
+      </div>
+      <div>${statusBadge}${siteHTML(g)}${dayBadgeHTML(g)}</div>
+      ${specialHTML(g)}
+      ${walkinRowHTML(g)}
+      ${bikeRowsHTML(g.bikes, 'No bikes yet', g)}
+      ${exceptionsHTML(g)}
+      ${removedHTML(g)}
+      ${correctionsHTML(g)}
+      <div class="card-actions">
+        <button class="btn btn-out btn-sm" onclick="setGroupStatus('${g.id}','out')">🚴 Out</button>
+        ${hireDaysOf(g) > 1 && !isLastDay(g) ? `<button class="btn btn-overnight btn-sm" onclick="setGroupStatus('${g.id}','overnight')">🌙 Out overnight</button>` : ''}
+        <button class="btn btn-returned btn-sm" onclick="setGroupStatus('${g.id}','returned')">${returnLabel}</button>
+        <select class="hire-sel" aria-label="Hire length" onchange="setHireDays('${g.id}', this.value)">${[1, 2, 3, 4, 5, 6, 7].map(d => `<option value="${d}"${d === hireDaysOf(g) ? ' selected' : ''}>${d === 1 ? '1-day hire' : d + '-day hire'}</option>`).join('')}</select>
+        <button class="btn btn-secondary btn-sm" onclick="setActive('${g.id}');switchTab('scan')">${isActive ? 'Go to Scanner' : 'Set Active'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">Delete</button>
+      </div>
+    </div>`;
+  };
+  $('groupsList').innerHTML = withHeads(groups, card) + deletedHTML();
+}
+function deleteGroup(id) {
+  const g = groupsView().find(x => x.id === id); if (!g) return;
+  if (!confirm('Delete "' + g.name + '" and its ' + g.bikes.length + ' bike(s)? This affects every phone.' + (g.bikes.length ? '\n\nIt can be restored today, from Deleted today at the bottom of Groups.' : ''))) return;
+  enqueue('deleteGroup', { groupId: id, dayOf: server.manifestDate || '' });
+}
+// ── previous day (read-only) ─────────────────────────────────────
+let showPrev = false, prevDay = null;
+async function setShowPrev(on) {
+  showPrev = on;
+  document.querySelectorAll('.ds-today').forEach(b => b.classList.toggle('on', !on));
+  document.querySelectorAll('.ds-prev').forEach(b => b.classList.toggle('on', on));
+  $('newGroupBtn').style.display = on ? 'none' : ''; $('weatherBtn').style.display = on ? 'none' : '';
+  if (on && !prevDay) {
+    $('groupsList').innerHTML = $('summaryContent').innerHTML = '<div class="empty-state"><p>Loading the previous day…</p></div>';
+    try { prevDay = await Ops.view('previous'); }
+    catch (e) { prevDay = null; showToast(e.status === 0 ? 'No connection' : e.message, 'error'); setShowPrev(false); return; }
+  }
+  const note = !on ? '' : prevDay && prevDay.found ? 'Read-only · ' + fmtDay(prevDay.manifestDate) + ' as it was when the next manifest was loaded. Groups still out came across to today.' : '';
+  ['prevNoteG', 'prevNoteS'].forEach(id => { $(id).textContent = note; $(id).style.display = note ? '' : 'none'; });
+  renderGroups(); renderSummary();
+}
+function prevCardsHTML() {
+  if (!prevDay || !prevDay.found) return '<div class="empty-state"><div class="icon">📅</div><p>No previous day saved yet. One appears after the next manifest is loaded.</p></div>';
+  if (!prevDay.groups.length) return '<div class="empty-state"><p>No groups that day.</p></div>';
+  return withHeads(prevDay.groups, g => {
+    const st = g.status === 'out' ? '<span class="status-badge out">🚴 OUT</span> ' : g.status === 'overnight' ? '<span class="status-badge overnight">🌙 OUT OVERNIGHT</span> '
+      : g.status === 'returned' ? '<span class="status-badge returned">✓ RETURNED' + (g.returnedBy ? ' · ' + esc(g.returnedBy) : '') + '</span> ' : '';
+    return '<div class="group-card' + (isDeliveryGroup(g) ? ' delivery' : '') + '"><div class="group-card-header"><div><div class="group-name-text">' + esc(g.name) + '</div>' +
+      '<div class="group-count">' + g.bikes.length + ' bike' + (g.bikes.length !== 1 ? 's' : '') + inCountHTML(g) + '</div></div></div>' +
+      '<div>' + st + siteHTML(g) + dayBadgeHTML(g, prevDay.manifestDate) + '</div>' + specialHTML(g) + bikeRowsHTML(g.bikes, 'No bikes') + exceptionsHTML(g) + removedHTML(g) + '</div>';
+  }, prevDay.manifestDate);
+}
+
+// Returned needs every bike ticked in; otherwise it opens the exception sheet.
+function setGroupStatus(id, status) {
+  const g = groupsView().find(x => x.id === id); if (!g) return;
+  if (status === 'returned') {
+    if (g.status === 'returned') {
+      if (confirm('Undo Returned for "' + g.name + '"?' + ((g.exceptions || []).length ? '\n\nThe exception reasons recorded will be cleared.' : ''))) enqueue('setGroupStatus', { groupId: id, status: '' });
+      return;
+    }
+    if (g.bikes.some(b => !b.inAt)) { openExceptions(g); return; }
+    enqueue('setGroupStatus', { groupId: id, status: 'returned', at: Date.now() });
+    showToast('✓ ' + g.name + ' returned', 'success');
+    return;
+  }
+  if (status === 'overnight' && isLastDay(g)) { showToast('Last day of the hire: bikes are due back today', 'warning'); return; }
+  const prev = g.status || '', next = g.status === status ? '' : status;
+  enqueue('setGroupStatus', { groupId: id, status: next });
+  if (next && window.UndoBar) UndoBar.show(g.name + (next === 'out' ? ' marked Out' : ' marked Out overnight'), () => enqueue('setGroupStatus', { groupId: id, status: prev, undo: true }));
+}
+
+function renderSummary() {
+  if (showPrev) { $('summaryContent').innerHTML = prevCardsHTML(); return; }
+  const groups = groupsView();
+  const total = groups.reduce((s, g) => s + g.bikes.length, 0);
+  const uniqueCodes = new Set(groups.flatMap(g => g.bikes.map(b => b.code)));
+  const oosInGroups = [...uniqueCodes].filter(c => oosBikes.has(c)).length;
+  const changes = groups.reduce((s, g) => s + (g.removed || []).length, 0);
+  const checkedIn = groups.reduce((s, g) => s + inCount(g), 0);
+  const multi = groups.filter(g => hireDaysOf(g) > 1).length;
+  const overdue = groups.filter(g => isOverdue(g)).length;
+  $('summaryContent').innerHTML =
+    `<div class="stat-row"><span class="stat-label">Total groups</span><span class="stat-value">${groups.length}</span></div>
+     <div class="stat-row"><span class="stat-label">Total bikes out</span><span class="stat-value">${total}</span></div>
+     <div class="stat-row"><span class="stat-label">Unique bike IDs</span><span class="stat-value">${uniqueCodes.size}</span></div>
+     <div class="stat-row"><span class="stat-label">Checked in</span><span class="stat-value">${checkedIn} of ${total}</span></div>
+     ${multi ? `<div class="stat-row"><span class="stat-label">Multi-day hires</span><span class="stat-value">${multi}</span></div>` : ''}
+     <div class="stat-row"><span class="stat-label">Bikes due an M-check</span><span class="stat-value">${mcDue().size}</span></div>
+     ${overdue ? `<div class="stat-row"><span class="stat-label" style="color:var(--danger-text)">Overdue groups</span><span class="stat-value" style="color:var(--danger-text)">${overdue}</span></div>` : ''}
+     ${changes ? `<div class="stat-row"><span class="stat-label">Bikes taken off groups</span><span class="stat-value">${changes}</span></div>` : ''}
+     ${oosInGroups ? `<div class="stat-row"><span class="stat-label" style="color:var(--danger-text)">⚠ OOS bikes scanned</span><span class="stat-value" style="color:var(--danger-text)">${oosInGroups}</span></div>` : ''}
+     <div class="divider"></div>` +
+    withHeads(groups, g => `
+      <div class="summary-group">
+        <div class="summary-group-header">
+          <div class="summary-group-name">${esc(g.name)}</div>
+          <span class="count-badge">${g.bikes.length}</span>
+        </div>
+        <div style="margin-top:6px">${g.status === 'returned' ? '<span class="status-badge returned">✓ RETURNED</span> ' : g.status === 'overnight' ? '<span class="status-badge overnight">🌙 OUT OVERNIGHT</span> ' : ''}${siteHTML(g)}${dayBadgeHTML(g)}<span class="in-count">${g.bikes.length ? inCount(g) + ' of ' + g.bikes.length + ' checked in' : ''}</span></div>
+        ${bikeRowsHTML(g.bikes, 'No bikes')}
+        ${exceptionsHTML(g)}
+        ${removedHTML(g)}
+      </div>`);
+}
+function resetAll() {
+  if (!confirm('Clear ALL groups on every phone?\n\nThis can\'t be undone here. A copy is archived first and can be downloaded from the Admin page.')) return;
+  stopScan();
+  enqueue('resetDay', { dayOf: server.manifestDate || '' });
+  switchTab('scan');
+}
+
+function buildShareText() {
+  const groups = groupsView();
+  const now = new Date().toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const total = groups.reduce((s, g) => s + g.bikes.length, 0);
+  const lines = ['🚴 ' + Brand.name() + ' — Bike Manifest', now, '─────────────────────'];
+  groups.forEach(g => {
+    lines.push('', '📋 ' + g.name + ' (' + g.bikes.length + ' bike' + (g.bikes.length !== 1 ? 's' : '') + ')' +
+      (g.site ? ' · ' + (isDeliveryGroup(g) ? 'HOME DELIVERY' : Locs.name(g.site)) : '') + (g.droppedAt ? ' · dropped at ' + Locs.name(g.droppedAt) : '') +
+      (isOverdue(g) ? ' · OVERDUE since ' + fmtDay(g.startDate) : hireDaysOf(g) > 1 ? ' · Day ' + dayOf(g) + ' of ' + g.hireDays : '') +
+      (g.status === 'returned' ? ' · RETURNED' : g.status === 'overnight' ? ' · OUT OVERNIGHT' : g.bikes.length ? ' · ' + inCount(g) + ' of ' + g.bikes.length + ' in' : ''));
+    if (!g.bikes.length) lines.push('   No bikes assigned');
+    else g.bikes.forEach(b => lines.push('   ' + (b.inAt ? '✓' : '•') + ' ' + b.code + (bikeWhat(b) ? ' — ' + bikeWhat(b) : '') + (oosBikes.has(b.code) ? ' 🚫 OOS' : '') + '  (' + fmtTime(b.ts) + ')'));
+    (g.exceptions || []).forEach(e => lines.push('   ⚠ ' + (e.code || '') + ' not back: ' + (EXC_LABEL[e.reason] || 'Other') + (e.note ? ', ' + e.note : '')));
+    (g.removed || []).forEach(b => lines.push('   ↺ ' + b.code + (bikeWhat(b) ? ' — ' + bikeWhat(b) : '') + '  off ' + fmtShort(b.removedAt) + ', ' + (REASON_LABEL[b.reason] || 'removed')));
+  });
+  lines.push('', '─────────────────────', 'Total bikes out: ' + total);
+  return lines.join('\n');
+}
+async function shareReport() {
+  if (!groupsView().some(g => g.bikes.length)) { showToast('No bikes scanned yet', 'warning'); return; }
+  const text = buildShareText();
+  if (navigator.share) { try { await navigator.share({ title: Brand.name() + ' Manifest', text }); showToast('Shared ✓', 'success'); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  copyToClipboard(text);
+}
+function copyToClipboard(text) {
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => showToast('Copied ✓', 'success')).catch(() => fallbackCopy(text));
+  else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('Copied ✓', 'success'); } catch {}
+  document.body.removeChild(ta);
+}
+function downloadCSV() {
+  const groups = groupsView();
+  if (!groups.some(g => g.bikes.length || (g.removed || []).length)) { showToast('No bikes scanned yet', 'warning'); return; }
+  const cv = Ops.csvCell;
+  const rows = [['Date Generated', 'Group', 'Hire Location', 'Hire Day', 'Bike ID', 'Brand', 'Model', 'Status', 'Scan Time', 'Checked In At', 'Taken Off At', 'Reason', 'Issued By', 'Checked In By', 'M-check Before Hire'].join(',')];
+  const dg = fmtDateTime(Date.now());
+  groups.forEach(g => {
+    const info = b => (server.bikeInfo || {})[b.code] || b;
+    const hl = cv(g.site ? Locs.name(g.site) : '');
+    const hd = cv(isOverdue(g) ? 'Overdue, out since ' + g.startDate : hireDaysOf(g) > 1 ? dayOf(g) + ' of ' + g.hireDays : '');
+    const exc = b => (g.exceptions || []).find(e => e.bikeId === b.id);
+    if (!g.bikes.length) rows.push([cv(dg), cv(g.name), hl, hd, 'No bikes', '', '', '', '', '', '', '', '', '', ''].join(','));
+    else g.bikes.forEach(b => { const e = exc(b); rows.push([cv(dg), cv(g.name), hl, hd, cv(b.code), cv(info(b).brand || ''), cv(info(b).model || ''),
+      cv(e ? 'NOT BACK' : oosBikes.has(b.code) ? 'OUT OF SERVICE' : 'OK'), cv(fmtDateTime(b.ts)), cv(b.inAt ? fmtDateTime(b.inAt) : ''), '',
+      cv(e ? (EXC_LABEL[e.reason] || 'Other') + (e.note ? ': ' + e.note : '') : ''), cv(b.by || ''), cv(b.inBy || ''), cv(mcText(b))].join(',')); });
+    (g.removed || []).forEach(b => rows.push([cv(dg), cv(g.name), hl, hd, cv(b.code), cv(info(b).brand || ''), cv(info(b).model || ''), cv('TAKEN OFF'), cv(fmtDateTime(b.ts)), '', cv(b.removedAt ? fmtDateTime(b.removedAt) : ''), cv(REASON_LABEL[b.reason] || 'removed'), cv(b.by || ''), '', cv(mcText(b))].join(',')));
+  });
+  Ops.downloadText(rows.join('\r\n'), Brand.file() + '-Manifest-' + Ops.todayISO() + '.csv', 'text/csv;charset=utf-8');
+  showToast('CSV downloaded ✓', 'success');
+}
+
+// New Group (walk-ins): location from this phone, start time now, full day or 4 hours, contact optional.
+function openModal() {
+  ['newGroupName', 'newGroupContact', 'newGroupPhone'].forEach(id => $(id).value = '');
+  // Pre-set from where this phone is: a hire site as itself, the trailer as home delivery, otherwise the first site.
+  const hire = Locs.hire();
+  const pick = hire.some(l => l.code === phoneLoc) ? phoneLoc : phoneLoc === 'TRA' ? (hire.find(l => l.kind === 'delivery') || {}).code : (hire[0] || {}).code;
+  $('newGroupSite').innerHTML = siteOptions(pick);
+  $('newGroupLen').value = 'day';
+  $('modal').classList.add('open'); setTimeout(() => $('newGroupName').focus(), 300);
+}
+function closeModal() { $('modal').classList.remove('open'); }
+const nowTime = d => d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }).toUpperCase().replace(/\s+/, ' ');
+function contactPayload(name, raw) {
+  const ph = raw ? Phones.fields(raw) : {};
+  if (ph.phoneCheck && !confirm(raw + " doesn't look like a valid phone number. Save it anyway?")) return null;
+  return { name, ...ph };
+}
+function createGroup() {
+  const name = $('newGroupName').value.trim();
+  if (!name) { showToast('Give the group a name', 'warning'); $('newGroupName').focus(); return; }
+  const cName = $('newGroupContact').value.trim(), cPhone = $('newGroupPhone').value.trim();
+  const contact = cName || cPhone ? contactPayload(cName, cPhone) : null;
+  if ((cName || cPhone) && !contact) return;
+  const groupId = uid(), now = new Date();
+  enqueue('createGroup', { groupId, name, site: $('newGroupSite').value, hireLength: $('newGroupLen').value, startAt: now.getTime(), ptime: nowTime(now), ...(contact ? { contact } : {}) });
+  setActive(groupId);
+  closeModal(); switchTab('scan');
+}
+// The group left its bikes at a collection point: they're checked in there and the group closes.
+// v3.8: the drop-off sheet lists exactly which bikes will be marked dropped, and which are already in.
+let dropPlan = null;
+function dropOff(groupId, loc) {
+  const g = groupsView().find(x => x.id === groupId); if (!g) return;
+  const out = g.bikes.filter(b => !b.inAt), done = g.bikes.filter(b => b.inAt);
+  dropPlan = { groupId, loc, name: g.name };
+  $('dropTitle').textContent = g.name + ': dropped at ' + Locs.name(loc) + '?';
+  const row = b => esc(b.code) + (bikeWhat(b) ? ' · ' + esc(bikeWhat(b)) : '');
+  $('dropBody').innerHTML =
+    '<div class="section-label" style="margin-top:6px">Will be marked dropped (' + out.length + ')</div><div class="drop-list">' + (out.map(row).join('<br>') || 'None') + '</div>' +
+    (done.length ? '<div class="section-label">Already checked in (' + done.length + ')</div><div class="drop-list" style="color:var(--text-muted)">' + done.map(b => row(b) + (b.inLoc ? ' · at ' + esc(b.inLoc) : '')).join('<br>') + '</div>' : '') +
+    '<div class="special" style="-webkit-line-clamp:unset;font-size:12px">They\'re checked in at ' + esc(Locs.name(loc)) + ' and the group is closed. Move them on with Asset Register → Move bikes when they\'re collected.</div>';
+  $('dropGo').textContent = 'Mark ' + out.length + ' bike' + (out.length === 1 ? '' : 's') + ' dropped at ' + Locs.name(loc);
+  $('dropGo').disabled = !out.length;
+  $('dropModal').classList.add('open');
+}
+function correctDrop(groupId) {
+  const g = groupsView().find(x => x.id === groupId); if (!g) return;
+  Correct.ask({ title: 'Undo ' + g.name + '\'s drop-off?', sub: 'The bikes it checked in at ' + Locs.name(g.droppedAt) + ' go back to being out, move back to where they were, and the group is open again.', action: 'Undo the drop-off',
+    onOK: (by, reason) => enqueue('undoDropOff', { groupId, by, reason }) });
+}
+function closeDrop() { $('dropModal').classList.remove('open'); dropPlan = null; }
+function confirmDrop() {
+  const d = dropPlan; if (!d) return; closeDrop();
+  enqueue('dropOff', { groupId: d.groupId, location: d.loc, at: Date.now() });
+  if (window.UndoBar) setTimeout(() => UndoBar.show(d.name + ' dropped at ' + Locs.name(d.loc), () => enqueue('undoDropOff', { groupId: d.groupId, undo: true })), 0);
+  showToast('↩ ' + d.name + ' dropped at ' + Locs.name(d.loc), 'success');
+}
+// Location and contact on a group after it's been created.
+function setGroupSite(groupId, site) { if (site) enqueue('setGroupSite', { groupId, site }); }
+let contactGroupId = null;
+function openContact(groupId) {
+  const g = groupsView().find(x => x.id === groupId); if (!g) return;
+  contactGroupId = groupId;
+  $('contactTitle').textContent = 'Contact for ' + g.name;
+  $('ctName').value = g.contactName || g.name.split(' (')[0]; $('ctPhone').value = g.contactPhone || '';
+  $('contactModal').classList.add('open');
+}
+function closeContact() { $('contactModal').classList.remove('open'); contactGroupId = null; }
+function saveContact() {
+  const c = contactPayload($('ctName').value.trim(), $('ctPhone').value.trim());
+  if (!c) return;
+  enqueue('setGroupContact', { groupId: contactGroupId, contact: c });
+  closeContact(); showToast('✓ Contact saved', 'success');
+}
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimer);
+  const el = $('toast'); el.textContent = msg; el.className = 'toast show ' + type;
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+function doFlash(color) {
+  const el = $('flash'); el.style.background = color; el.style.opacity = '0.22';
+  setTimeout(() => el.style.opacity = '0', 130);
+}
+
+// Boot: first load may ask for the PIN; background polls never will.
+drawSoundBtn();
+renderScan();
+pullState(true).catch(() => {}).finally(() => poll.start());
+if (pending.length) flush();
+</script>
+</body>
+</html>

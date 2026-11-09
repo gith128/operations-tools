@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Fleet Report</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;              /* warm off-white */
+  --bg-elev:#ffffff;         /* pure white for cards */
+  --bg-soft:#f2efe8;         /* cream */
+  --border:#e4ded2;          /* warm beige border */
+  --border-strong:#d4cdbd;
+  --text:#1f2428;            /* near-black, softer than #000 */
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  /* softer leafy green */
+  /* darker for readable text on light bg */
+  --warn:#d48a2f;            /* warm amber, darker for contrast on light */
+  --warn-soft:rgba(212,138,47,.1);
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;          /* coral red, darker for contrast */
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+#reader-report, #reader-resolve{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader-report video, #reader-resolve video{border-radius:12px}
+#reader-report img, #reader-resolve img{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);min-height:140px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-success{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.manual-entry{display:flex;gap:8px;margin-top:10px}
+.manual-input{flex:1;padding:13px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.field-input,.field-textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted)}
+.field-mono{font-family:'DM Mono',monospace}
+
+.priority-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px}
+.priority-btn{padding:10px 4px;border-radius:10px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;text-align:center;font-family:'Syne',sans-serif;transition:all .15s}
+.priority-btn .num{font-size:18px;font-weight:800;line-height:1}
+.priority-btn .lbl{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.priority-btn.active[data-p="1"]{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.priority-btn.active[data-p="2"]{border-color:#9bb845;color:#5a7a22;background:rgba(155,184,69,.12)}
+.priority-btn.active[data-p="3"]{border-color:#d48a2f;color:#8a5a1a;background:rgba(212,138,47,.12)}
+.priority-btn.active[data-p="4"]{border-color:#c96a5c;color:#9a3530;background:rgba(201,106,92,.14)}
+.priority-btn.active[data-p="5"]{border-color:#b23a35;color:#8a2a26;background:rgba(178,58,53,.14)}
+.priority-help{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5}
+.priority-help strong{color:var(--danger-text)}
+
+.matched-card{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.3);border-radius:14px;padding:14px;margin-bottom:16px}
+.matched-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.matched-id{font-family:'DM Mono',monospace;font-size:15px;color:var(--warn-text);font-weight:600;letter-spacing:1px}
+.matched-issue{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--text)}
+.matched-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.matched-notes{margin-top:6px;font-size:12px;color:var(--text);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+
+.ts-note{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+
+.issue-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.issue-item:active{border-color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.issue-item.p5{border-left:4px solid #b23a35}
+.issue-item.p4{border-left:4px solid #c96a5c}
+.issue-item.p3{border-left:4px solid #d48a2f}
+.issue-item.p2{border-left:4px solid #9bb845}
+.issue-item.p1{border-left:4px solid var(--accent)}
+.issue-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.issue-bike{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent-text);font-weight:600;letter-spacing:1px}
+.issue-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.status{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.8px;white-space:nowrap}
+.status.open{background:var(--danger-soft);color:var(--danger-text);border:1px solid rgba(201,74,69,.25)}
+.status.resolved{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.prio{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.prio.p5{background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.prio.p4{background:rgba(201,106,92,.1);color:#9a3530;border:1px solid rgba(201,106,92,.25)}
+.prio.p3{background:rgba(212,138,47,.1);color:#8a5a1a;border:1px solid rgba(212,138,47,.25)}
+.prio.p2{background:rgba(155,184,69,.1);color:#5a7a22;border:1px solid rgba(155,184,69,.25)}
+.prio.p1{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.issue-desc{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.issue-foot{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.notes-indicator{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:6px}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:6px 13px;border-radius:100px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.detail-section{margin-bottom:18px}
+.detail-section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-body{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:10px}
+.detail-meta-row{display:flex;gap:10px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.detail-meta-label{color:var(--text-muted);min-width:95px}
+.detail-meta-val{color:var(--text)}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.mc-ok{font-family:'DM Mono',monospace;color:var(--accent-text)}
+.mc-due-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--warn-text)}
+.mc-hist-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 4px}
+.mc-hist-head input{font:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.h-row.fail{color:var(--danger-text)}
+.loc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.loc-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.loc-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.loc-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text)}
+.loc-tag.out{color:var(--warn-text)}
+.hist{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.6}
+.hist .h-row{border-bottom:1px solid var(--border);padding:3px 0}
+.move-list{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px}
+.move-list div{padding:5px 0;border-bottom:1px solid var(--border)}
+.move-list .ok{color:var(--accent-text)}.move-list .warn{color:var(--warn-text)}.move-list .dim{color:var(--text-muted)}
+.loc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.loc-row .code{font-family:'DM Mono',monospace;font-weight:700;margin-right:6px}
+.loc-row.retired{opacity:.5}
+.loc-row button{font-size:11px;padding:5px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--text-dim)}
+.toolbar .manual-input{margin:0}
+.add-btn{padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap}
+.add-btn:active{background:var(--accent-dark)}
+.count-line{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px}
+.asset{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.asset:active{border-color:var(--accent)}
+.asset-id{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--accent-text);letter-spacing:1px}
+.asset-key{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);text-align:right;align-self:center}
+.asset-what{font-size:14px;font-weight:700;color:var(--text)}
+.asset-meta{grid-column:1 / -1;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.asset-flags{grid-column:1 / -1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.flag-open{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px solid rgba(212,138,47,.3)}
+.flag-disposed{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border-strong)}
+.asset.disposed{opacity:.6}
+.form-group-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.flag-noserial{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px dashed rgba(212,138,47,.5)}
+.req{color:var(--danger-text)}
+.count-line .warn{color:var(--warn-text);cursor:pointer;text-decoration:underline}
+.flag-oos{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.id-row{display:flex;gap:8px}
+.id-row .field-input{flex:1}
+.scan-mini{padding:0 14px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-soft);font-size:18px;cursor:pointer}
+#reader-asset{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;display:none}
+#reader-asset img{display:none!important}
+.age-note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row .btn{flex:1}
+.import-result{font-family:'DM Mono',monospace;font-size:12px;margin-top:10px;line-height:1.5}
+.import-result.ok{color:var(--accent-text)}.import-result.err{color:var(--danger-text)}
+.file-btn{position:relative;overflow:hidden;display:block;text-align:center}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mc{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:12px}
+.ml{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin:0}
+.mv{font-size:22px;font-weight:800;margin:4px 0 0}
+.ms{font-size:11px;color:var(--text-muted);margin:0}
+.md{font-family:'DM Mono',monospace;font-size:11px;margin:4px 0 0}
+.up{color:var(--accent-text)}.dn{color:var(--danger-text)}.flat{color:var(--text-muted)}
+.sec{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin:22px 0 10px}
+.bar-row{display:grid;grid-template-columns:72px minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:12px;margin-bottom:7px}
+.bar-row .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:10px;background:var(--bg-soft);border-radius:5px;overflow:hidden}
+.fill{height:100%;border-radius:5px;background:var(--accent)}
+.fill.hot{background:#D85A30}.fill.loc{background:#378ADD}.fill.prev{background:#b4b2a9}
+.num{font-family:'DM Mono',monospace;color:var(--text-dim);text-align:right}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border)}
+.pill{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--warn-soft);color:var(--warn-text);white-space:nowrap}
+.note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin:6px 0 0;line-height:1.5}
+.seg{display:flex;gap:6px;margin:0 0 10px}
+.seg button{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:5px 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.seg button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+
+/* Fleet report (v3.6) */
+.dates{display:flex;gap:8px;margin:0 0 10px}.dates input{flex:1;font:inherit;font-size:13px;padding:7px 9px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.rbar{display:grid;grid-template-columns:96px minmax(0,1fr) 112px;gap:8px;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)}
+.rbar.tap{cursor:pointer}.rbar.tap:active{background:var(--bg-soft)}
+.rbar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rbar .lbl small{display:block;color:var(--text-muted);font-size:10px;font-family:'DM Mono',monospace}
+.rbar .num{font-size:11px}
+.fill.low{background:#b4b2a9}
+.tbl-wrap{overflow-x:auto;margin:0 -2px}
+table.t{border-collapse:collapse;font-family:'DM Mono',monospace;font-size:11px;width:100%}
+table.t th,table.t td{padding:5px 6px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left;position:sticky;left:0;background:var(--bg)}
+table.t th{color:var(--text-dim);font-weight:700}
+.days-list{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);line-height:1.7}
+.st-h{color:var(--accent-text);font-weight:700}.st-o{color:var(--danger-text)}.st-s{color:var(--text-muted)}
+.actions{display:flex;gap:8px;margin-top:18px}
+.print-head{display:none}
+@media print{
+  .back-home,header,.no-print,.tm-btn,.tm-back,.toast{display:none!important}
+  .app{max-width:none}main{padding:0}
+  .print-head{display:block;font-size:16px;font-weight:800;margin-bottom:6px}
+  .rbar{break-inside:avoid}.tbl-wrap{overflow:visible}
+  .fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/dashboard">← Dashboard</a>
+<a class="back-home" href="/help#fleet-report" style="margin-left:6px">? Help</a>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Fleet report · Operations Tools v3.10</div>
+    </div>
+    <div class="sync-indicator" style="cursor:pointer" onclick="load()"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">loading…</span></div>
+  </header>
+  <main>
+    <div class="no-print">
+      <p class="sec" style="margin-top:0">Period</p>
+      <div class="seg" id="periods" style="flex-wrap:wrap"></div>
+      <div class="dates" id="custom" style="display:none"><input type="date" id="from" onchange="customChanged()"><input type="date" id="to" onchange="customChanged()"></div>
+      <p class="sec">Show</p>
+      <div class="seg" id="views"></div>
+    </div>
+    <div id="main"><div class="empty-state"><p>Loading…</p></div></div>
+    <div class="actions no-print">
+      <button class="btn btn-secondary" onclick="downloadExcel()">⬇ Excel</button>
+      <button class="btn btn-secondary" onclick="window.print()">🖨 Print or save as PDF</button>
+    </div>
+  </main>
+</div>
+<div class="modal-backdrop" id="bikeModal" onclick="if(event.target===this)closeBike()">
+  <div class="modal"><div class="modal-handle"></div><div id="bikeBody"></div>
+    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeBike()">Close</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script src="/assets/fleet-report.js"></script>
+<script src="/assets/xlsx-lite.js"></script>
+<script>
+// SA eBikes Operations Tools v3.10: fleet report. Utilisation = days hired ÷ days available, from the
+// per-bike daily records (frozen when the next manifest loads, or rebuilt in Admin). Read-only.
+const $ = id => document.getElementById(id);
+const esc = Ops.esc;
+let R = null, period = 'month', view = 'model', range = null;
+
+function showToast(msg, type) { const t = $('toast'); t.textContent = msg; t.className = 'toast show ' + (type || ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', 3500); }
+
+// ── dates (local YYYY-MM-DD) ──
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const fyStart = s => { const [y, m] = s.split('-').map(Number); return (m >= 7 ? y : y - 1) + '-07-01'; };
+const fmtDay = s => parse(s).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const fmtShort = s => parse(s).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: '2-digit' });
+const monthLabel = m => parse(m + '-01').toLocaleDateString('en-AU', { month: 'short', year: '2-digit' });
+const pct = x => (x == null ? '—' : Math.round(x * 100) + '%');
+
+const PERIODS = [
+  ['week', 'Last 7 days', t => [addDays(t, -6), t]],
+  ['month', 'This month', t => [t.slice(0, 8) + '01', t]],
+  ['lastmonth', 'Last month', t => { const d = parse(t.slice(0, 8) + '01'); d.setDate(0); const e = iso(d); return [e.slice(0, 8) + '01', e]; }],
+  ['fy', 'FY to date', t => [fyStart(t), t]],
+  ['lastfy', 'Last FY', t => { const s = fyStart(t); return [String(Number(s.slice(0, 4)) - 1) + '-07-01', addDays(s, -1)]; }],
+  ['custom', 'Custom', null],
+];
+const VIEWS = [['model', 'By model'], ['bike', 'By bike'], ['location', 'By location']];
+
+function drawControls() {
+  $('periods').innerHTML = PERIODS.map(([k, l]) => '<button class="' + (period === k ? 'on' : '') + '" onclick="setPeriod(\'' + k + '\')">' + l + '</button>').join('');
+  $('views').innerHTML = VIEWS.map(([k, l]) => '<button class="' + (view === k ? 'on' : '') + '" onclick="setView(\'' + k + '\')">' + l + '</button>').join('');
+  $('custom').style.display = period === 'custom' ? 'flex' : 'none';
+}
+function setPeriod(k) {
+  period = k; drawControls();
+  if (k === 'custom') { if (!$('from').value && range) { $('from').value = range[0]; $('to').value = range[1]; } customChanged(); return; }
+  const today = iso(new Date());
+  range = PERIODS.find(p => p[0] === k)[2](today);
+  load();
+}
+function setView(k) { view = k; drawControls(); if (R) render(); }
+function customChanged() {
+  const f = $('from').value, t = $('to').value;
+  if (!f || !t) return;
+  if (t < f) { showToast('The end date is before the start date', 'warning'); return; }
+  range = [f, t]; load();
+}
+
+// ── names ──
+const locName = c => { if (!c || c === '—') return 'Location not recorded'; const l = (R.locations || []).find(x => x.code === c); return l ? l.code + ' · ' + l.name : c; };
+const locKind = c => ((R.locations || []).find(x => x.code === c) || {}).kind || '';
+const bikeOf = id => (R.assets || []).find(a => a.id === id) || {};
+
+function rowsFor(by) {
+  const rows = FleetCore.aggregate(R.days, by);
+  if (by === 'model') for (const r of rows) r.bikes = new Set(Object.values(R.days).flatMap(d => Object.entries(d.bikes).filter(([, b]) => b.m === r.key).map(([id]) => id))).size;
+  return rows.sort((a, b) => (b.util == null ? -1 : b.util) - (a.util == null ? -1 : a.util) || b.hired - a.hired || String(a.key).localeCompare(String(b.key)));
+}
+
+function render() {
+  const days = R.days, dates = Object.keys(days).sort();
+  const q = FleetCore.quality(days), tot = FleetCore.totals(days);
+  const span = Math.round((parse(range[1]) - parse(range[0])) / 864e5) + 1;
+  let h = '<p class="print-head">' + esc(Brand.name()) + ' fleet report, ' + fmtDay(range[0]) + ' to ' + fmtDay(range[1]) + '</p>';
+  if (!dates.length) {
+    $('main').innerHTML = h + '<div class="empty-state"><div class="icon">🚲</div><p>No fleet records for ' + fmtShort(range[0]) + ' to ' + fmtShort(range[1]) + '.<br>Records are made when the next manifest is loaded. Earlier days can be rebuilt from the archives in Admin → Fleet history.' +
+      (R.first ? '<br>Records run from ' + fmtDay(R.first) + '.' : '') + '</p></div>';
+    return;
+  }
+  const missing = span - dates.length;
+  h += '<div class="mgrid">' +
+    '<div class="mc"><p class="ml">Utilisation</p><p class="mv">' + pct(tot.util) + '</p><p class="ms">days hired ÷ days available</p></div>' +
+    '<div class="mc"><p class="ml">Bike-days hired</p><p class="mv">' + tot.hired + '</p><p class="ms">of ' + tot.available + ' available</p></div></div>';
+  h += '<p class="note">' + fmtDay(dates[0]) + ' to ' + fmtDay(dates[dates.length - 1]) + ' · ' + dates.length + ' day' + (dates.length === 1 ? '' : 's') +
+    (days[R.today] && days[R.today].src === 'today' ? ' (today so far)' : '') + (missing > 0 ? ' · ' + missing + (missing === 1 ? ' day in the period has' : ' days in the period have') + ' no record yet' : '') + '</p>';
+
+  const rows = rowsFor(view);
+  h += '<p class="sec">' + VIEWS.find(v => v[0] === view)[1] + '</p>';
+  h += rows.map(r => {
+    const delivery = view === 'location' && locKind(r.key) === 'delivery';
+    const w = r.util == null ? 0 : Math.round(r.util * 100);
+    const loc = view === 'location' ? (R.locations || []).find(x => x.code === r.key) : null;
+    const sub = view === 'bike' ? esc(bikeOf(r.key).model || r.models[r.models.length - 1] || '') : view === 'model' ? r.bikes + ' bike' + (r.bikes === 1 ? '' : 's') : loc ? esc(loc.name) : '';
+    const num = delivery ? r.hired + ' hired' : !r.available && r.storage ? 'storage only' : pct(r.util) + ' · ' + r.hired + '/' + r.available;
+    return '<div class="rbar' + (view === 'bike' ? ' tap" onclick="openBike(\'' + esc(r.key) + '\')' : '') + '"><span class="lbl">' + esc(view === 'location' ? (loc ? loc.code : r.key === '—' ? 'Not recorded' : r.key) : r.key) + (sub ? '<small>' + sub + '</small>' : '') + '</span>' +
+      '<div class="track"><div class="fill' + (delivery ? ' loc' : w < 20 ? ' low' : '') + '" style="width:' + (delivery ? 100 : Math.min(100, w)) + '%"></div></div><span class="num">' + num + '</span></div>';
+  }).join('');
+  h += '<p class="note">' + (view === 'location'
+    ? 'A hired bike counts at the location it went out from; one not hired counts where it was at opening. Home delivery shows bikes hired only.'
+    : 'Days hired ÷ days available, and the bike-days behind it.') + (view === 'bike' ? ' Tap a bike for its days.' : '') + '</p>';
+
+  // month by month
+  if (view !== 'bike') {
+    const mo = FleetCore.monthly(days, view);
+    if (mo.months.length > 1) {
+      const order = rows.map(r => r.key);
+      h += '<p class="sec">Month by month</p><div class="tbl-wrap"><table class="t"><tr><th></th>' + mo.months.map(m => '<th>' + monthLabel(m) + '</th>').join('') + '</tr>' +
+        order.map(k => { const r = mo.rows.find(x => x.key === k); return '<tr><td>' + esc(view === 'location' ? k : k) + '</td>' + mo.months.map(m => { const c = r.months[m]; return '<td>' + (c ? (view === 'location' && locKind(k) === 'delivery' ? c.hired : pct(c.util)) : '') + '</td>'; }).join('') + '</tr>'; }).join('') +
+        '</table></div>';
+    }
+  }
+
+  // how the figures were made
+  const share = n => (q.bikeDays ? Math.round(n / q.bikeDays * 100) : 0) + '%';
+  h += '<p class="sec">About these figures</p><div class="days-list">' +
+    (q.rebuilt ? share(q.rebuilt) + ' of bike-days were rebuilt from the archives; the rest were recorded on the day.<br>' : 'Every day was recorded on the day.<br>') +
+    (q.estModel ? share(q.estModel) + ' use the model in today\'s register (from before the register history began).<br>' : '') +
+    (q.estLocation ? share(q.estLocation) + ' have a location that may be wrong (from before bike moves were recorded).<br>' : '') +
+    (q.unregistered ? q.unregistered + ' hire' + (q.unregistered === 1 ? '' : 's') + ' of barcodes not in the register.<br>' : '') +
+    (q.noManifest.length ? 'No manifest was loaded on ' + q.noManifest.length + ' day' + (q.noManifest.length === 1 ? '' : 's') + ' (counted as no bikes hired): ' +
+      q.noManifest.slice(0, 40).map(fmtShort).join(', ') + (q.noManifest.length > 40 ? ' …' : '') + '. If any of them was a hire day, the manifest was missed.' : 'A manifest was loaded on every day.') +
+    '</div>';
+  $('main').innerHTML = h;
+}
+
+// ── one bike's days ──
+const STATUS = { h: 'Hired', a: 'Available', o: 'Out of service', s: 'In storage' };
+function openBike(id) {
+  const b = bikeOf(id);
+  const list = Object.keys(R.days).sort().reverse().map(d => [d, R.days[d].bikes[id]]).filter(([, x]) => x);
+  const n = FleetCore.aggregate(Object.fromEntries(Object.entries(R.days).map(([d, r]) => [d, { bikes: r.bikes[id] ? { [id]: r.bikes[id] } : {} }])), 'bike')[0] || {};
+  $('bikeBody').innerHTML = '<h3>' + esc(id) + '</h3><div class="modal-sub">' + esc([b.brand, b.model].filter(Boolean).join(' ')) + (b.disposalDate ? ' · disposed ' + fmtShort(b.disposalDate) : '') + '</div>' +
+    '<p class="note" style="margin-bottom:10px">' + pct(n.util) + ' utilisation: hired ' + (n.hired || 0) + ' of ' + (n.available || 0) + ' days available' + (n.oos ? ', ' + n.oos + ' out of service' : '') + (n.storage ? ', ' + n.storage + ' in storage' : '') + '.</p>' +
+    '<div class="tbl-wrap"><table class="t"><tr><th>Day</th><th>Status</th><th>At opening</th><th>Went out from</th></tr>' +
+    list.map(([d, x]) => '<tr><td>' + fmtShort(d) + '</td><td class="st-' + x.s + '">' + STATUS[x.s] + (x.s === 'h' && x.d > 1 ? ' (day ' + x.d + ')' : '') + '</td><td>' + esc(x.l || '—') + (x.e && x.e.includes('l') ? '?' : '') + '</td><td>' + esc((x.h || []).join(', ')) + '</td></tr>').join('') +
+    '</table></div>';
+  $('bikeModal').classList.add('open');
+}
+function closeBike() { $('bikeModal').classList.remove('open'); }
+
+// ── Excel: every view, month by month, and every daily record ──
+function downloadExcel() {
+  if (!R || !Object.keys(R.days).length) { showToast('Nothing to export for this period', 'warning'); return; }
+  const tot = FleetCore.totals(R.days), q = FleetCore.quality(R.days);
+  const head = ['Days available', 'Days hired', 'Utilisation', 'Hires', 'Days out of service', 'Days in storage'];
+  const nums = r => [r.available, r.hired, r.util == null ? '' : r.util, r.hires, r.oos, r.storage];
+  const sheets = [
+    { name: 'Summary', widths: [34, 40], rows: [[Brand.name() + ' fleet report', ''], ['Period', fmtDay(range[0]) + ' to ' + fmtDay(range[1])], ['Days with records', Object.keys(R.days).length],
+      ['Bike-days available', tot.available], ['Bike-days hired', tot.hired], ['Utilisation', tot.util == null ? '' : tot.util], ['', ''],
+      ['How it\'s worked out', 'Utilisation = days hired ÷ days available.'], ['Available', 'Hired that day, or free to hire at 8 am (not out of service, not in storage).'],
+      ['Hired', 'Out with a group at any time that day, including days 2 and 3 of a multi-day hire.'], ['By location', 'Where a hired bike went out from; otherwise where it was at opening.'],
+      ['Days with no manifest', q.noManifest.length + ' (counted as no bikes hired)'], ['Rebuilt bike-days', q.rebuilt], ['Model taken from today\'s register', q.estModel], ['Location uncertain', q.estLocation],
+      ['Exported', new Date().toLocaleString('en-AU')]], pct: [] },
+    { name: 'By model', widths: [22, 8, 14, 11, 12, 8, 18, 15], pct: [4], rows: [['Model', 'Bikes', ...head], ...rowsForAll('model').map(r => [r.key, r.bikes, ...nums(r)])] },
+    { name: 'By bike', widths: [12, 14, 20, 14, 11, 12, 8, 18, 15], pct: [5], rows: [['Bike', 'Brand', 'Model', ...head], ...rowsForAll('bike').map(r => [r.key, bikeOf(r.key).brand || '', bikeOf(r.key).model || r.models[r.models.length - 1] || '', ...nums(r)])] },
+    { name: 'By location', widths: [28, 14, 11, 12, 8, 18, 15], pct: [3], rows: [['Location', ...head], ...rowsForAll('location').map(r => [locName(r.key), ...nums(r)])] },
+  ];
+  for (const by of ['model', 'location']) {
+    const mo = FleetCore.monthly(R.days, by);
+    sheets.push({ name: 'Monthly by ' + by, widths: [24, ...mo.months.map(() => 9)], pct: mo.months.map((_, i) => i + 1),
+      rows: [[by === 'model' ? 'Model' : 'Location', ...mo.months.map(monthLabel)], ...mo.rows.map(r => [by === 'location' ? locName(r.key) : r.key, ...mo.months.map(m => r.months[m] && r.months[m].util != null ? r.months[m].util : '')])] });
+  }
+  const daily = [['Date', 'Bike', 'Model', 'At opening', 'Status', 'Went out from', 'Hires', 'Day of hire', 'Record', 'Estimated']];
+  for (const d of Object.keys(R.days).sort()) for (const [id, b] of Object.entries(R.days[d].bikes).sort())
+    daily.push([d, id, b.m, b.l || '', STATUS[b.s], (b.h || []).join(', '), b.n || '', b.d || '', R.days[d].src === 'live' ? 'recorded on the day' : R.days[d].src === 'today' ? 'today so far' : 'rebuilt',
+      [(b.e || '').includes('m') ? 'model' : '', (b.e || '').includes('l') ? 'location' : ''].filter(Boolean).join(', ')]);
+  sheets.push({ name: 'Daily records', widths: [11, 10, 20, 11, 14, 14, 6, 10, 18, 16], rows: daily });
+  XlsxLite.download('Fleet_report_' + range[0] + '_to_' + range[1] + '.xlsx', sheets);
+}
+function rowsForAll(by) { const v = view; view = by; const r = rowsFor(by); view = v; return r; }
+
+async function load() {
+  $('syncDot').className = 'sync-dot syncing'; $('syncLabel').textContent = 'loading…';
+  try {
+    R = await Ops.get({ view: 'fleetReport', from: range[0], to: range[1] });
+    if (window.Locs) Locs.set(R.locations);
+    render(); $('syncDot').className = 'sync-dot synced'; $('syncLabel').textContent = 'live ✓';
+  } catch (e) {
+    $('syncDot').className = 'sync-dot error'; $('syncLabel').textContent = e.status === 0 ? 'offline' : 'error';
+    $('main').innerHTML = '<div class="empty-state"><p>' + esc(e.message) + '</p></div>';
+  }
+}
+drawControls();
+setPeriod('month');
+</script>
+</body>
+</html>

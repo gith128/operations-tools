@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Issue Reporter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;              /* warm off-white */
+  --bg-elev:#ffffff;         /* pure white for cards */
+  --bg-soft:#f2efe8;         /* cream */
+  --border:#e4ded2;          /* warm beige border */
+  --border-strong:#d4cdbd;
+  --text:#1f2428;            /* near-black, softer than #000 */
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  /* softer leafy green */
+  /* darker for readable text on light bg */
+  --warn:#d48a2f;            /* warm amber, darker for contrast on light */
+  --warn-soft:rgba(212,138,47,.1);
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;          /* coral red, darker for contrast */
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+#reader-report, #reader-resolve{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader-report video, #reader-resolve video{border-radius:12px}
+#reader-report img, #reader-resolve img{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);min-height:140px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-success{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.manual-entry{display:flex;gap:8px;margin-top:10px}
+.manual-input{flex:1;padding:13px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.field-input,.field-textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted)}
+.field-mono{font-family:'DM Mono',monospace}
+
+.fault-chips{display:flex;flex-wrap:wrap;gap:6px}
+.fault-chip{padding:7px 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.fault-chip.on{border-color:var(--warn);background:var(--warn-soft);color:var(--warn-text)}
+.repeat-box{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.35);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;color:var(--warn-text);margin-top:8px}
+.ftag{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border);white-space:nowrap}
+.ftag.rep{background:var(--warn-soft);color:var(--warn-text);border-color:rgba(212,138,47,.3)}
+.priority-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px}
+.priority-btn{padding:10px 4px;border-radius:10px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;text-align:center;font-family:'Syne',sans-serif;transition:all .15s}
+.priority-btn .num{font-size:18px;font-weight:800;line-height:1}
+.priority-btn .lbl{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.priority-btn.active[data-p="1"]{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.priority-btn.active[data-p="2"]{border-color:#9bb845;color:#5a7a22;background:rgba(155,184,69,.12)}
+.priority-btn.active[data-p="3"]{border-color:#d48a2f;color:#8a5a1a;background:rgba(212,138,47,.12)}
+.priority-btn.active[data-p="4"]{border-color:#c96a5c;color:#9a3530;background:rgba(201,106,92,.14)}
+.priority-btn.active[data-p="5"]{border-color:#b23a35;color:#8a2a26;background:rgba(178,58,53,.14)}
+.priority-help{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5}
+.priority-help strong{color:var(--danger-text)}
+
+.matched-card{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.3);border-radius:14px;padding:14px;margin-bottom:16px}
+.matched-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.matched-id{font-family:'DM Mono',monospace;font-size:15px;color:var(--warn-text);font-weight:600;letter-spacing:1px}
+.matched-issue{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--text)}
+.matched-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.matched-notes{margin-top:6px;font-size:12px;color:var(--text);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+
+.ts-note{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+
+.issue-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.issue-item:active{border-color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.issue-item.p5{border-left:4px solid #b23a35}
+.issue-item.p4{border-left:4px solid #c96a5c}
+.issue-item.p3{border-left:4px solid #d48a2f}
+.issue-item.p2{border-left:4px solid #9bb845}
+.issue-item.p1{border-left:4px solid var(--accent)}
+.issue-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.issue-bike{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent-text);font-weight:600;letter-spacing:1px}
+.issue-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.status{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.8px;white-space:nowrap}
+.status.open{background:var(--danger-soft);color:var(--danger-text);border:1px solid rgba(201,74,69,.25)}
+.status.resolved{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.prio{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.prio.p5{background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.prio.p4{background:rgba(201,106,92,.1);color:#9a3530;border:1px solid rgba(201,106,92,.25)}
+.prio.p3{background:rgba(212,138,47,.1);color:#8a5a1a;border:1px solid rgba(212,138,47,.25)}
+.prio.p2{background:rgba(155,184,69,.1);color:#5a7a22;border:1px solid rgba(155,184,69,.25)}
+.prio.p1{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.issue-desc{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.issue-foot{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.odo-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.odo-row .field-input{max-width:170px}
+.odo-unread{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-dim)}
+.odo-hint{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.updates{border-left:2px solid var(--border-strong);margin:6px 0 4px 4px;padding-left:12px}
+.upd{margin-bottom:10px;font-size:13px}
+.upd-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.upd-text{white-space:pre-wrap;margin-top:2px}
+.upd-chip{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--bg-soft);border:1px solid var(--border);margin-left:4px}
+.upd-form{background:var(--bg-soft);border:1px solid var(--border);border-radius:12px;padding:12px;margin:8px 0 12px}
+.upd-form .field{margin-bottom:10px}
+.upd-form select{font:inherit;padding:9px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.notes-indicator{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:6px}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:6px 13px;border-radius:100px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.detail-section{margin-bottom:18px}
+.detail-section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-body{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:10px}
+.detail-meta-row{display:flex;gap:10px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.detail-meta-label{color:var(--text-muted);min-width:95px}
+.detail-meta-val{color:var(--text)}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+/* Asset register confirmation */
+.asset-card{border-radius:12px;padding:11px 13px;margin-top:10px;font-size:13px;line-height:1.5;border:1.5px solid var(--border);background:var(--bg-soft)}
+.asset-card.known{border-color:var(--accent-line);background:var(--accent-soft)}
+.asset-card.unknown{border-color:rgba(212,138,47,.4);background:var(--warn-soft);color:var(--warn-text)}
+.asset-card .ac-head{display:flex;justify-content:space-between;gap:10px;font-weight:800;color:var(--text)}
+.asset-card .ac-key{font-family:'DM Mono',monospace;font-weight:500;color:var(--text-dim)}
+.asset-card .ac-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:2px}
+.asset-card a{color:inherit}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#issue-reporter" style="margin-left:6px">? Help</a>
+<div class="app">
+  <div class="flash" id="flash"></div>
+
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Issue Reporter</div>
+    </div>
+    <div class="sync-indicator">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">connecting…</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" id="tab-report" onclick="switchTab('report')">⚠️ Report</button>
+    <button class="tab" id="tab-resolve" onclick="switchTab('resolve')">🔧 Resolve</button>
+    <button class="tab" id="tab-log" onclick="switchTab('log')">📋 Log</button>
+  </nav>
+
+  <main>
+
+    <!-- REPORT -->
+    <div id="view-report">
+      <div class="section-label">Bike ID</div>
+      <div id="reader-report" style="display:none"></div>
+      <div class="camera-ph" id="cameraPlaceholderReport">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <p>Scan the Bike ID or enter it below</p>
+      </div>
+      <button class="btn btn-primary" id="scanBtnReport" onclick="toggleScan('report')">Scan Bike ID</button>
+
+      <div class="manual-entry">
+        <input class="manual-input" id="reportBikeId" placeholder="Bike ID (e.g. EB-012)" maxlength="30" style="text-transform:uppercase" oninput="showReportAsset()" autocomplete="off">
+      </div>
+      <div id="reportAsset"></div>
+
+      <div style="margin-top:18px">
+        <div class="field">
+          <label class="field-label" for="reportOdo">Odometer (km)</label>
+          <div class="odo-row">
+            <input class="field-input field-mono" id="reportOdo" inputmode="numeric" placeholder="e.g. 1240" maxlength="9" autocomplete="off">
+            <label class="odo-unread"><input type="checkbox" id="reportOdoUnread" onchange="$('reportOdo').disabled=this.checked"> Can't read it (e.g. flat battery)</label>
+          </div>
+          <div class="odo-hint" id="reportOdoHint"></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Fault type <span style="color:var(--text-muted);text-transform:none;letter-spacing:0">(tap one or more)</span></label>
+          <div class="fault-chips" id="reportFaults"></div>
+          <div id="reportRepeat"></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Priority</label>
+          <div class="priority-grid" id="reportPrioGrid">
+            <div class="priority-btn" data-p="1" onclick="setReportPrio(1)"><div class="num">1</div><div class="lbl">MINOR</div></div>
+            <div class="priority-btn" data-p="2" onclick="setReportPrio(2)"><div class="num">2</div><div class="lbl">LOW</div></div>
+            <div class="priority-btn" data-p="3" onclick="setReportPrio(3)"><div class="num">3</div><div class="lbl">MED</div></div>
+            <div class="priority-btn" data-p="4" onclick="setReportPrio(4)"><div class="num">4</div><div class="lbl">HIGH</div></div>
+            <div class="priority-btn" data-p="5" onclick="setReportPrio(5)"><div class="num">5</div><div class="lbl">OOS</div></div>
+          </div>
+          <div class="priority-help">1 = minor · 3 = medium · <strong>5 = out of service</strong> (bike will flash red in group scanner)</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Issue Description</label>
+          <textarea class="field-textarea" id="reportIssue" placeholder="Describe the problem — e.g. Front brake squealing, battery not holding charge, flat rear tyre…" rows="4"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Parts Ordered / Notes <span style="color:var(--text-muted);text-transform:none;letter-spacing:0">(optional)</span></label>
+          <textarea class="field-textarea" id="reportNotes" placeholder="e.g. Rear disc brake pads ordered from Giant AU, ETA Tue. Awaiting parts." rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Your Initials</label>
+          <input class="field-input field-mono" id="reportInitials" placeholder="e.g. JS" maxlength="5" style="text-transform:uppercase;max-width:140px">
+        </div>
+
+        <div class="ts-note">📅 Date & time recorded automatically on submit</div>
+        <button class="btn btn-warn" onclick="submitReport()">Submit Issue Report</button>
+      </div>
+    </div>
+
+    <!-- RESOLVE -->
+    <div id="view-resolve" style="display:none">
+      <div class="section-label">Bike ID</div>
+      <div id="reader-resolve" style="display:none"></div>
+      <div class="camera-ph" id="cameraPlaceholderResolve">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <p>Scan the bike to find its open issue</p>
+      </div>
+      <button class="btn btn-primary" id="scanBtnResolve" onclick="toggleScan('resolve')">Scan Bike ID</button>
+
+      <div class="manual-entry">
+        <input class="manual-input" id="resolveBikeId" placeholder="Bike ID (e.g. EB-012)" maxlength="30" style="text-transform:uppercase" onkeydown="if(event.key==='Enter')lookupResolve()">
+      </div>
+
+      <button class="btn btn-secondary" style="margin-top:10px" onclick="lookupResolve()">Find Open Issue</button>
+
+      <div id="resolveBody" style="margin-top:18px"></div>
+    </div>
+
+    <!-- LOG -->
+    <div id="view-log" style="display:none">
+      <div class="section-label">Issue Log</div>
+      <div class="filter-row" id="filterRow">
+        <div class="filter-chip active" data-filter="all" onclick="setFilter('all')">All</div>
+        <div class="filter-chip" data-filter="open" onclick="setFilter('open')">Open</div>
+        <div class="filter-chip" data-filter="p1" onclick="setFilter('p1')">P1</div>
+        <div class="filter-chip" data-filter="p2" onclick="setFilter('p2')">P2</div>
+        <div class="filter-chip" data-filter="p3" onclick="setFilter('p3')">P3</div>
+        <div class="filter-chip" data-filter="p4" onclick="setFilter('p4')">P4</div>
+        <div class="filter-chip" data-filter="oos" onclick="setFilter('oos')">OOS (P5)</div>
+        <div class="filter-chip" data-filter="resolved" onclick="setFilter('resolved')">Resolved</div>
+        <div class="filter-chip" data-filter="repeat" onclick="setFilter('repeat')">🔁 Repeats</div>
+      </div>
+      <input class="manual-input" id="filterBike" placeholder="Filter by Bike ID…" style="margin-bottom:12px;text-transform:uppercase" oninput="renderLog()">
+      <div id="issueList"></div>
+
+      <div class="divider"></div>
+      <div class="section-label">Stats</div>
+      <div id="statsContent"></div>
+
+      <div class="export-section">
+        <div class="section-label">Export & Share</div>
+        <div class="export-card">
+          <div class="export-card-title">📤 Share Open Issues</div>
+          <div class="export-card-desc">Sends a formatted list of open issues via SMS, WhatsApp, email or any messaging app.</div>
+          <button class="btn btn-primary" onclick="shareOpen()">Share Report</button>
+        </div>
+        <div class="export-card">
+          <div class="export-card-title">📄 Download CSV</div>
+          <div class="export-card-desc">Full log of reported & resolved issues for your records.</div>
+          <button class="btn btn-secondary" onclick="downloadCSV()">Download CSV</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script src="/assets/vendor/html5-qrcode.min.js"></script>
+<script src="/assets/scan.js"></script>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+// Issue Reporter v3.2
+// Reports and resolutions are sent as single actions and only cleared from
+// the form once the server confirms them, so nothing is lost to a dropout.
+// ─────────────────────────────────────────────────────────────────
+const POLL_MS = 20000;
+const $ = id => document.getElementById(id);
+const esc = s => Ops.esc(s).replace(/\n/g, '<br>');
+
+let S = { rev: -1, issues: [] }, lastTypesKey = '';
+let ASSETS = [], assetsRev = -1;
+let currentFilter = 'all';
+let activeScanView = null, html5QrCode = null, scanning = false, lastCode = null, lastTime = 0;
+let matchedIssue = null;
+let reportPrio = 3;
+let busy = false;
+
+function setSyncStatus(status, label) { $('syncDot').className = 'sync-dot ' + status; $('syncLabel').textContent = label; }
+
+function acceptView(v) {
+  if (!v) return;
+  if (Array.isArray(v.assets) && typeof v.assetsRev === 'number' && v.assetsRev !== assetsRev) {
+    ASSETS = v.assets; assetsRev = v.assetsRev;
+    showReportAsset();
+  }
+  if (typeof v.rev !== 'number' || v.rev < S.rev) return;
+  const changed = v.rev !== S.rev;
+  const typesKey = JSON.stringify(v.faultTypes || []);
+  S = v;
+  if (typesKey !== lastTypesKey) { lastTypesKey = typesKey; drawReportFaults(); }
+  if (!changed) return;
+  const activeTab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
+  if (activeTab === 'log') renderLog();
+  if (detailId && $('detailUpdates')) { const di = S.issues.find(x => x.id === detailId); if (di) $('detailUpdates').innerHTML = updatesHTML(di); }
+  if (activeTab === 'resolve' && matchedIssue) {
+    const updated = S.issues.find(i => i.id === matchedIssue.id);
+    if (!updated || updated.status === 'resolved') {
+      matchedIssue = null;
+      renderResolveBody();
+      showToast('Another user resolved this issue', 'warning');
+    }
+  }
+}
+
+async function pullIssues(interactive) {
+  try {
+    acceptView(await Ops.view('issues', { interactive: !!interactive }));
+    setSyncStatus('synced', 'live ✓');
+  } catch (e) {
+    setSyncStatus('error', e.isAuth ? 'PIN needed · tap here' : 'offline');
+    throw e;
+  }
+}
+// Initials of whoever is using this phone, filled in where a field is empty. Still editable.
+function fillMe() { if (window.Team && !$('reportInitials').value) $('reportInitials').value = Team.initials(); }
+if (window.Team) Team.onChange(() => { $('reportInitials').value = ''; fillMe(); });
+document.addEventListener('DOMContentLoaded', fillMe);
+setTimeout(fillMe, 0);
+
+const poll = Ops.poller(() => pullIssues(false), { interval: POLL_MS, idleInterval: 60000 });
+document.querySelector('.sync-indicator').style.cursor = 'pointer';
+document.querySelector('.sync-indicator').addEventListener('click', () => {
+  if ($('syncLabel').textContent.startsWith('PIN')) Ops.forgetPin();
+  pullIssues(true).catch(() => {});
+});
+
+function switchTab(name) {
+  if (scanning) stopScan();
+  ['report', 'resolve', 'log'].forEach(t => {
+    $('view-' + t).style.display = t === name ? '' : 'none';
+    $('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'log') renderLog();
+  if (name === 'resolve') renderResolveBody();
+  if (name === 'report') setReportPrio(reportPrio);
+  poll.now();
+}
+
+// ── asset register confirmation ─────────────────────────────────
+function findAsset(id) { return ASSETS.find(a => a.id === String(id || '').trim().toUpperCase()) || null; }
+
+function assetCardHTML(id, a) {
+  if (!id) return '';
+  if (!a) {
+    if (assetsRev < 0) return '';
+    return '<div class="asset-card unknown">⚠️ <strong>' + esc(id) + '</strong> is not in the asset register. Check the ID, or <a href="/fleet">add the bike</a>.</div>';
+  }
+  const what = [a.brand, a.model].filter(Boolean).join(' ') || 'Brand and model not recorded';
+  const meta = [a.serial ? 'S/N ' + a.serial : '', a.size ? 'Size ' + a.size : '', a.purchaseDate ? Ops.ageLabel(a.purchaseDate) : ''].filter(Boolean).join(' · ');
+  return '<div class="asset-card known"><div class="ac-head"><span>✓ ' + esc(what) + '</span>' +
+    (a.keyNumber ? '<span class="ac-key">🔑 ' + esc(a.keyNumber) + '</span>' : '') + '</div>' +
+    (meta ? '<div class="ac-meta">' + esc(meta) + '</div>' : '') + '</div>';
+}
+
+// Typed IDs don't need leading zeros: "12" finds EB-012 when it's the only match.
+function resolveTyped(v) {
+  const known = [...S.assets.map(a => a.id), ...S.issues.map(i => i.bikeId)];
+  return window.BikeIds ? BikeIds.match(v, known) : { id: String(v || '').trim().toUpperCase() };
+}
+function showReportAsset() {
+  const box = $('reportAsset'); if (!box) return;
+  const m = resolveTyped($('reportBikeId').value);
+  const id = m.id;
+  // Wait until the ID looks complete before warning that it isn't registered.
+  const a = findAsset(id);
+  box.innerHTML = a || id.length >= 3 ? assetCardHTML(id, a) : '';
+  showRepeat();
+  const last = lastOdometer(id);
+  $('reportOdoHint').textContent = last ? 'Last recorded: ' + fmtKm(last.km) + ' on ' + fmtDate(last.at) : '';
+}
+
+// Latest odometer reading for a bike, from its issue reports and updates.
+function lastOdometer(bikeId) {
+  if (!bikeId) return null;
+  let best = null;
+  for (const i of S.issues) {
+    if (i.bikeId !== bikeId) continue;
+    const readings = [{ km: i.odometer, at: i.reportedAt }, ...(i.updates || []).map(u => ({ km: u.odometer, at: u.at }))];
+    for (const r of readings) if (r.km != null && (!best || r.at > best.at)) best = r;
+  }
+  return best;
+}
+const fmtKm = n => Number(n).toLocaleString('en-AU') + ' km';
+const fmtDate = t => new Date(t).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+const readKm = v => { const n = Number(String(v || '').replace(/[,\s]|km$/gi, '')); return String(v || '').trim() === '' ? null : (Number.isFinite(n) && n >= 0 ? Math.round(n) : NaN); };
+
+// Updates on an issue, oldest first, as a timeline.
+function updatesHTML(i) {
+  const list = i.updates || [];
+  if (!list.length) return '<div class="upd-meta" style="margin:4px 0 10px">No updates yet.</div>';
+  return '<div class="updates">' + list.map(u => '<div class="upd"><div class="upd-meta">' + esc(u.by) + ' · ' + fmtDateTime(u.at) +
+    (u.priorityTo ? '<span class="upd-chip">P' + u.priorityFrom + ' → P' + u.priorityTo + '</span>' : '') +
+    (u.odometer != null ? '<span class="upd-chip">' + fmtKm(u.odometer) + '</span>' : '') +
+    (u.faultsTo ? '<span class="upd-chip">Fault type: ' + esc((u.faultsFrom || []).length ? u.faultsFrom.map(faultLabel).join(', ') + ' → ' : '') + esc(u.faultsTo.map(faultLabel).join(', ')) + '</span>' : '') +
+    '</div>' + (u.text ? '<div class="upd-text">' + esc(u.text) + '</div>' : '') + '</div>').join('') + '</div>';
+}
+
+// ── fault types (v3.7, set in Admin) ─────────────────────────
+const DEFAULT_TYPES = [{ id: 'other', label: 'Other' }];
+const faultTypes = () => (S.faultTypes && S.faultTypes.length ? S.faultTypes : DEFAULT_TYPES);
+const faultLabel = id => (faultTypes().find(t => t.id === id) || { label: id }).label;
+const faultTags = i => (i.faults || []).map(t => '<span class="ftag">' + esc(faultLabel(t)) + '</span>').join('') +
+  (S.repeats && S.repeats[i.id] ? '<span class="ftag rep">🔁 repeat</span>' : '') +
+  (i.error ? '<span class="ftag">✎ logged in error</span>' : (i.corrections || []).length ? '<span class="ftag">↶ reopened</span>' : '');
+let reportFaults = [];
+function chipsHTML(selected, fn, includeRetired) {
+  return faultTypes().filter(t => !t.retired || (includeRetired && selected.includes(t.id)))
+    .map(t => '<button type="button" class="fault-chip' + (selected.includes(t.id) ? ' on' : '') + '" onclick="' + fn + '(\'' + t.id + '\')">' + esc(t.label) + '</button>').join('');
+}
+function drawReportFaults() { const el = $('reportFaults'); if (el) el.innerHTML = chipsHTML(reportFaults, 'toggleReportFault'); showRepeat(); }
+function toggleReportFault(id) { reportFaults = reportFaults.includes(id) ? reportFaults.filter(x => x !== id) : [...reportFaults, id]; drawReportFaults(); }
+// A repeat fault: this bike had the same type logged within the window set in Admin.
+function showRepeat() {
+  const box = $('reportRepeat'); if (!box) return;
+  const bike = resolveTyped($('reportBikeId').value).id;
+  const days = S.repeatDays || 90, since = Date.now() - days * 864e5;
+  const hits = bike && reportFaults.length ? S.issues.filter(i => i.bikeId === bike && i.reportedAt >= since && (i.faults || []).some(t => reportFaults.includes(t))) : [];
+  box.innerHTML = !hits.length ? '' : '<div class="repeat-box"><b>🔁 Repeat fault.</b> ' + esc(bike) + ' had ' + hits.slice(0, 3).map(i =>
+    esc((i.faults || []).filter(t => reportFaults.includes(t)).map(faultLabel).join(', ')) + ' logged ' + fmtDate(i.reportedAt) + (i.status === 'resolved' ? ' (repaired ' + fmtDate(i.resolvedAt) + ')' : ' (still open)')).join('; ') +
+    '. Say in the description what\'s happened since, so the workshop can look for the cause.</div>';
+}
+let updFaults = null;
+function toggleUpdFault(id) { updFaults = updFaults.includes(id) ? updFaults.filter(x => x !== id) : [...updFaults, id]; $('updFaults').innerHTML = chipsHTML(updFaults, 'toggleUpdFault', true); }
+
+function setReportPrio(p) {
+  reportPrio = p;
+  document.querySelectorAll('#reportPrioGrid .priority-btn').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.p) === p));
+}
+
+async function toggleScan(view) {
+  if (scanning && activeScanView === view) { stopScan(); return; }
+  if (scanning) stopScan();
+  startScan(view);
+}
+async function startScan(view) {
+  if (typeof Html5Qrcode === 'undefined') { showToast('Scanner loading — try again', 'error'); return; }
+  activeScanView = view;
+  const readerEl = view === 'report' ? 'reader-report' : 'reader-resolve';
+  const phEl = view === 'report' ? 'cameraPlaceholderReport' : 'cameraPlaceholderResolve';
+  const btnEl = view === 'report' ? 'scanBtnReport' : 'scanBtnResolve';
+  try {
+    $(readerEl).style.display = 'block'; $(phEl).style.display = 'none';
+    $(btnEl).textContent = 'Stop Scanning'; $(btnEl).className = 'btn btn-stop';
+    scanning = true;
+    html5QrCode = OpsScan.make(readerEl);
+    await html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.333, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] },
+      (code) => { const now = Date.now(); if (code !== lastCode || now - lastTime > 2000) { lastCode = code; lastTime = now; handleScanned(code, view); } },
+      () => {}
+    );
+  } catch (e) {
+    console.error(e); stopScan();
+    alert(OpsScan.cameraError(e));
+  }
+}
+async function stopScan() {
+  scanning = false;
+  if (html5QrCode) { try { if (html5QrCode.isScanning) await html5QrCode.stop(); html5QrCode.clear(); } catch {} html5QrCode = null; }
+  ['report', 'resolve'].forEach(v => {
+    const readerEl = v === 'report' ? 'reader-report' : 'reader-resolve';
+    const phEl = v === 'report' ? 'cameraPlaceholderReport' : 'cameraPlaceholderResolve';
+    const btnEl = v === 'report' ? 'scanBtnReport' : 'scanBtnResolve';
+    if ($(readerEl)) { $(readerEl).style.display = 'none'; $(readerEl).innerHTML = ''; }
+    if ($(phEl)) $(phEl).style.display = 'flex';
+    if ($(btnEl)) { $(btnEl).textContent = 'Scan Bike ID'; $(btnEl).className = 'btn btn-primary'; }
+  });
+  activeScanView = null;
+}
+function handleScanned(code, view) {
+  const clean = String(code).trim().toUpperCase();
+  doFlash('var(--accent)');
+  if (view === 'report') {
+    $('reportBikeId').value = clean; stopScan();
+    showReportAsset();
+    const a = findAsset(clean);
+    showToast(a ? '✓ ' + clean + ' · ' + [a.brand, a.model].filter(Boolean).join(' ') : '⚠ ' + clean + ' is not in the asset register', a ? 'success' : 'warning');
+    $('reportIssue').focus();
+  } else {
+    $('resolveBikeId').value = clean; stopScan(); lookupResolve();
+  }
+}
+
+// Keep the generated id while the same report is being retried,
+// so a slow connection can't log the same issue twice.
+let draftIssueId = null;
+async function submitReport() {
+  { const m = resolveTyped($('reportBikeId').value);
+    if (m.ambiguous) { showToast($('reportBikeId').value.trim() + ' could be ' + m.ambiguous.slice(0, 4).join(', ') + '. Type more of the ID.', 'warning'); return; }
+    $('reportBikeId').value = m.id; }
+  if (busy) return;
+  const bikeId = $('reportBikeId').value.trim().toUpperCase();
+  const issue = $('reportIssue').value.trim();
+  const notes = $('reportNotes').value.trim();
+  const initials = $('reportInitials').value.trim().toUpperCase();
+  if (!bikeId) { showToast('Enter or scan a Bike ID', 'warning'); return; }
+  if (!reportFaults.length) { showToast('Choose the fault type (Other if none fits)', 'warning'); return; }
+  if (!issue) { showToast('Describe the issue', 'warning'); return; }
+  if (!initials) { showToast('Enter your initials', 'warning'); return; }
+  const unreadable = $('reportOdoUnread').checked;
+  const odometer = unreadable ? null : readKm($('reportOdo').value);
+  if (!unreadable && odometer == null) { showToast('Enter the odometer reading, or tick "Can\'t read it"', 'warning'); $('reportOdo').focus(); return; }
+  if (Number.isNaN(odometer)) { showToast('Odometer must be a number of km', 'warning'); $('reportOdo').focus(); return; }
+  const last = lastOdometer(bikeId);
+  if (last && odometer != null && odometer < last.km &&
+      !confirm('The odometer reads lower than last time (' + fmtKm(last.km) + ' on ' + fmtDate(last.at) + ').\n\nCheck the reading. Save ' + fmtKm(odometer) + ' anyway?')) return;
+  if (assetsRev >= 0 && ASSETS.length && !findAsset(bikeId) &&
+      !confirm(bikeId + ' is not in the asset register.\n\nCheck the ID is right. Log the issue anyway?')) return;
+  draftIssueId = draftIssueId || Ops.uid();
+  const btn = document.querySelector('#view-report .btn-warn');
+  busy = true; btn.disabled = true; btn.textContent = 'Saving…'; setSyncStatus('syncing', 'saving…');
+  try {
+    const res = await Ops.act('reportIssue', { issue: { id: draftIssueId, bikeId, issue, priority: reportPrio, notes, reportedBy: initials, odometer, odometerUnreadable: unreadable, faults: reportFaults } });
+    acceptView(res.view);
+    setSyncStatus('synced', 'live ✓');
+    doFlash(reportPrio === 5 ? 'var(--danger)' : 'var(--warn)');
+    showToast('✓ Issue logged · ' + bikeId + (reportPrio === 5 ? ' (OUT OF SERVICE)' : ''), 'success');
+    ['reportBikeId', 'reportIssue', 'reportNotes', 'reportInitials', 'reportOdo'].forEach(id => $(id).value = '');
+    fillMe();
+    $('reportOdoUnread').checked = false; $('reportOdo').disabled = false;
+    showReportAsset();
+    draftIssueId = null;
+    reportFaults = []; drawReportFaults();
+    setReportPrio(3);
+    if (FROM_SCANNER) setTimeout(() => { location.href = '/scanner'; }, 1200);
+  } catch (e) {
+    setSyncStatus('error', e.isAuth ? 'PIN needed · tap here' : e.status === 0 ? 'not confirmed' : 'not saved');
+    showToast(e.message, 'error');
+  } finally {
+    busy = false; btn.disabled = false; btn.textContent = 'Submit Issue Report';
+  }
+}
+
+function lookupResolve() {
+  const m = resolveTyped($('resolveBikeId').value);
+  if (m.ambiguous) { showToast($('resolveBikeId').value.trim() + ' could be ' + m.ambiguous.slice(0, 4).join(', ') + '. Type more of the ID.', 'warning'); return; }
+  $('resolveBikeId').value = m.id;
+  const bikeId = m.id;
+  if (!bikeId) { showToast('Enter or scan a Bike ID', 'warning'); return; }
+  const openIssues = S.issues.filter(i => i.bikeId === bikeId && i.status === 'open')
+    .sort((a, b) => (b.priority || 3) - (a.priority || 3) || b.reportedAt - a.reportedAt);
+  if (!openIssues.length) {
+    matchedIssue = null;
+    renderResolveBody(`<div class="empty-state"><div class="icon">✅</div><p>No open issues for <strong style="color:var(--accent-text)">${esc(bikeId)}</strong>.<br>This bike is good to go.</p></div>` + assetCardHTML(bikeId, findAsset(bikeId)));
+    return;
+  }
+  matchedIssue = openIssues[0];
+  renderResolveBody();
+  if (openIssues.length > 1) showToast(bikeId + ' has ' + openIssues.length + ' open issues — showing the most urgent', 'warning');
+}
+
+function renderResolveBody(customHTML) {
+  const box = $('resolveBody');
+  if (customHTML) { box.innerHTML = customHTML; return; }
+  if (!matchedIssue) { box.innerHTML = ''; return; }
+  const p = matchedIssue.priority || 3;
+  const notesHtml = matchedIssue.notes ? `<div class="matched-notes"><strong>Notes:</strong> ${esc(matchedIssue.notes)}</div>` : '';
+  box.innerHTML = `
+    <div class="matched-card">
+      <div class="matched-head">
+        <span class="matched-id">${esc(matchedIssue.bikeId)}</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="prio p${p}">P${p} · ${prioLabel(p)}</span>
+          <span class="status open">OPEN</span>
+        </div>
+      </div>
+      <div class="matched-issue">${esc(matchedIssue.issue)}</div>
+      ${notesHtml}
+      ${assetCardHTML(matchedIssue.bikeId, matchedIssue.asset || findAsset(matchedIssue.bikeId))}
+      <div class="matched-meta">by ${esc(matchedIssue.reportedBy)} · ${fmtDateTime(matchedIssue.reportedAt)}${matchedIssue.odometer != null ? ' · ' + fmtKm(matchedIssue.odometer) : ''}</div>
+      ${(matchedIssue.updates || []).length ? '<div style="margin-top:10px">' + updatesHTML(matchedIssue) + '</div>' : ''}
+    </div>
+    <button class="btn btn-secondary" onclick="openDetail('${matchedIssue.id}')" style="margin-bottom:14px">💬 Not fixed yet? Add an update</button>
+    <div class="field">
+      <label class="field-label" for="repairDetails">Repair Details</label>
+      <textarea class="field-textarea" id="repairDetails" placeholder="Describe repairs carried out — parts replaced, adjustments made…" rows="4"></textarea>
+    </div>
+    <div class="field">
+      <label class="field-label" for="repairerName">Repairer's Name</label>
+      <input class="field-input" id="repairerName" placeholder="Full name" style="max-width:280px" value="${esc(window.Team ? Team.name() : '')}">
+    </div>
+    <div class="ts-note">📅 Resolved timestamp recorded automatically on submit</div>
+    <button class="btn btn-success" id="resolveBtn" onclick="submitResolve()">Mark as Resolved</button>
+  `;
+}
+
+async function submitResolve() {
+  if (!matchedIssue || busy) return;
+  const resolution = $('repairDetails').value.trim();
+  const repairedBy = $('repairerName').value.trim();
+  if (!resolution) { showToast('Enter repair details', 'warning'); return; }
+  if (!repairedBy) { showToast("Enter repairer's name", 'warning'); return; }
+  const btn = $('resolveBtn');
+  busy = true; btn.disabled = true; btn.textContent = 'Saving…';
+  const bikeId = matchedIssue.bikeId;
+  try {
+    const res = await Ops.act('resolveIssue', { id: matchedIssue.id, resolution, repairedBy });
+    matchedIssue = null;
+    acceptView(res.view);
+    doFlash('var(--accent)');
+    showToast(res.result === 'already-resolved' && res.resolvedBy !== repairedBy ? '✓ ' + bikeId + ' was already resolved' + (res.resolvedBy ? ' by ' + res.resolvedBy : '') : '✓ ' + bikeId + ' resolved', 'success');
+    $('resolveBikeId').value = '';
+    renderResolveBody();
+  } catch (e) {
+    showToast(e.message, 'error');
+    if (e.code === 'already-resolved' || e.code === 'not-found') { matchedIssue = null; renderResolveBody(); poll.now(); }
+  } finally {
+    busy = false;
+    if ($('resolveBtn')) { $('resolveBtn').disabled = false; $('resolveBtn').textContent = 'Mark as Resolved'; }
+  }
+}
+
+// "Reported 12 Oct · Resolved 14 Oct (2 days)" for a resolved issue.
+function resolvedLine(i) {
+  const d = t => new Date(t).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  const startOf = t => { const x = new Date(t); x.setHours(0, 0, 0, 0); return x.getTime(); };
+  const days = Math.round((startOf(i.resolvedAt) - startOf(i.reportedAt)) / 864e5);
+  return 'Reported ' + d(i.reportedAt) + ' · Resolved ' + d(i.resolvedAt) + ' (' + (days === 0 ? 'same day' : days + ' day' + (days > 1 ? 's' : '')) + ')';
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(el => el.classList.toggle('active', el.dataset.filter === f));
+  renderLog();
+}
+
+function renderLog() {
+  const bikeFilter = ($('filterBike')?.value || '').trim().toUpperCase();
+  let list = [...S.issues];
+  if (currentFilter === 'open') list = list.filter(i => i.status === 'open');
+  else if (currentFilter === 'resolved') list = list.filter(i => i.status === 'resolved');
+  else if (currentFilter === 'repeat') list = list.filter(i => S.repeats && S.repeats[i.id]);
+  else if (currentFilter === 'oos') list = list.filter(i => i.status === 'open' && (i.priority || 3) === 5);
+  // P1–P4 show open issues at that priority.
+  else if (/^p[1-4]$/.test(currentFilter)) list = list.filter(i => i.status === 'open' && (i.priority || 3) === Number(currentFilter[1]));
+  if (bikeFilter) list = list.filter(i => i.bikeId.includes(bikeFilter));
+  list.sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+    if (a.status === 'open') { const d = (b.priority || 3) - (a.priority || 3); if (d) return d; }
+    return b.reportedAt - a.reportedAt;
+  });
+  const openCount = S.issues.filter(i => i.status === 'open').length;
+  // Each filter chip shows how many issues it holds.
+  const chipCount = { all: S.issues.length, open: openCount, resolved: S.issues.filter(i => i.status === 'resolved').length, repeat: Object.keys(S.repeats || {}).length };
+  for (let n = 1; n <= 5; n++) chipCount[n === 5 ? 'oos' : 'p' + n] = S.issues.filter(i => i.status === 'open' && (i.priority || 3) === n).length;
+  document.querySelectorAll('#filterRow .filter-chip').forEach(el => {
+    if (!el.dataset.label) el.dataset.label = el.textContent;
+    el.textContent = el.dataset.label + ' · ' + (chipCount[el.dataset.filter] || 0);
+  });
+  const oosCount = S.issues.filter(i => i.status === 'open' && (i.priority || 3) === 5).length;
+  const resolvedCount = S.issues.filter(i => i.status === 'resolved').length;
+
+  $('issueList').innerHTML = !list.length
+    ? `<div class="empty-state"><div class="icon">📋</div><p>No issues ${currentFilter === 'all' && !bikeFilter ? 'yet' : 'in this view'}.</p></div>`
+    : list.map(i => {
+        const p = i.priority || 3;
+        return `
+        <div class="issue-item p${p}" onclick="openDetail('${i.id}')">
+          <div class="issue-head">
+            <span class="issue-bike">${esc(i.bikeId)}</span>
+            <div class="issue-tags"><span class="prio p${p}">P${p}</span><span class="status ${i.status}">${i.status.toUpperCase()}</span></div>
+          </div>
+          ${(i.faults || []).length || (S.repeats && S.repeats[i.id]) || (i.corrections || []).length ? '<div class="issue-tags" style="margin:-2px 0 6px">' + faultTags(i) + '</div>' : ''}
+          ${(() => { const a = i.asset || findAsset(i.bikeId); const w = a ? [a.brand, a.model].filter(Boolean).join(' ') : ''; return w ? '<div class="issue-foot" style="margin:-4px 0 6px">' + esc(w) + (a.keyNumber ? ' · 🔑 ' + esc(a.keyNumber) : '') + '</div>' : ''; })()}
+          <div class="issue-desc">${esc(truncate(i.issue, 100))}</div>
+          <div class="issue-foot">${i.status === 'resolved' && i.resolvedAt ? resolvedLine(i) : esc(i.reportedBy) + ' · ' + fmtDateTime(i.reportedAt)}${i.odometer != null ? ' · ' + fmtKm(i.odometer) : ''}${i.notes ? '<span class="notes-indicator">· 📝</span>' : ''}${(i.updates || []).length ? '<span class="notes-indicator">· 💬 ' + i.updates.length + ' update' + (i.updates.length > 1 ? 's' : '') + '</span>' : ''}${i.source === 'mcheck' ? '<span class="notes-indicator">· 🔧 found in M-check</span>' : ''}</div>
+        </div>`;
+      }).join('');
+
+  $('statsContent').innerHTML = `
+    <div class="stat-row"><span class="stat-label">Total issues</span><span class="stat-value">${S.issues.length}</span></div>
+    <div class="stat-row"><span class="stat-label">Open</span><span class="stat-value" style="color:var(--danger-text)">${openCount}</span></div>
+    <div class="stat-row"><span class="stat-label">Out of service (P5)</span><span class="stat-value" style="color:#8a2a26">${oosCount}</span></div>
+    <div class="stat-row"><span class="stat-label">Resolved</span><span class="stat-value" style="color:var(--accent-text)">${resolvedCount}</span></div>`;
+}
+
+function prioLabel(p) { return ['', 'MINOR', 'LOW', 'MED', 'HIGH', 'OUT OF SERVICE'][p] || 'MED'; }
+
+function openDetail(id) {
+  const i = S.issues.find(x => x.id === id); if (!i) return;
+  const p = i.priority || 3;
+  $('detailContent').innerHTML = `
+    <h3>${esc(i.bikeId)}</h3>
+    <div class="modal-sub"><span class="prio p${p}">P${p} · ${prioLabel(p)}</span><span class="status ${i.status}">${i.status.toUpperCase()}</span></div>
+    ${assetCardHTML(i.bikeId, i.asset || findAsset(i.bikeId))}
+    <div class="detail-section" style="margin-top:14px">
+      <div class="detail-section-label">Issue Reported</div>
+      <div class="detail-body">${esc(i.issue)}</div>
+      ${i.notes ? `<div class="detail-meta-row"><span class="detail-meta-label">Parts / Notes</span><span class="detail-meta-val">${esc(i.notes)}</span></div>` : ''}
+      <div class="detail-meta-row"><span class="detail-meta-label">Fault type</span><span class="detail-meta-val">${(i.faults || []).length ? esc(i.faults.map(faultLabel).join(', ')) : 'Not set (choose it below)'}</span></div>
+      ${S.repeats && S.repeats[i.id] ? '<div class="detail-meta-row"><span class="detail-meta-label">🔁 Repeat of</span><span class="detail-meta-val">' + S.repeats[i.id].map(r => esc(faultLabel(r.type)) + ', ' + fmtDate(r.at)).join('; ') + '</span></div>' : ''}
+      <div class="detail-meta-row"><span class="detail-meta-label">Reported by</span><span class="detail-meta-val">${esc(i.reportedBy)}</span></div>
+      <div class="detail-meta-row"><span class="detail-meta-label">Date / Time</span><span class="detail-meta-val">${fmtDateTime(i.reportedAt)}</span></div>
+      ${i.source === 'mcheck' ? '<div class="detail-meta-row"><span class="detail-meta-label">Found by</span><span class="detail-meta-val">M-check</span></div>' : ''}
+      <div class="detail-meta-row"><span class="detail-meta-label">Odometer</span><span class="detail-meta-val">${i.odometer != null ? fmtKm(i.odometer) : ('odometer' in i ? 'Couldn\'t be read' : 'Not recorded')}</span></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">Updates</div>
+      <div id="detailUpdates">${updatesHTML(i)}</div>
+      <div class="upd-form">
+        <div class="field"><div class="field-label" style="margin-bottom:6px">Fault type</div><div class="fault-chips" id="updFaults"></div></div>
+        <div class="field"><textarea class="field-textarea" id="updText" rows="3" placeholder="What's changed? e.g. Pads ordered, ETA Thursday. Brake now rubbing more."></textarea></div>
+        <div class="field odo-row">
+          <input class="field-input field-mono" id="updBy" placeholder="Initials" maxlength="5" style="text-transform:uppercase;max-width:110px">
+          <input class="field-input field-mono" id="updOdo" inputmode="numeric" placeholder="Odometer (optional)" maxlength="9" style="max-width:170px">
+          ${i.status === 'open' ? `<select id="updPrio" aria-label="Priority"><option value="">Priority: keep P${p}</option>${[1, 2, 3, 4, 5].filter(n => n !== p).map(n => `<option value="${n}">Change to P${n} · ${prioLabel(n)}</option>`).join('')}</select>` : ''}
+        </div>
+        <button class="btn btn-secondary" id="updBtn" onclick="submitUpdate('${i.id}')" style="margin:0">Add update</button>
+      </div>
+    </div>
+    ${i.status === 'resolved' ? `
+      <div class="detail-section">
+        <div class="detail-section-label" style="color:var(--accent-text);border-color:var(--accent-line)">Resolution</div>
+        <div class="detail-body">${esc(i.resolution)}</div>
+        <div class="detail-meta-row"><span class="detail-meta-label">Repaired by</span><span class="detail-meta-val">${esc(i.repairedBy)}</span></div>
+        <div class="detail-meta-row"><span class="detail-meta-label">Date / Time</span><span class="detail-meta-val">${fmtDateTime(i.resolvedAt)}</span></div>
+      </div>` : ''}
+    ${(i.corrections || []).length ? '<div class="detail-section"><div class="detail-section-label">Correction</div>' + i.corrections.map(c =>
+      '<div class="detail-body">' + (c.kind === 'reopened' ? 'Reopened: repaired by mistake' : 'Logged in error') + '</div>' + Correct.line(c) +
+      (c.resolution ? '<div class="detail-meta-row"><span class="detail-meta-label">Was repaired</span><span class="detail-meta-val">' + esc(c.resolution) + (c.repairedBy ? ' · ' + esc(c.repairedBy) : '') + (c.resolvedAt ? ' · ' + fmtDateTime(c.resolvedAt) : '') + '</span></div>' : '')).join('') + '</div>' : ''}
+    ${i.status === 'open'
+      ? `<button class="btn btn-success" onclick="resolveFromDetail('${i.id}')" style="margin-top:8px">Mark as Resolved</button>`
+      : ''}
+    ${!(i.corrections || []).length ? `<div style="display:flex;gap:8px;margin-top:8px">
+        ${i.status === 'resolved' ? `<button class="btn btn-secondary" style="margin:0;font-size:13px" onclick="correctIssue('${i.id}','reopen')">↶ Reopen: not fixed</button>` : ''}
+        <button class="btn btn-secondary" style="margin:0;font-size:13px" onclick="correctIssue('${i.id}','error')">✎ Logged in error</button></div>` : ''}
+    <button class="btn btn-secondary" onclick="closeDetail()" style="margin-top:8px">Close</button>`;
+  $('detailModal').classList.add('open');
+  updFaults = [...(i.faults || [])]; $('updFaults').innerHTML = chipsHTML(updFaults, 'toggleUpdFault', true);
+  if ($('updBy') && !$('updBy').value && window.Team) $('updBy').value = Team.initials();
+  detailId = id;
+}
+// v3.9 corrections: initials and a reason; the original stays on the issue. Once per issue.
+function correctIssue(id, kind) {
+  const i = S.issues.find(x => x.id === id); if (!i) return;
+  const reopen = kind === 'reopen';
+  Correct.ask({
+    title: reopen ? 'Reopen ' + i.bikeId + '\'s issue?' : 'Close as logged in error?',
+    sub: reopen ? 'For an issue marked repaired by mistake. It goes back to open, with the repair kept on the record.'
+      : 'For an issue logged on the wrong bike, or that wasn\'t a real fault. It\'s closed, and left out of repeats, time out of service and the Dashboard. If it belongs to another bike, log it again on that bike.',
+    action: reopen ? 'Reopen it' : 'Close as in error',
+    onOK: async (by, reason) => {
+      try { acceptView((await Ops.act(reopen ? 'reopenIssue' : 'issueInError', { id, by, reason })).view); showToast(reopen ? '↶ Reopened' : '✎ Closed as logged in error', 'success'); openDetail(id); }
+      catch (e) { showToast(e.message, 'error'); }
+    },
+  });
+}
+function closeDetail() { $('detailModal').classList.remove('open'); detailId = null; draftUpdateId = null; }
+
+// Updates go straight to the server; the id makes a retry after a dropped connection safe.
+let detailId = null, draftUpdateId = null;
+async function submitUpdate(issueId) {
+  if (busy) return;
+  const text = $('updText').value.trim();
+  const by = $('updBy').value.trim().toUpperCase();
+  const odometer = readKm($('updOdo').value);
+  const priority = $('updPrio') ? $('updPrio').value : '';
+  const cur = (S.issues.find(x => x.id === issueId) || {}).faults || [];
+  const faultsChanged = updFaults && JSON.stringify([...updFaults].sort()) !== JSON.stringify([...cur].sort());
+  if (faultsChanged && !updFaults.length) { showToast('Keep at least one fault type', 'warning'); return; }
+  if (!text && !faultsChanged) { showToast('Write the update', 'warning'); $('updText').focus(); return; }
+  if (!by) { showToast('Enter your initials', 'warning'); $('updBy').focus(); return; }
+  if (Number.isNaN(odometer)) { showToast('Odometer must be a number of km', 'warning'); return; }
+  if (priority === '5' && !confirm('Change to P5? The bike will be out of service and refused in the Group Scanner.')) return;
+  draftUpdateId = draftUpdateId || Ops.uid();
+  const btn = $('updBtn');
+  busy = true; btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await Ops.act('updateIssue', { id: issueId, update: { id: draftUpdateId, by, text, odometer, priority, ...(faultsChanged ? { faults: updFaults } : {}) } });
+    draftUpdateId = null;
+    acceptView(res.view);
+    showToast('✓ Update added', 'success');
+    openDetail(issueId);
+  } catch (e) {
+    showToast(e.message, 'error');
+    busy = false; btn.disabled = false; btn.textContent = 'Add update';
+  } finally { busy = false; }
+}
+function resolveFromDetail(id) {
+  const i = S.issues.find(x => x.id === id); if (!i) return;
+  closeDetail();
+  matchedIssue = i;
+  $('resolveBikeId').value = i.bikeId;
+  switchTab('resolve');
+  setTimeout(() => renderResolveBody(), 50);
+}
+
+function buildShareText() {
+  const openIssues = S.issues.filter(i => i.status === 'open').sort((a, b) => (b.priority || 3) - (a.priority || 3) || b.reportedAt - a.reportedAt);
+  const now = new Date().toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const lines = ['⚠️ ' + Brand.name() + ' — Open Issues', now, '─────────────────────'];
+  if (!openIssues.length) lines.push('', 'No open issues. Fleet is all clear ✓');
+  else {
+    openIssues.forEach(i => {
+      const p = i.priority || 3;
+      const a = i.asset || findAsset(i.bikeId);
+      const w = a ? [a.brand, a.model].filter(Boolean).join(' ') : '';
+      lines.push('', (p === 5 ? '🚫 OOS' : 'P' + p) + ' · 🚲 ' + i.bikeId + (w ? ' ' + w : '') + (a && a.keyNumber ? ' · key ' + a.keyNumber : '') + '  (' + i.reportedBy + ' · ' + fmtDateTime(i.reportedAt) + ')');
+      lines.push('   ' + i.issue);
+      if (i.notes) lines.push('   📝 ' + i.notes);
+      const lu = (i.updates || []).slice(-1)[0];
+      if (lu) lines.push('   💬 ' + lu.by + ', ' + fmtDateTime(lu.at) + ': ' + lu.text);
+    });
+    lines.push('', '─────────────────────', 'Total open: ' + openIssues.length);
+  }
+  return lines.join('\n');
+}
+async function shareOpen() {
+  const text = buildShareText();
+  if (navigator.share) { try { await navigator.share({ title: Brand.name() + ' Open Issues', text }); showToast('Shared ✓', 'success'); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  copyToClipboard(text);
+}
+function copyToClipboard(text) {
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => showToast('Copied ✓', 'success')).catch(() => fallbackCopy(text));
+  else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('Copied ✓', 'success'); } catch {}
+  document.body.removeChild(ta);
+}
+function downloadCSV() {
+  if (!S.issues.length) { showToast('No issues to export', 'warning'); return; }
+  const cv = Ops.csvCell;
+  const rows = [['Date Generated', 'Bike ID', 'Serial Number', 'Key Number', 'Brand', 'Model', 'Size', 'Bike Age (months)', 'Priority', 'Priority Label', 'Status', 'Fault Types', 'Repeat', 'Issue', 'Parts/Notes', 'Reported By', 'Reported At', 'Odometer (km)', 'Updates', 'Latest Update', 'Update History', 'Resolution', 'Repaired By', 'Resolved At'].join(',')];
+  const dg = fmtDateTime(Date.now());
+  S.issues.forEach(i => {
+    const p = i.priority || 3;
+    const a = i.asset || findAsset(i.bikeId) || {};
+    rows.push([cv(dg), cv(i.bikeId), cv(a.serial || ''), cv(a.keyNumber || ''), cv(a.brand || ''), cv(a.model || ''), cv(a.size || ''),
+      cv(a.purchaseDate ? Ops.ageMonths(a.purchaseDate) : ''), cv('P' + p), cv(prioLabel(p)), cv(i.error ? 'logged in error' : (i.corrections || []).length && i.status === 'open' ? 'reopened' : i.status), cv((i.faults || []).map(faultLabel).join('; ')), cv(S.repeats && S.repeats[i.id] ? 'yes' : ''), cv(i.issue), cv(i.notes || ''),
+      cv(i.reportedBy), cv(fmtDateTime(i.reportedAt)), cv(i.odometer != null ? i.odometer : ''),
+      cv((i.updates || []).length), cv((i.updates || []).length ? i.updates[i.updates.length - 1].text : ''), cv(updateHistoryText(i)), cv(i.resolution || ''), cv(i.repairedBy || ''), cv(i.resolvedAt ? fmtDateTime(i.resolvedAt) : '')].join(','));
+  });
+  Ops.downloadText(rows.join('\r\n'), Brand.file() + '-Issues-' + Ops.todayISO() + '.csv', 'text/csv;charset=utf-8');
+  showToast('CSV downloaded ✓', 'success');
+}
+
+// One cell holding every update, oldest first, for the spreadsheet.
+function updateHistoryText(i) {
+  return (i.updates || []).map(u => fmtDateTime(u.at) + ' ' + u.by + ': ' + u.text +
+    (u.priorityTo ? ' [P' + u.priorityFrom + '→P' + u.priorityTo + ']' : '') + (u.odometer != null ? ' [' + u.odometer + ' km]' : '')).join(' | ');
+}
+
+function truncate(s, n) { s = String(s); return s.length > n ? s.slice(0, n) + '…' : s; }
+function fmtDateTime(ts) { return new Date(ts).toLocaleString('en-AU', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimer);
+  const el = $('toast'); el.textContent = msg; el.className = 'toast show ' + type;
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+function doFlash(color) {
+  const el = $('flash'); el.style.background = color; el.style.opacity = '0.22';
+  setTimeout(() => el.style.opacity = '0', 130);
+}
+
+setReportPrio(3);
+renderLog();
+pullIssues(true).then(renderLog).catch(() => {}).finally(() => poll.start());
+
+// Opened from the Group Scanner after taking a bike off for a fault (v3.5): the bike is filled in,
+// and once the issue is logged the page goes back to the scanner.
+const FROM_SCANNER = new URLSearchParams(location.search).get('from') === 'scanner';
+(() => {
+  const bike = new URLSearchParams(location.search).get('bike');
+  if (!bike) return;
+  try { switchTab('report'); } catch {}
+  $('reportBikeId').value = bike.toUpperCase().slice(0, 30);
+  try { showReportAsset(); } catch {}
+  $('reportIssue').focus();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SA eBikes · Operations Tools v3.10 · Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;--bg-elev:#ffffff;--bg-soft:#f2efe8;
+  --border:#e4ded2;--border-strong:#d4cdbd;
+  --text:#1f2428;--text-dim:#5a6269;--text-muted:#8b8f93;
+  --warn-text:#8a5a1a;--danger:#c94a45;--danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;padding:24px 16px}
+.wrap{max-width:680px;margin:0 auto}
+h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:24px}
+.card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+h2{font-size:16px;font-weight:800;margin-bottom:6px}
+p{font-size:13px;color:var(--text-dim);line-height:1.55;margin-bottom:12px}
+.btn{padding:12px 16px;border-radius:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;border:1.5px solid var(--border-strong);background:var(--bg-elev);color:var(--text)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+label.check{display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:12px;color:var(--danger-text)}
+.out{font-family:'DM Mono',monospace;font-size:12px;margin-top:10px;white-space:pre-wrap;line-height:1.6}
+.out.ok{color:var(--accent-text)}.out.err{color:var(--danger-text)}
+ul.archives{list-style:none;font-size:13px;margin-top:12px}
+ul.archives li{padding:10px 0;border-bottom:1px solid var(--border)}
+.arch-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.arch-date{font-weight:800}
+.arch-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.arch-btns{display:flex;gap:6px;flex:none}
+.arch-btns .btn{font-size:12px;padding:6px 10px}
+.arch-view{margin-top:10px;overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+.arch-view table{border-collapse:collapse;width:100%;min-width:520px;font-size:12px}
+.arch-view th,.arch-view td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.arch-view th{background:var(--bg-soft);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--text-dim)}
+.arch-view tr.off td{color:var(--text-muted)}
+.arch-view td.mono{white-space:nowrap;font-family:'DM Mono',monospace}
+.team-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+.team-row.retired{opacity:.5}
+.team-row .ini{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text);margin-left:6px;font-size:12px}
+.team-row .btns{display:flex;gap:6px;flex:none}
+.team-row .btns .btn{font-size:12px;padding:6px 10px}
+.team-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.team-add input{font:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text);min-width:0}
+.range{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:10px}
+.range select{font:inherit;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)}
+.range label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);display:flex;flex-direction:column;gap:4px}
+.range input{font:inherit;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)}
+.bk-status{font-size:13px;line-height:1.6;padding:12px 14px;border-radius:12px;margin-bottom:12px;border:1.5px solid var(--border)}
+.bk-status.green{background:var(--accent-soft);border-color:var(--accent-glow)}
+.bk-status.red{background:rgba(201,74,69,.08);border-color:rgba(201,74,69,.5);color:var(--danger-text)}
+.bk-status.amber{background:rgba(212,138,47,.08);border-color:rgba(212,138,47,.5);color:var(--warn-text)}
+/* v3.10: one page, two areas. /admin is the day-to-day Admin; /config is the Configuration. */
+body[data-area="ops"] [data-area="config"],body[data-area="config"] [data-area="ops"]{display:none!important}
+.area-switch{display:flex;gap:8px;margin:10px 0 4px}
+.area-switch a{flex:1;text-align:center;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);font-weight:800;font-size:14px;text-decoration:none}
+body[data-area="ops"] .area-switch a[data-to="ops"],body[data-area="config"] .area-switch a[data-to="config"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.biz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:10px 0}
+@media (max-width:560px){.biz-grid{grid-template-columns:1fr}}
+.biz-grid label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:var(--text-dim)}
+.biz-grid input,.biz-grid select{font:inherit;font-size:14px;padding:9px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.biz-grid .col{display:flex;gap:8px}.biz-grid .col input[type=color]{width:46px;padding:2px;height:40px}.biz-grid .col input:not([type]){flex:1;font-family:'DM Mono',monospace}
+.biz-logo{display:flex;gap:14px;align-items:flex-start;margin:6px 0}
+.biz-logo-box{width:88px;height:88px;border:1.5px dashed var(--border-strong);border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none;background:var(--bg-soft)}
+.biz-logo-box img{max-width:76px;max-height:76px}.biz-logo-box span{font-size:11px;color:var(--text-muted)}
+.biz-logo .btn{margin:0 6px 6px 0}.chk{display:flex;gap:6px;align-items:center;font-size:13px;margin:4px 0}
+.biz-preview{border:1.5px solid var(--border);border-radius:14px;padding:14px;margin:8px 0;background:var(--bg)}
+.biz-preview .ph{display:flex;align-items:center;gap:10px;font-size:26px}
+.biz-preview .pbtn{margin-top:10px;padding:12px;border-radius:12px;text-align:center;color:#fff;font-weight:800}
+.biz-preview .pbar{height:8px;border-radius:5px;margin-top:10px}
+.biz-preview .warn{font-size:12px;color:var(--danger-text,#b03a2e);margin-top:8px}
+.cfg-sec{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 0}
+.adm-nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0}
+.adm-nav a{font-size:12px;font-weight:700;padding:6px 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);text-decoration:none}
+h2.grp{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin:22px 0 10px;scroll-margin-top:52px}
+.card{scroll-margin-top:52px}
+.ft-row,.hm-row{display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.ft-row input[type=text]{flex:1;font:inherit;font-size:14px;padding:7px 9px;border:1.5px solid var(--border);border-radius:9px;background:var(--bg-elev);color:var(--text)}
+.ft-row.retired input[type=text]{opacity:.5;text-decoration:line-through}
+.ft-row button,.hm-row button{font:inherit;font-size:12px;padding:5px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.hm-row span{flex:1;font-size:14px}.hm-row.off span{opacity:.45}
+.admin-bar{font-size:13px;line-height:1.5;padding:10px 14px;border-radius:12px;margin:0 0 14px;border:1.5px solid var(--border);background:var(--bg-elev);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-bar.warn{background:rgba(212,138,47,.08);border-color:rgba(212,138,47,.5);color:var(--warn-text)}
+.admin-bar .btn{padding:8px 12px;font-size:13px}
+.wk-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 10px}
+.wk-nav .btn{width:44px;padding:10px 0}
+.wk-nav b{font-size:15px}
+.rs-day{font-weight:800;font-size:14px;margin:12px 0 4px}
+.rs-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.rs-row .btn{padding:7px 12px;font-size:13px;flex:none}
+.rs-row small{display:block;color:var(--text-dim);font-size:12px;margin-top:2px}
+.rs-tag{font:500 11px 'DM Mono',monospace;color:var(--warn-text);background:rgba(212,138,47,.12);border-radius:6px;padding:1px 6px;margin-left:4px}
+.btn-dark{background:var(--accent-text);border-color:var(--accent-text);color:#fff}
+.undo-bar{font-size:13px;background:var(--bg-soft);border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sheet-back{position:fixed;inset:0;background:rgba(20,22,24,.45);display:none;align-items:flex-end;justify-content:center;z-index:200}
+.sheet-back.open{display:flex}
+.sheet{background:var(--bg-elev);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow-y:auto}
+.sheet h3{font-size:19px;font-weight:800;margin:0 0 4px}
+.sheet .meta{font:400 12px 'DM Mono',monospace;color:var(--text-dim);margin-bottom:12px}
+.sheet label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700;margin-bottom:10px}
+.sheet input,.sheet select,.sheet textarea{font:400 15px 'Syne',sans-serif;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text);width:100%}
+.sheet .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sheet .hint{font-weight:400;font-size:12px;color:var(--text-dim)}
+.sheet .hist{background:var(--bg-soft);border-radius:12px;padding:10px 12px;font:400 12px 'DM Mono',monospace;color:var(--text-dim);line-height:1.6;margin:6px 0 12px}
+.sheet .acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
+.sheet .wide{grid-column:1/-1}
+.warnbox2{background:rgba(212,138,47,.1);border:1.5px solid rgba(212,138,47,.5);color:var(--warn-text);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;margin:8px 0}
+.errbox{background:rgba(201,74,69,.07);border:1.5px solid rgba(201,74,69,.45);color:var(--danger-text);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;margin:8px 0}
+.plan-list{font:400 12px 'DM Mono',monospace;line-height:1.7;margin:4px 0 10px}
+.team-row .who small{display:block;font:400 12px 'DM Mono',monospace;color:var(--text-dim);margin-top:2px}
+.bk-status .amber{color:var(--warn-text);font-weight:700}
+.bk-status .dim{color:var(--text-dim);font-size:12px}
+.bk-preview{font-size:13px;line-height:1.55;padding:12px 14px;border-radius:12px;margin-bottom:12px;background:rgba(90,110,200,.08);border:1.5px solid rgba(90,110,200,.45)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+h3.bk{font-size:14px;font-weight:800;margin:18px 0 6px}
+ul.snaps{list-style:none;font-size:13px}
+ul.snaps li{padding:10px 0;border-bottom:1px solid var(--border)}
+.snap-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.snap-row .btn{font-size:12px;padding:6px 10px;flex:none}
+.restore-box{margin-top:10px;padding:12px;border:1.5px solid var(--border-strong);border-radius:12px;background:var(--bg-soft)}
+.restore-box label{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:6px 0}
+.restore-box label small{display:block;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:11px}
+.restore-box input[type=text]{font:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text);width:140px;text-transform:uppercase}
+.warnbox{font-size:12px;color:var(--warn-text);margin:8px 0;line-height:1.5}
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);text-decoration:none;font-size:12px;font-weight:800}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/manifest" style="margin-left:6px">← Back to Load Manifest</a>
+<a class="back-home" href="/help#admin" style="margin-left:6px">? Help</a>
+<div class="wrap">
+  <h1 id="admTitle">Admin</h1>
+  <div class="sub" id="admSub">People, day to day, fleet, data and safety</div>
+  <div class="area-switch"><a href="/admin" data-to="ops">⚙️ Admin</a><a href="/config" data-to="config">🎨 Configuration</a></div>
+  <div class="admin-bar" id="adminBar" style="display:none"></div>
+
+  <div class="adm-nav" data-area="ops"><a href="#people">People</a><a href="#daily">Day to day</a><a href="#fleetgrp">Fleet</a><a href="#data">Data and safety</a></div>
+  <div class="adm-nav" data-area="config"><a href="#bizgrp">Business</a><a href="#guests">Guests and sites</a><a href="#maint">Maintenance</a><a href="#screens">Home screen</a><a href="#cfgfile">Configuration file</a></div>
+
+  <h2 class="grp" id="people" data-area="ops">People</h2>
+
+  <div class="card" id="team" data-area="ops">
+    <h2>Team</h2>
+    <p>The names staff pick from with the 👤 button. Staff only ever see each person's <b>Known as</b> name and initials; full name, email and mobile stay here, for emailing the roster and texting about changes. People who leave are retired, so their name stays on old records.</p>
+    <div id="teamList"><div class="out show">Loading…</div></div>
+    <div class="team-add">
+      <input id="tmName" maxlength="60" placeholder="Known as" style="flex:2 1 160px">
+      <input id="tmIni" maxlength="5" placeholder="Initials" style="flex:1 1 80px;text-transform:uppercase;font-family:'DM Mono',monospace">
+      <button class="btn btn-primary" onclick="addMember()">Add</button>
+    </div>
+    <div class="hint" style="font-size:12px;color:var(--text-dim);margin-top:6px">Add the full name, email and mobile with <b>Edit</b> once they're on the list.
+    </div>
+    <div class="out" id="teamOut"></div>
+  </div>
+
+  <div class="card" id="roster" data-area="ops">
+    <h2>Roster</h2>
+    <div class="wk-nav"><button class="btn" aria-label="Previous week" onclick="rsMove(-7)">‹</button><b id="rsWeek"></b><button class="btn" aria-label="Next week" onclick="rsMove(7)">›</button></div>
+    <div class="out show" id="rsInfo" style="margin-top:0"></div>
+    <div id="rsUndo"></div>
+    <div id="rsList"></div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-dark" onclick="openShift()">+ Add shift</button>
+      <button class="btn" onclick="openEmail()">Email roster</button>
+      <button class="btn" onclick="copyLastWeek()">Copy last week</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn" onclick="downloadRosterCSV()">Download CSV</button>
+      <button class="btn" onclick="document.getElementById('rsFile').click()">Upload CSV</button>
+      <input type="file" id="rsFile" accept=".csv,text/csv" style="display:none" onchange="uploadRosterCSV(this)">
+    </div>
+    <div class="out" id="rsOut"></div>
+  </div>
+
+  <h2 class="grp" id="daily" data-area="ops">Day to day</h2>
+
+  <div class="card" id="rezdy" data-area="ops">
+    <h2>Rezdy products</h2>
+    <p>Every product name seen in a manifest, and the location it goes to with the current matching words. Matching words are set for each location in Asset Register → Locations, or tried and saved below. A product that matches more than one location, or none, is flagged.</p>
+    <div id="rzList">Loading…</div>
+    <h3 class="bk">Try matching</h3>
+    <p>Paste product names (one per line) or choose a Rezdy manifest to see where each would go. Leave it empty to test every product seen. To try different words for a location, choose it and edit its words: nothing changes until you tap <b>Save these words</b>.</p>
+    <textarea id="rzNames" rows="3" placeholder="e.g. Sunset Ride - Oxenberry Farm" style="width:100%;font:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)" oninput="rzRender()"></textarea>
+    <div class="btn-row" style="margin:8px 0"><button class="btn" onclick="document.getElementById('rzFile').click()">Choose a manifest…</button><input type="file" id="rzFile" accept=".csv,text/csv" style="display:none" onchange="rzFromFile(this)"></div>
+    <div class="btn-row" style="align-items:center">
+      <select id="rzLoc" onchange="rzPickLoc()" style="font:inherit;font-size:14px;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)"></select>
+      <input id="rzWords" placeholder="matching words, separated by commas" oninput="rzRender()" style="flex:1 1 220px;font:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)">
+      <button class="btn btn-dark" id="rzSave" onclick="rzSaveWords()" disabled>Save these words</button>
+    </div>
+    <div id="rzResult" style="margin-top:10px"></div>
+    <div class="out" id="rzOut"></div>
+  </div>
+
+  <h2 class="grp" id="fleetgrp" data-area="ops">Fleet</h2>
+
+  <div class="card" id="dashboardData" data-area="ops">
+    <h2>Fleet history and dashboard data</h2>
+    <p>Each bike's day (available, hired and where from, out of service, in storage) is recorded when the next day's manifest is loaded, and the Fleet report and Dashboard read those records. <b>Rebuild</b> fills in earlier days from the daily archives, the move history, the issue log and the register's change history, so the figures describe each day as it was. Days recorded on the day are never changed. Where a rebuilt day had to use today's model or an unknown location, the report says so.</p>
+    <p><b>Preview</b> first: it reads everything and shows what would be saved, month by month, without saving. Then <b>Save</b>. Both are safe to run again.</p>
+    <div class="btn-row"><button class="btn" id="fleetPrevBtn" onclick="fleetRebuild(true)">Preview rebuild</button><button class="btn btn-primary" id="fleetSaveBtn" onclick="fleetRebuild(false)" disabled>Save rebuild</button></div>
+    <div class="out" id="dailyOut"></div>
+  </div>
+
+  <h2 class="grp" id="data" data-area="ops">Data and safety</h2>
+
+  <div class="card" id="backups" data-area="ops">
+    <h2>Backups</h2>
+    <div class="bk-preview" id="bkPreview" style="display:none"></div>
+    <div class="bk-status" id="bkStatus">Loading…</div>
+    <p>A checked backup of everything (groups and contacts, issues, the register, M-checks, checklists, lost property with photos, settings and the daily archives) is taken automatically each night. Backups are kept every night for 30 days, the first of each month for a year, and ones taken with <b>Back up now</b> for 90 days.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="bkNowBtn" onclick="backupNow()">Back up now</button>
+      <button class="btn" id="bkDlBtn" onclick="downloadOffsite()">Download off-site copy</button>
+    </div>
+    <div class="out" id="bkOut"></div>
+    <h3 class="bk">Restore</h3>
+    <p>Choose a backup, then the parts to put back. A safety backup of the data as it is now is taken first, so a restore can itself be undone.</p>
+    <ul class="snaps" id="bkList"></ul>
+    <button class="btn" id="bkMore" onclick="BK_ALL=true;renderSnaps()" style="display:none;margin-top:8px">Show all backups</button>
+  </div>
+
+  <div class="card" id="archives" data-area="ops">
+    <h2>Archived days</h2>
+    <p>A copy of the scanner groups is saved automatically each time a new manifest is loaded or the scanner is reset. Each archive opens as a spreadsheet (CSV): one row per bike, with its group, scan time and anything taken off. Customer phone numbers are not included.</p>
+    <div class="range">
+      <label>From tour date<input type="date" id="fromDate"></label>
+      <label>To tour date<input type="date" id="toDate"></label>
+      <button class="btn btn-primary" id="allBtn" onclick="downloadRange()">Download as one CSV</button>
+    </div>
+    <div class="out" id="rangeOut"></div>
+    <button class="btn" onclick="loadArchives()" style="margin-top:12px">Show archives</button>
+    <ul class="archives" id="archiveList"></ul>
+  </div>
+
+  <h2 class="grp" id="bizgrp" data-area="config">Business</h2>
+
+  <div class="card" id="business" data-area="config">
+    <h2>Business</h2>
+    <p>The business's name, logo, colours and heading font, shown on every page. Each phone keeps a copy, so pages never wait for them; the home screen picks up a change straight away, other screens within a few hours (or when reopened from the home screen).</p>
+    <div class="biz-grid">
+      <label>Business name<input id="bzName" maxlength="40"></label>
+      <label>Tagline (under the name on the home screen)<input id="bzTag" maxlength="80"></label>
+    </div>
+    <div class="biz-logo">
+      <div class="biz-logo-box"><img id="bzLogo" alt=""><span id="bzNoLogo">No logo</span></div>
+      <div>
+        <label class="btn" style="display:inline-block;cursor:pointer">Upload a logo<input type="file" id="bzFile" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="bzUpload(this)"></label>
+        <button class="btn" onclick="bzLogoTo('')">Use the standard logo</button>
+        <button class="btn" onclick="bzLogoTo('none')">No logo</button>
+        <label class="chk"><input type="checkbox" id="bzShowName"> Show the name beside the logo</label>
+        <p class="note">PNG or JPEG. It's shrunk to suit phones (about 50 KB at most). A square or upright mark works best beside the name.</p>
+      </div>
+    </div>
+    <div class="biz-grid">
+      <label>Main colour (buttons and green text)<span class="col"><input type="color" id="bzMainPick" oninput="bzCol('Main',this.value)"><input id="bzMain" maxlength="7" oninput="bzCol('Main',this.value,true)"></span></label>
+      <label>Highlight colour (flashes, ticks, bars)<span class="col"><input type="color" id="bzBrightPick" oninput="bzCol('Bright',this.value)"><input id="bzBright" maxlength="7" oninput="bzCol('Bright',this.value,true)"></span></label>
+      <label>Heading font<select id="bzFont"><option value="baloo">Baloo Bhai 2 (as on the SA eBikes logo)</option><option value="app">The app's own font</option></select></label>
+      <label>Country (for phone numbers)<select id="bzCountry"><option value="AU">Australia</option><option value="NZ">New Zealand</option><option value="GB">United Kingdom</option><option value="IE">Ireland</option><option value="US">United States</option><option value="CA">Canada</option></select></label>
+    </div>
+    <div class="biz-preview" id="bzPreview"></div>
+    <p class="note" id="bzTz"></p>
+    <button class="btn btn-primary" onclick="bzSave()">Save business details</button>
+    <div class="out" id="bzOut"></div>
+  </div>
+
+  <h2 class="grp" id="guests" data-area="config">Guests and sites</h2>
+
+  <div class="card" id="qr" data-area="config">
+    <h2>QR codes for guests</h2>
+    <p>The codes on the Show QR screen, and the links staff can send from Today's Contacts. One per line: the name, then a <b>|</b>, then the link (it must start with https://).</p>
+    <textarea id="qrText" rows="5" style="width:100%;font:inherit;font-size:13px;line-height:1.6;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)"></textarea>
+    <button class="btn btn-primary" onclick="saveQr()" style="margin-top:8px">Save QR codes</button>
+    <div class="out" id="qrOut"></div>
+  </div>
+
+  <div class="card" id="messages" data-area="config">
+    <h2>Message templates</h2>
+    <p>The messages staff send guests from Today's Contacts and the Group Scanner. These fill themselves in: <b>{first}</b> the guest's first name, <b>{site}</b> where they're hiring from, <b>{time}</b> their start time, and <b>{weather}</b>, which staff describe when they send it (keep it in the weather message).</p>
+    <div id="msgList"></div>
+    <div class="btn-row" style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="addTemplate()">+ Add a message</button><button class="btn btn-primary" onclick="saveTemplates()">Save messages</button></div>
+    <div class="out" id="msgOut"></div>
+  </div>
+
+  <div class="card" id="checklists" data-area="config">
+    <h2>Site checklists</h2>
+    <p>Edit the opening and closing checklists for each site: one item per line, in the order staff work through them. Start a line with <b>*</b> to make it mandatory: it must be ticked as done before the checklist can be signed off. Records already signed off keep the wording they had.</p>
+    <div class="range">
+      <label>Site<select id="clSite" onchange="loadList()"></select></label>
+      <label>Checklist<select id="clKind" onchange="loadList()"><option value="open">Opening</option><option value="close">Closing</option></select></label>
+    </div>
+    <textarea id="clText" rows="12" style="width:100%;font:inherit;font-size:13px;line-height:1.6;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text)"></textarea>
+    <button class="btn btn-primary" onclick="saveList()" style="margin-top:8px">Save checklist</button>
+    <div class="out" id="clOut"></div>
+  </div>
+
+  <div class="card" id="locationsNote" data-area="config">
+    <h2>Locations</h2>
+    <p>Hire, delivery, collection and storage locations, and the words that match them to Rezdy products, are kept in the <a href="/fleet">Asset Register → Locations</a>, next to the bikes. They're included in the configuration file.</p>
+  </div>
+
+  <h2 class="grp" id="maint" data-area="config">Maintenance</h2>
+
+  <div class="card" id="faults" data-area="config">
+    <h2>Fault types</h2>
+    <p>The fault types staff choose from when logging an issue, and that M-check failures are logged under. Rename one in place; its issues keep it. A type you no longer want can be <b>retired</b>: it leaves the list but stays on the issues that used it. <b>Repeat faults</b> are the same type logged again on the same bike within the window below.</p>
+    <div id="ftList">Loading…</div>
+    <div class="btn-row" style="margin-top:8px;align-items:center">
+      <button class="btn" onclick="ftAdd()">+ Add a fault type</button>
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px">Repeat window <input id="ftDays" type="number" min="7" max="365" style="width:70px;font:inherit;padding:7px 8px;border:1.5px solid var(--border);border-radius:9px;background:var(--bg-elev);color:var(--text)"> days</label>
+      <button class="btn btn-primary" onclick="ftSave()">Save fault types</button>
+    </div>
+    <div class="out" id="ftOut"></div>
+  </div>
+
+  <h2 class="grp" id="screens" data-area="config">Home screen</h2>
+
+  <div class="card" id="home" data-area="config">
+    <h2>Home screen</h2>
+    <p>The order of the tools on the home screen, and which are shown, for every phone. A hidden tool still opens from its address (for example /qr). Load Manifest is always shown, because Admin is opened from it.</p>
+    <div id="hmList">Loading…</div>
+    <button class="btn btn-primary" onclick="hmSave()" style="margin-top:8px">Save home screen</button>
+    <div class="out" id="hmOut"></div>
+  </div>
+
+  <h2 class="grp" id="cfgfile" data-area="config">Configuration file</h2>
+
+  <div class="card" id="configFile" data-area="config">
+    <h2>Configuration file</h2>
+    <p>Everything on this page in one small file: the business details, fault types, home screen, QR codes, messages, site checklists and locations. Keep a copy with your backups. Loading one puts back the parts you choose, after taking a backup first; hire records, issues and the asset register aren't touched. It's also how a new installation is set up.</p>
+    <div class="btn-row"><button class="btn" onclick="cfgDownload()">⬇ Download configuration</button>
+      <label class="btn" style="display:inline-block;cursor:pointer">⬆ Load a configuration file<input type="file" accept="application/json,.json" style="display:none" onchange="cfgPick(this)"></label></div>
+    <div id="cfgLoad"></div>
+    <div class="out" id="cfgOut"></div>
+  </div>
+
+
+
+</div>
+
+<div class="sheet-back" id="sheetBack" onclick="if (event.target === this) closeSheet()"><div class="sheet" id="sheet"></div></div>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+function show(id, msg, ok) { const el = document.getElementById(id); el.textContent = msg; el.className = 'out ' + (ok ? 'ok' : 'err'); }
+
+// ── backups ──────────────────────────────────────────────────
+let BK = null, BK_ALL = false, BK_OPEN = null;
+const FILE_UNIT = { day: 'groups', issues: 'issues', assets: 'bikes', moves: 'moves', mchecks: 'M-checks', 'mcheck-status': 'bikes',
+  'site-checklists': 'site lists', 'site-checks': 'sign-offs', 'qr-links': 'QR codes', 'message-templates': 'messages', team: 'people',
+  'daily-stats': 'days', 'lost-property': 'items' };
+const SNAP_REASON = { nightly: 'Nightly', manual: 'Back up now', 'pre-restore': 'Before a restore' };
+const whenAdl = t => new Date(t).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+const mb = n => n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB';
+const ONE = { groups: 'group', issues: 'issue', bikes: 'bike', moves: 'move', 'M-checks': 'M-check', 'site lists': 'site list', 'sign-offs': 'sign-off',
+  'QR codes': 'QR code', messages: 'message', people: 'person', days: 'day', items: 'item', 'lost items': 'lost item', photos: 'photo', 'daily archives': 'daily archive', parts: 'part' };
+const n = (count, unit) => count + ' ' + (count === 1 ? ONE[unit] || unit : unit);
+const ini = () => (window.Team ? Team.initials() : '') || '';
+
+async function loadBackups() {
+  try { BK = await Ops.view('backups'); renderAdminBar(BK.admin); renderBackups(); }
+  catch (e) { document.getElementById('bkStatus').innerHTML = '✗ ' + Ops.esc(e.message); }
+}
+function renderBackups() {
+  const st = BK.status, el = document.getElementById('bkStatus');
+  const lines = [];
+  if (st.state !== 'red') {
+    lines.push('✓ <b>Last good backup:</b> ' + whenAdl(st.lastOk.at) + ' (' + (SNAP_REASON[st.lastOk.reason] || st.lastOk.reason) + ')');
+    if (st.archivesProblem) lines.push('<span class="amber">Some daily archives weren\'t copied: ' + Ops.esc(st.archives.error) + '. They\'re tried again at the next backup.</span>');
+  } else {
+    lines.push('⛔ <b>' + (st.unfinished ? 'The ' + (SNAP_REASON[st.unfinished.reason] || st.unfinished.reason).toLowerCase() + ' backup started ' + whenAdl(st.unfinished.startedAt) + ' never finished' : st.lastOk ? 'No good backup since ' + whenAdl(st.lastOk.at) : 'No backup has been taken yet') + '.</b> Tap <b>Back up now</b>. If that fails too, the message below says why.');
+    if (st.lastError) lines.push('<span class="dim">Last attempt ' + whenAdl(st.lastError.at) + ': ' + Ops.esc(st.lastError.message) + '</span>');
+  }
+  if (st.archives) lines.push('<span class="dim">Daily archives: ' + st.archives.inBackup + ' in the backup' + (st.archives.pending ? ', ' + st.archives.pending + ' still to copy (they follow over the next few nights)' : '') + '</span>');
+  lines.push(st.offsiteDue
+    ? '<span class="amber">📥 Off-site copy due: ' + (st.offsiteAt ? 'last downloaded ' + whenAdl(st.offsiteAt) : 'never downloaded') + '.</span>'
+    : '<span class="dim">Off-site copy downloaded ' + whenAdl(st.offsiteAt) + (st.offsiteBy ? ' by ' + Ops.esc(st.offsiteBy) : '') + '</span>');
+  if (st.lastRestore) lines.push('<span class="dim">Last restore: ' + whenAdl(st.lastRestore.at) + (st.lastRestore.by ? ' by ' + Ops.esc(st.lastRestore.by) : '') + ', from the backup of ' + whenAdl(st.lastRestore.snapshotAt) + '</span>');
+  el.className = 'bk-status ' + st.state;
+  el.innerHTML = lines.map(l => '<div>' + l + '</div>').join('');
+  // A preview: its own data, with live backups it can load.
+  const pv = document.getElementById('bkPreview');
+  if (!BK.isLive) {
+    const live = BK.liveSnapshots || [];
+    pv.style.display = 'block';
+    pv.innerHTML = '🧪 <b>This is a preview</b> (' + Ops.esc(BK.context) + '). It has its own data, separate from the live site, and nothing done here reaches the live site. To try this version with real data, load a copy of a live backup into it.' +
+      (live.length ? '<ul class="snaps">' + live.slice(0, 5).map(x => '<li><div class="snap-row"><div>' + whenAdl(x.at) + ' · ' + (SNAP_REASON[x.reason] || x.reason) + '</div><button class="btn" onclick="loadLive(\'' + x.id + '\')">Load into this preview</button></div></li>').join('') + '</ul>'
+        : '<div class="dim" style="margin-top:6px">The live site has no backups yet.</div>');
+  } else pv.style.display = 'none';
+  renderSnaps();
+}
+function snapLine(x) {
+  const c = x.counts;
+  return [c.day != null ? n(c.day, 'groups') : '', c.issues != null ? n(c.issues, 'issues') : '', c.assets != null ? n(c.assets, 'bikes') : '',
+    c.mchecks != null ? n(c.mchecks, 'M-checks') : '', c['lost-property'] != null ? n(c['lost-property'], 'lost items') : '', mb(x.bytes)].filter(Boolean).join(' · ');
+}
+function renderSnaps() {
+  const list = BK.snapshots || [], show = BK_ALL ? list : list.slice(0, 10);
+  document.getElementById('bkList').innerHTML = !list.length ? '<li class="arch-meta">No backups yet. Tap Back up now.</li>' : show.map(x =>
+    '<li><div class="snap-row"><div><div class="arch-date">' + whenAdl(x.at) + '</div><div class="arch-meta">' + (SNAP_REASON[x.reason] || x.reason) + (x.by ? ' · ' + Ops.esc(x.by) : '') +
+    ' · ' + snapLine(x) + '</div></div><button class="btn" onclick="openRestore(\'' + x.id + '\')">' + (BK_OPEN === x.id ? 'Close' : 'Restore…') + '</button></div>' +
+    (BK_OPEN === x.id ? restoreBox(x) : '') + '</li>').join('');
+  document.getElementById('bkMore').style.display = !BK_ALL && list.length > 10 ? 'inline-block' : 'none';
+}
+function openRestore(id) { BK_OPEN = BK_OPEN === id ? null : id; renderSnaps(); }
+function restoreBox(x) {
+  const cnt = (counts, files) => files.map(f => counts[f] != null ? n(counts[f], FILE_UNIT[f]) : null).filter(Boolean).join(', ') || 'none';
+  return '<div class="restore-box">' + BK.sections.map(s => '<label><input type="checkbox" class="rs" value="' + s.id + '" onchange="dayWarn()"><span>' + Ops.esc(s.label) +
+    (s.files.length ? '<small>in the backup: ' + cnt(x.counts, s.files) + ' · now: ' + cnt(BK.current, s.files) + '</small>' : '') + '</span></label>').join('') +
+    '<div class="warnbox" id="dayWarn" style="display:none">⚠ Restoring today\'s groups replaces what\'s on every scanner. Do it when nobody is scanning. A phone still holding unsent scans sends them once it\'s back online, on top of the restored day.</div>' +
+    '<p style="margin:10px 0 6px">Type <b>RESTORE</b> to confirm:</p><div class="btn-row"><input type="text" id="rsConfirm" autocomplete="off"><button class="btn btn-primary" id="rsBtn" onclick="doRestore(\'' + x.id + '\')">Restore</button></div></div>';
+}
+function dayWarn() { const d = document.querySelector('.rs[value="day"]'); document.getElementById('dayWarn').style.display = d && d.checked ? 'block' : 'none'; }
+async function doRestore(id) {
+  const sections = [...document.querySelectorAll('.rs:checked')].map(c => c.value);
+  if (!sections.length) { show('bkOut', '✗ Tick at least one part to restore', false); return; }
+  if (document.getElementById('rsConfirm').value.trim().toUpperCase() !== 'RESTORE') { show('bkOut', '✗ Type RESTORE to confirm', false); return; }
+  const btn = document.getElementById('rsBtn'); btn.disabled = true;
+  show('bkOut', 'Checking the backup, taking a safety backup, then restoring…', true);
+  try {
+    const r = await Ops.act('restoreSnapshot', { id, sections, confirm: 'RESTORE', by: ini() });
+    show('bkOut', '✓ Restored from the backup of ' + whenAdl(r.snapshotAt) + ':\n' + r.restored.map(x => '  ' + x.key + ': ' + n(x.count, FILE_UNIT[x.key] || 'records')).join('\n') +
+      (r.photos ? '\n  ' + n(r.photos, 'photos') + ' put back' : '') + (r.archives ? '\n  ' + n(r.archives.copied, 'daily archives') + ' added back' : '') +
+      (r.archives && r.archives.pending ? '\n  ' + n(r.archives.pending, 'daily archives') + ' didn\'t fit in the time: restore Daily archives again to add the rest.' : '') +
+      '\nThe data as it was just before is saved as "Before a restore", in case this needs undoing.', true);
+    BK_OPEN = null; loadBackups();
+  } catch (e) { show('bkOut', '✗ ' + e.message, false); btn.disabled = false; }
+}
+async function loadLive(id) {
+  if (!confirm('Replace this preview\'s test data with the live backup? The live site isn\'t affected.')) return;
+  show('bkOut', 'Loading the live backup into this preview…', true);
+  try {
+    const r = await Ops.act('restoreSnapshot', { id, from: 'live', sections: BK.sections.map(s => s.id), confirm: 'RESTORE', by: ini() });
+    show('bkOut', '✓ Loaded the live backup of ' + whenAdl(r.snapshotAt) + ' into this preview.' + (r.archives && r.archives.pending ? '\n  ' + n(r.archives.pending, 'daily archives') + ' still to add: tap Load again.' : ''), true);
+    loadBackups();
+  } catch (e) { show('bkOut', '✗ ' + e.message, false); }
+}
+async function backupNow() {
+  const btn = document.getElementById('bkNowBtn'); btn.disabled = true;
+  show('bkOut', 'Backing up and checking…', true);
+  try {
+    const r = await Ops.act('backupNow', { by: ini() });
+    show('bkOut', '✓ Backed up and checked: ' + whenAdl(r.at) + (r.archives && r.archives.pending ? '\n  ' + n(r.archives.pending, 'daily archives') + ' still to copy. Tap Back up now again, or they follow tonight.' : ''), true);
+    loadBackups();
+  } catch (e) { show('bkOut', '✗ Backup failed: ' + e.message, false); }
+  finally { btn.disabled = false; }
+}
+async function shaHex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+// The off-site copy: fetched one part at a time (so it works at any size), each part checked
+// against its checksum, then saved as one file in this device's Downloads folder.
+async function downloadOffsite() {
+  const btn = document.getElementById('bkDlBtn'); btn.disabled = true;
+  try {
+    const out = { format: 'sa-ebikes-ops-backup', schema: 1, appVersion: BK ? BK.appVersion : '', exportedAt: Date.now(), exportedBy: ini(), files: {}, photos: {}, archives: {} };
+    const keys = Object.keys(BK ? BK.current : {});
+    for (const [n, key] of keys.entries()) {
+      show('bkOut', 'Downloading ' + (n + 1) + ' of ' + keys.length + ': ' + key + '…', true);
+      const r = await Ops.get({ view: 'backupPart', key });
+      if (r.missing) continue;
+      if (await shaHex(r.text) !== r.sha) throw new Error(key + ' didn\'t arrive intact. Try again.');
+      out.files[key] = { sha: r.sha, data: JSON.parse(r.text) };
+    }
+    const items = ((out.files['lost-property'] || {}).data || {}).items || [];
+    for (const i of items.filter(i => i.hasPhoto)) {
+      show('bkOut', 'Downloading lost-property photos…', true);
+      const ph = await Ops.get({ view: 'lostphoto', id: i.id });
+      if (ph.photo) out.photos[i.id] = ph.photo;
+    }
+    const arch = (await Ops.view('archives')).archives || [];
+    for (let i = 0; i < arch.length; i += 4) {
+      show('bkOut', 'Downloading daily archives: ' + Math.min(i + 4, arch.length) + ' of ' + arch.length + '…', true);
+      const got = await Promise.all(arch.slice(i, i + 4).map(key => Ops.get({ view: 'archive', key })));
+      got.forEach((d, j) => { out.archives[arch[i + j]] = d; });
+    }
+    const name = Brand.file() + '-backup-' + Ops.todayISO() + '.json';
+    Ops.downloadText(JSON.stringify(out), name, 'application/json');
+    await Ops.act('markOffsite', { by: ini() });
+    show('bkOut', '✓ Saved ' + name + ' (' + n(Object.keys(out.files).length, 'parts') + ', ' + n(Object.keys(out.photos).length, 'photos') + ', ' + n(arch.length, 'daily archives') + ', each part checked).\nKeep it somewhere private: it holds customer names and phone numbers.', true);
+    loadBackups();
+  } catch (e) { show('bkOut', '✗ Download failed: ' + e.message, false); }
+  finally { btn.disabled = false; }
+}
+loadBackups();
+
+// ── message templates ────────────────────────────────────────
+let TPL = [], TPL_REV = undefined;
+function renderTemplates() {
+  document.getElementById('msgList').innerHTML = TPL.map((t, n) =>
+    '<div style="border:1.5px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px">' +
+    '<input data-n="' + n + '" data-k="label" value="' + Ops.esc(t.label) + '" maxlength="60" style="width:100%;font:inherit;font-weight:700;font-size:14px;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;background:var(--bg-elev);color:var(--text);margin-bottom:6px">' +
+    '<textarea data-n="' + n + '" data-k="text" rows="5" maxlength="1000" style="width:100%;font:inherit;font-size:13px;line-height:1.5;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;background:var(--bg-elev);color:var(--text)">' + Ops.esc(t.text) + '</textarea>' +
+    '<button class="btn" style="margin-top:6px;font-size:12px;padding:6px 10px" onclick="TPL.splice(' + n + ',1);renderTemplates()">Remove</button></div>').join('');
+  document.querySelectorAll('#msgList [data-n]').forEach(el => el.oninput = () => { TPL[+el.dataset.n][el.dataset.k] = el.value; });
+}
+function addTemplate() { TPL.push({ id: '', label: 'New message', text: "Hi {first}, it's the " + Brand.name() + " team. " }); renderTemplates(); }
+async function saveTemplates() {
+  if (TPL.some(t => !t.label.trim() || !t.text.trim())) { show('msgOut', 'Each message needs a name and some text', false); return; }
+  try { const r = await Ops.act('saveMessages', { templates: TPL, baseRev: TPL_REV }); TPL = r.templates; TPL_REV = r.rev; renderTemplates(); show('msgOut', '✓ Saved ' + TPL.length + ' messages', true); }
+  catch (e) { show('msgOut', '✗ ' + (e.message), false); }
+}
+Ops.view('messages').then(v => { TPL = v.templates; TPL_REV = v.rev; renderTemplates(); }).catch(e => show('msgOut', '✗ ' + e.message, false));
+
+// ── QR codes ─────────────────────────────────────────────────
+let QR = [], QR_REV = undefined;
+(async () => {
+  try { const v = await Ops.view('qr'); QR = v.links; QR_REV = v.rev; document.getElementById('qrText').value = QR.map(l => l.label + ' | ' + l.url).join('\n'); }
+  catch (e) { show('qrOut', '✗ ' + e.message, false); }
+})();
+async function saveQr() {
+  const lines = document.getElementById('qrText').value.split('\n').map(l => l.trim()).filter(Boolean);
+  const links = lines.map((l, n) => { const i = l.lastIndexOf('|'); return { id: (QR[n] && QR[n].id) || '', label: i > 0 ? l.slice(0, i).trim() : '', url: i > 0 ? l.slice(i + 1).trim() : l }; });
+  if (links.some(l => !l.label)) { show('qrOut', 'Each line needs a name, then |, then the link', false); return; }
+  try { const r = await Ops.act('saveQrLinks', { links, baseRev: QR_REV }); QR = r.links; QR_REV = r.rev; show('qrOut', '✓ Saved ' + QR.length + ' QR code' + (QR.length > 1 ? 's' : ''), true); }
+  catch (e) { show('qrOut', '✗ ' + (e.message), false); }
+}
+// Fleet history (v3.6): one month per request, so a long history doesn't run into the server's time limit.
+let fleetPreviewed = false;
+async function fleetRebuild(dryRun) {
+  const prev = document.getElementById('fleetPrevBtn'), save = document.getElementById('fleetSaveBtn');
+  prev.disabled = save.disabled = true;
+  try {
+    const info = await Ops.view('fleetRebuildInfo');
+    if (!info.firstArchive) { show('dailyOut', 'There are no daily archives to rebuild from yet.', false); prev.disabled = false; return; }
+    const months = [];
+    for (let m = info.firstArchive.slice(0, 7); m <= (info.today || Ops.todayISO()).slice(0, 7); ) {
+      months.push(m);
+      const [y, mo] = m.split('-').map(Number); m = mo === 12 ? (y + 1) + '-01' : y + '-' + String(mo + 1).padStart(2, '0');
+    }
+    const lines = ['Archives from ' + info.firstArchive + ' to ' + info.lastArchive + ' (' + info.archivedDays + ' days). Records now: ' + info.live + ' recorded on the day, ' + info.rebuilt + ' rebuilt.', ''];
+    let total = 0, changed = 0;
+    for (const [n, m] of months.entries()) {
+      show('dailyOut', lines.join('\n') + '\n' + (dryRun ? 'Previewing ' : 'Saving ') + m + ' (' + (n + 1) + ' of ' + months.length + ')…', true);
+      const r = await Ops.act('rebuildFleet', { month: m, dryRun });
+      const bd = r.days.reduce((a, d) => a + d.bikes, 0), av = r.days.reduce((a, d) => a + d.available, 0), hi = r.days.reduce((a, d) => a + d.hired, 0);
+      const em = r.days.reduce((a, d) => a + d.estModel, 0), el = r.days.reduce((a, d) => a + d.estLocation, 0), ch = r.days.filter(d => d.changed).length;
+      const nm = r.days.filter(d => !d.manifest).length;
+      total += r.days.length; changed += ch;
+      lines.push(m + ': ' + (r.days.length ? r.days.length + ' day' + (r.days.length === 1 ? '' : 's') + ', ' + hi + ' of ' + av + ' bike-days hired (' + (av ? Math.round(hi / av * 100) : 0) + '%)' +
+        (nm ? ', ' + nm + ' with no manifest' : '') + (em ? ', model estimated ' + Math.round(em / bd * 100) + '%' : '') + (el ? ', location uncertain ' + Math.round(el / bd * 100) + '%' : '') +
+        (dryRun ? ', ' + ch + ' new or different' : '') : 'nothing to rebuild') + (r.kept ? '; ' + r.kept + ' recorded on the day, kept' : ''));
+    }
+    if (!dryRun) { try { await Ops.act('rebuildDaily', {}); } catch {} }
+    lines.push('', dryRun ? (changed ? 'Preview only: nothing saved. ' + changed + ' of ' + total + ' days would be new or different. Tap Save rebuild to save them.' : 'Preview only: the records already match. Nothing to save.')
+      : '✓ Saved ' + total + ' day' + (total === 1 ? '' : 's') + '. The Fleet report and Dashboard now use them.');
+    show('dailyOut', lines.join('\n'), true);
+    fleetPreviewed = dryRun && changed > 0;
+  } catch (e) { show('dailyOut', '✗ ' + e.message + (dryRun ? '' : '. Months already saved stay saved; run it again to finish.'), false); fleetPreviewed = false; }
+  prev.disabled = false; save.disabled = !fleetPreviewed;
+}
+
+// ── site checklists ──────────────────────────────────────────
+let CL = null;
+async function loadLists() {
+  const d = new Date(), iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  try {
+    CL = await Ops.get({ view: 'sitechecks', date: iso });
+    const sel = document.getElementById('clSite');
+    sel.innerHTML = CL.locations.map(l => '<option value="' + Ops.esc(l.code) + '">' + Ops.esc(l.code) + ' · ' + Ops.esc(l.name) + '</option>').join('');
+    loadList();
+  } catch (e) { show('clOut', '✗ ' + e.message, false); }
+}
+function loadList() {
+  const site = document.getElementById('clSite').value, kind = document.getElementById('clKind').value;
+  const lists = CL && CL.sites[site] && CL.sites[site].lists;
+  document.getElementById('clText').value = lists ? lists[kind].map(i => (i.mandatory ? '*' : '') + i.label).join('\n') : '';
+  if (lists && lists.isDefault) show('clOut', site + ' is using the starting lists, the same as VIC. Saving makes them its own.', true);
+  else document.getElementById('clOut').className = 'out';
+}
+async function saveList() {
+  const site = document.getElementById('clSite').value, kind = document.getElementById('clKind').value;
+  const items = document.getElementById('clText').value.split('\n').map(l => l.trim()).filter(Boolean)
+    .map(l => ({ label: l.replace(/^\*\s*/, ''), mandatory: l.startsWith('*') }));
+  if (!items.length) { show('clOut', 'A checklist needs at least one item', false); return; }
+  try {
+    const lists = CL.sites[site] && CL.sites[site].lists;
+    const res = await Ops.act('saveChecklist', { site, kind, items, baseV: lists ? lists.v || 0 : 0 });
+    CL.sites[site].lists = res.lists;
+    show('clOut', '✓ Saved: ' + site + ' ' + (kind === 'open' ? 'opening' : 'closing') + ' checklist, ' + items.length + ' items', true);
+  } catch (e) { show('clOut', '✗ ' + e.message + (e.code === 'changed' ? '. The list now shows the latest version: make your change again.' : ''), false); if (e.code === 'changed') loadLists(); }
+}
+loadLists();
+
+// ── team ─────────────────────────────────────────────────────
+let team = [];
+// ── team (v3.2: Known as, and contact details for Admin only) ──────────────
+let teamAdmin = false; // true when contact details can be shown and saved
+function renderTeam() {
+  const el = document.getElementById('teamList');
+  if (!team.length) { el.innerHTML = '<p style="margin:0">Nobody on the list yet. Add the first name below.</p>'; return; }
+  el.innerHTML = team.map(m => '<div class="team-row' + (m.retired ? ' retired' : '') + '"><span class="who"><b>' + Ops.esc(m.name) + '</b><span class="ini">' + Ops.esc(m.initials) + '</span>' + (m.retired ? ' · retired' : '') +
+    (teamAdmin ? '<small>' + [m.fullName, m.email, m.mobile].filter(Boolean).map(Ops.esc).join(' · ') + (!m.email || !m.mobile ? (m.fullName || m.email || m.mobile ? ' · ' : '') + '<span style="color:var(--warn-text)">' + (!m.email && !m.mobile ? 'no email or mobile yet' : !m.email ? 'no email yet' : 'no mobile yet') + '</span>' : '') + '</small>' : '') + '</span>' +
+    '<span class="btns"><button class="btn" onclick="editMember(\'' + m.id + '\')">Edit</button>' +
+    '<button class="btn" onclick="retireMember(\'' + m.id + '\',' + (m.retired ? 'false' : 'true') + ')">' + (m.retired ? 'Restore' : 'Retire') + '</button></span></div>').join('');
+}
+async function loadTeam() {
+  try { team = (await Ops.view('teamAdmin')).members; teamAdmin = true; }
+  catch (e) {
+    if (e.code !== 'admin-not-configured') { document.getElementById('teamList').innerHTML = '<div class="out show err">' + Ops.esc(e.message) + '</div>'; return; }
+    team = (await Ops.view('team')).members; teamAdmin = false;
+  }
+  renderTeam();
+}
+async function teamAct(action, payload, ok) {
+  try { await Ops.act(action, payload); await loadTeam(); show('teamOut', '✓ ' + ok, true); if (window.Team) Team.refresh(); return true; }
+  catch (e) {
+    if (e.code === 'changed') { await loadTeam(); show('teamOut', '✗ ' + e.message + '. The list now shows their latest details: open Edit again.', false); return false; }
+    show('teamOut', '✗ ' + (e.message), false); return false;
+  }
+}
+async function addMember() {
+  const name = document.getElementById('tmName').value.trim(), initials = document.getElementById('tmIni').value.trim().toUpperCase();
+  if (!name || !initials) { show('teamOut', 'Enter a Known as name and initials', false); return; }
+  if (await teamAct('addMember', { member: { id: Ops.uid(), name, initials } }, name + ' added')) {
+    document.getElementById('tmName').value = ''; document.getElementById('tmIni').value = '';
+  }
+}
+function editMember(id) {
+  const m = team.find(x => x.id === id); if (!m) return;
+  const f = (k, label, val, extra = '') => '<label>' + label + '<input id="tm_' + k + '" value="' + Ops.esc(val || '') + '" ' + extra + '></label>';
+  openSheet('<h3>Edit ' + Ops.esc(m.name) + '</h3><div class="meta">Staff see the Known as name and initials only.</div>' +
+    '<div class="two">' + f('name', 'Known as', m.name, 'maxlength="60"') + f('initials', 'Initials', m.initials, 'maxlength="5" style="text-transform:uppercase"') + '</div>' +
+    (teamAdmin ? f('fullName', 'Full name', m.fullName, 'maxlength="100"') + f('email', 'Email', m.email, 'type="email" maxlength="120" autocapitalize="off"') + f('mobile', 'Mobile', m.mobile, 'type="tel" maxlength="30"')
+      : '<div class="warnbox2">Full name, email and mobile can be added once an admin password is set in Netlify. See the note at the top of this page.</div>') +
+    '<div class="acts"><button class="btn" onclick="closeSheet()">Cancel</button><button class="btn btn-dark" id="tmSave">Save</button></div>');
+  document.getElementById('tmSave').onclick = async () => {
+    const v = k => document.getElementById('tm_' + k).value.trim();
+    const member = { name: v('name'), initials: v('initials').toUpperCase() };
+    if (teamAdmin) {
+      Object.assign(member, { fullName: v('fullName'), email: v('email') });
+      const raw = v('mobile');
+      if (raw && window.Phones) { const ph = Phones.fields(raw); if (ph.phoneCheck && !confirm(raw + " doesn't look like a mobile number. Save it anyway?")) return; member.mobile = ph.phone || raw; }
+      else member.mobile = raw;
+    }
+    if (await teamAct('updateMember', { id, baseV: m.v, member }, 'Saved')) closeSheet();
+  };
+}
+function retireMember(id, retire) {
+  const m = team.find(x => x.id === id); if (!m) return;
+  if (retire && !confirm('Retire ' + m.name + '? They come off the pick list and the roster list, but stay on old records. You can restore them later.')) return;
+  teamAct('retireMember', { id, retired: retire }, retire ? m.name + ' retired' : m.name + ' restored');
+}
+
+// ── a sheet for editing ──────────────────────────────────────────────────
+function openSheet(html) { document.getElementById('sheet').innerHTML = html; document.getElementById('sheetBack').classList.add('open'); }
+function closeSheet() { document.getElementById('sheetBack').classList.remove('open'); }
+
+// ── the admin password ───────────────────────────────────────────────────
+function renderAdminBar(a) {
+  const el = document.getElementById('adminBar');
+  if (!a) return;
+  el.style.display = 'flex';
+  if (!a.configured) {
+    el.className = 'admin-bar warn';
+    el.innerHTML = a.tooShort
+      ? '<span><b>The admin password set in Netlify is too short.</b> It needs at least 8 characters, so it isn\'t being used yet: Admin is still open to anyone with the staff PIN. Change <code>SAEBIKES_ADMIN_PASSWORD</code> in Netlify, then redeploy.</span>'
+      : '<span><b>No admin password yet.</b> Admin is open to anyone with the staff PIN, and team contact details can\'t be stored. Set <code>SAEBIKES_ADMIN_PASSWORD</code> in Netlify and redeploy (DEPLOY_NOTES.md shows how).</span>';
+  } else {
+    el.className = 'admin-bar';
+    el.innerHTML = '<span>🔓 Admin is unlocked. It locks again as soon as you leave this page.</span><button class="btn" onclick="Ops.lockAdmin();location.href=\'/manifest\'">Lock now</button>';
+  }
+}
+
+// ── roster ─────────────────────────────────────────────────────────────────
+const RDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const rDate = iso => { const d = new Date(iso + 'T00:00:00'); return RDAYS[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + Ops.MONTHS[d.getMonth()]; };
+const rMonday = iso => { const d = new Date(iso + 'T00:00:00'); return Ops.addDaysISO(iso, -((d.getDay() + 6) % 7)); };
+const r12 = t => { if (t === 'close') return 'close'; const [h, m] = t.split(':').map(Number); return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? 'am' : 'pm'); };
+let RS = null, rsWeek = Ops.addDaysISO(rMonday(Ops.todayISO()), 7);
+function rsMove(n) { rsWeek = Ops.addDaysISO(rsWeek, n); loadRoster(); }
+async function loadRoster() {
+  try { RS = await Ops.get({ view: 'rosterAdmin', start: rsWeek, days: 7 }); if (RS.locations) Locs.set(RS.locations); renderRoster(); }
+  catch (e) { document.getElementById('rsList').innerHTML = '<div class="out show err">' + Ops.esc(e.message) + '</div>'; }
+}
+function renderRoster() {
+  document.getElementById('rsWeek').textContent = rDate(RS.from) + ' – ' + rDate(RS.to);
+  const wk = RS.weeks[0] || {}, people = new Set(RS.shifts.map(s => s.memberId)).size;
+  document.getElementById('rsInfo').textContent = RS.shifts.length + ' shift' + (RS.shifts.length === 1 ? '' : 's') + ' · ' + people + ' ' + (people === 1 ? 'person' : 'people') + '\n' +
+    (wk.emailedAt ? 'Emailed ' + new Date(wk.emailedAt).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) + (wk.emailedBy ? ' by ' + wk.emailedBy : '') : 'Not emailed yet');
+  document.getElementById('rsUndo').innerHTML = wk.undo ? '<div class="undo-bar"><span>The last ' + (wk.undo.kind === 'copy' ? 'copy' : 'upload') + ' into this week (' + Ops.esc(wk.undo.by) + ', ' +
+    new Date(wk.undo.at).toLocaleString('en-AU', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ') can be undone until the week is edited.</span><button class="btn" onclick="undoUpload()">Undo ' + (wk.undo.kind === 'copy' ? 'copy' : 'upload') + '</button></div>' : '';
+  if (!RS.shifts.length) { document.getElementById('rsList').innerHTML = '<p style="margin:8px 0 0">No shifts this week yet.</p>'; return; }
+  let html = '', day = '';
+  for (const s of RS.shifts) {
+    if (s.date !== day) { day = s.date; html += '<div class="rs-day">' + rDate(s.date) + '</div>'; }
+    html += '<div class="rs-row"><span><b>' + (s.kind === 'na' ? 'N/A' : Ops.esc(s.site)) + '</b> · ' + Ops.esc(s.name) + ' ' + (s.kind === 'na' ? 'not available' : r12(s.start) + '–' + r12(s.end)) + (s.changed ? '<span class="rs-tag">changed</span>' : '') +
+      (s.note ? '<small>' + Ops.esc(s.note) + '</small>' : '') + '</span><button class="btn" onclick="openShift(\'' + s.id + '\')">Edit</button></div>';
+  }
+  document.getElementById('rsList').innerHTML = html;
+}
+async function rsAct(action, payload) {
+  const r = await Ops.act(action, Object.assign({ by: ini(), viewStart: rsWeek, viewDays: 7 }, payload));
+  if (r.view) { RS = r.view; renderRoster(); }
+  return r;
+}
+function openShift(id) {
+  const s = id ? RS.shifts.find(x => x.id === id) : null;
+  const members = RS.members, locs = RS.locations || [], na = s && s.kind === 'na';
+  const opt = (v, label, sel) => '<option value="' + Ops.esc(v) + '"' + (sel ? ' selected' : '') + '>' + Ops.esc(label) + '</option>';
+  const m = s && team.find(x => x.id === s.memberId);
+  openSheet('<h3>' + (s ? 'Edit shift' : 'Add shift') + '</h3><div class="meta">Admin' + (s ? ' · ' + rDate(s.date) + ' · ' + Ops.esc(Locs.name(s.site)) : '') + '</div>' +
+    '<label>Who<select id="shWho">' + (s ? '' : opt('', 'Choose…', true)) + members.map(x => opt(x.id, x.name + ' (' + x.initials + ')', s && s.memberId === x.id)).join('') + '</select></label>' +
+    '<div class="two"><label>Where<select id="shSite" onchange="shKind()">' + locs.map(l => opt(l.code, l.code + ' · ' + l.name, s ? s.site === l.code : l.code === 'VIC')).join('') + opt('__NA__', 'N/A · Not available', na) + '</select></label>' +
+    '<label>Date<input type="date" id="shDate" value="' + (s ? s.date : Ops.addDaysISO(rsWeek, 5)) + '"></label></div>' +
+    '<div class="two" id="shTimes"><label>Start<input type="time" id="shStart" value="' + (s && !na ? s.start : '09:00') + '"></label><label>Finish<input type="time" id="shEnd" value="' + (s && !na && s.end !== 'close' ? s.end : '17:00') + '"' + (s && s.end === 'close' ? ' disabled' : '') + '>' +
+      '<span class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="shClose" style="width:auto" onchange="document.getElementById(\'shEnd\').disabled=this.checked"' + (s && s.end === 'close' ? ' checked' : '') + '> Until close</span></label></div>' +
+    '<label>Note for the shift<textarea id="shNote" rows="2" maxlength="300">' + Ops.esc(s ? s.note : '') + '</textarea><span class="hint">Every staff member can see notes. Keep them to the day\'s work.</span></label>' +
+    (s && s.history.length ? '<div class="hist"><div style="color:var(--text);font-weight:500">History</div>' + s.history.slice(-6).map(h => Ops.esc(new Date(h.at).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) + ' · ' + h.what + ' · ' + h.by)).join('<br>') + '</div>' : '') +
+    '<div class="out" id="shOut"></div>' +
+    '<div class="acts">' + (s ? '<button class="btn" style="color:var(--danger-text)" onclick="removeShift(\'' + s.id + '\')">Remove shift</button>' : '<button class="btn" onclick="closeSheet()">Cancel</button>') +
+    '<button class="btn btn-dark" onclick="saveShift(' + (s ? '\'' + s.id + '\'' : '') + ')">Save</button>' +
+    (s && m && m.mobile ? '<a class="btn wide" style="text-align:center;text-decoration:none" href="#" onclick="return textChange(\'' + s.id + '\')">Text ' + Ops.esc(m.name) + ' about this shift</a>' : '') +
+    (s ? '<button class="btn wide" onclick="closeSheet()">Cancel</button>' : '') + '</div>');
+  shKind();
+}
+// Not available has no times.
+function shKind() { const el = document.getElementById('shTimes'); if (el) el.style.display = document.getElementById('shSite').value === '__NA__' ? 'none' : ''; }
+async function saveShift(id) {
+  const s = id ? RS.shifts.find(x => x.id === id) : null;
+  const v = k => document.getElementById(k).value;
+  const isNA = v('shSite') === '__NA__';
+  const shift = isNA ? { id: id || 'sh' + Ops.uid(), kind: 'na', memberId: v('shWho'), date: v('shDate'), note: v('shNote').trim() }
+    : { id: id || 'sh' + Ops.uid(), kind: 'shift', memberId: v('shWho'), site: v('shSite'), date: v('shDate'), start: v('shStart'), end: document.getElementById('shClose').checked ? 'close' : v('shEnd'), note: v('shNote').trim() };
+  if (!shift.memberId) { show('shOut', '✗ Choose who is working', false); return; }
+  if (!ini()) { show('shOut', '✗ Set your name first with the 👤 button at the top', false); return; }
+  try {
+    const r = await rsAct('rosterSave', { shift, baseV: s ? s.v : undefined });
+    closeSheet();
+    show('rsOut', '✓ ' + (r.result === 'added' ? 'Shift added' : r.result === 'unchanged' ? 'Nothing changed' : 'Shift saved') + (rMonday(shift.date) !== rsWeek ? ' (in the week of ' + rDate(rMonday(shift.date)) + ')' : ''), true);
+  } catch (e) {
+    if (e.code === 'changed') { await loadRoster(); closeSheet(); show('rsOut', '✗ ' + e.message + '. The list now shows the latest version: open it again to make your change.', false); return; }
+    show('shOut', '✗ ' + (e.message), false);
+  }
+}
+async function removeShift(id) {
+  const s = RS.shifts.find(x => x.id === id); if (!s) return;
+  if (!confirm('Remove ' + s.name + '\'s shift on ' + rDate(s.date) + '?')) return;
+  try { await rsAct('rosterRemove', { id, baseV: s.v }); closeSheet(); show('rsOut', '✓ Shift removed', true); }
+  catch (e) { show('shOut', '✗ ' + e.message, false); }
+}
+// A text message about a changed shift, from the manager's own phone.
+function textChange(id) {
+  const s = RS.shifts.find(x => x.id === id), m = s && team.find(x => x.id === s.memberId);
+  if (!m || !m.mobile) return false;
+  const body = 'Hi ' + m.name + ', a change to the roster: ' + rDate(s.date) + ', ' + (s.kind === 'na' ? 'marked not available' : Locs.name(s.site) + ' ' + r12(s.start) + '–' + r12(s.end)) + (s.note ? '. ' + s.note : '') + '. The latest roster is in Operations Tools. Thanks!';
+  location.href = 'sms:' + m.mobile.replace(/[^\d+]/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(body);
+  return false;
+}
+async function copyLastWeek() {
+  const from = Ops.addDaysISO(rsWeek, -7);
+  try { const r = await rsAct('rosterCopyWeek', { from, to: rsWeek }); show('rsOut', r.result === 'already-saved' ? '✓ Already copied' : '✓ Copied ' + r.added + ' shift' + (r.added === 1 ? '' : 's') + ' from the week of ' + rDate(from) + (r.skipped ? ' (' + r.skipped + ' skipped: person retired or site gone)' : '') + '. Undo is above the list.', true); }
+  catch (e) {
+    if (e.code === 'confirm') {
+      if (!confirm('The week of ' + rDate(rsWeek) + ' already has ' + e.data.affected + ' shift' + (e.data.affected === 1 ? '' : 's') + '.\n\nReplace ' + (e.data.affected === 1 ? 'it' : 'them') + ' with a copy of the week of ' + rDate(from) + '? You can undo this.')) return;
+      try { const r = await rsAct('rosterCopyWeek', { from, to: rsWeek, confirmReplace: e.data.affected }); show('rsOut', '✓ Replaced with ' + r.added + ' copied shift' + (r.added === 1 ? '' : 's') + '. Undo is above the list.', true); }
+      catch (e2) { show('rsOut', '✗ ' + e2.message, false); }
+      return;
+    }
+    show('rsOut', '✗ ' + e.message, false);
+  }
+}
+async function undoUpload() {
+  try { const r = await rsAct('rosterUndoImport', { week: rsWeek }); show('rsOut', '✓ Undone: the week is back as it was (' + r.shifts + ' shift' + (r.shifts === 1 ? '' : 's') + ').', true); }
+  catch (e) { show('rsOut', '✗ ' + e.message, false); loadRoster(); }
+}
+// Email roster: the week as text, opened in your own mail app with everyone rostered as Bcc, so
+// nobody sees anyone else's address. Opening it records the date and clears the "changed" marks.
+async function openEmail() {
+  if (!RS.shifts.length) { show('rsOut', '✗ There are no shifts this week to email', false); return; }
+  if (!teamAdmin) { show('rsOut', '✗ Email addresses need an admin password first (see the note at the top)', false); return; }
+  const ids = [...new Set(RS.shifts.map(s => s.memberId))];
+  const who = ids.map(i => team.find(m => m.id === i)).filter(Boolean);
+  const withEmail = who.filter(m => m.email), without = who.filter(m => !m.email);
+  const byDate = {};
+  for (const s of RS.shifts) { const k = s.kind === 'na' ? '~na' : s.site; ((byDate[s.date] = byDate[s.date] || {})[k] = byDate[s.date][k] || []).push(s.name + (s.kind === 'na' ? '' : ' ' + r12(s.start) + '–' + r12(s.end)) + (s.note ? ' (' + s.note + ')' : '')); }
+  const subject = Brand.name() + ' roster, ' + rDate(RS.from) + ' – ' + rDate(RS.to);
+  const body = 'Hi all,\n\nHere\'s the roster for ' + rDate(RS.from) + ' – ' + rDate(RS.to) + '.\n\n' +
+    Object.keys(byDate).sort().map(d => rDate(d).toUpperCase() + '\n' + Object.entries(byDate[d]).map(([site, l]) => (site === '~na' ? 'Not available' : Locs.name(site)) + ': ' + l.join(', ')).join('\n')).join('\n\n') +
+    '\n\nThe latest version is always in Operations Tools, under Roster.';
+  openSheet('<h3>Email roster</h3><div class="meta">' + Ops.esc(rDate(RS.from) + ' – ' + rDate(RS.to)) + '</div>' +
+    '<div class="out show">Bcc: ' + Ops.esc(withEmail.map(m => m.name).join(', ') || 'nobody') + '</div>' +
+    (without.length ? '<div class="warnbox2">No email address for ' + Ops.esc(without.map(m => m.name).join(', ')) + '. Add it in Team, or text them.</div>' : '') +
+    '<label>Subject<input id="emSubject" value="' + Ops.esc(subject) + '"></label><label>Message<textarea id="emBody" rows="12">' + Ops.esc(body) + '</textarea></label>' +
+    '<div class="acts"><button class="btn" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById(\'emBody\').value).then(() => show(\'rsOut\', \'✓ Copied\', true))">Copy text</button>' +
+    '<button class="btn btn-dark" id="emGo"' + (withEmail.length ? '' : ' disabled') + '>Open in Mail</button><button class="btn wide" onclick="closeSheet()">Cancel</button></div>');
+  document.getElementById('emGo').onclick = async () => {
+    const url = 'mailto:?bcc=' + encodeURIComponent(withEmail.map(m => m.email).join(',')) + '&subject=' + encodeURIComponent(document.getElementById('emSubject').value) + '&body=' + encodeURIComponent(document.getElementById('emBody').value);
+    try { await rsAct('rosterEmailed', { week: rsWeek }); } catch {}
+    location.href = url;
+    closeSheet(); show('rsOut', '✓ Opened in your mail app. Check it and send.', true);
+  };
+}
+// CSV: one row per shift. Download gives this week (an empty week gives the headings to fill in).
+function downloadRosterCSV() {
+  const head = ['Date', 'Day', 'Site', 'Known as', 'Start', 'Finish', 'Note'];
+  const rows = RS.shifts.map(s => [s.date.split('-').reverse().join('/'), RDAYS[new Date(s.date + 'T00:00:00').getDay()], s.kind === 'na' ? 'N/A' : s.site, s.name, s.kind === 'na' ? '' : s.start, s.kind === 'na' ? '' : s.end === 'close' ? 'Close' : s.end, s.note]);
+  const csv = '\ufeff' + [head, ...rows].map(r => r.map(Ops.csvCell).join(',')).join('\r\n');
+  Ops.downloadText(csv, Brand.file() + '-roster-' + rsWeek + '.csv', 'text/csv;charset=utf-8');
+}
+function parseCSVText(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  text = text.replace(/^\ufeff/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim()));
+}
+let rsUpload = null;
+async function uploadRosterCSV(input) {
+  const file = input.files[0]; input.value = '';
+  if (!file) return;
+  const rows = parseCSVText(await file.text());
+  if (rows.length < 2) { show('rsOut', '✗ That file has no rows under its headings', false); return; }
+  const h = rows[0].map(x => x.trim().toLowerCase());
+  const col = names => h.findIndex(x => names.includes(x));
+  const c = { date: col(['date']), day: col(['day']), site: col(['site', 'where', 'location']), person: col(['known as', 'person', 'name', 'who', 'staff', 'initials']), start: col(['start']), end: col(['finish', 'end']), note: col(['note', 'notes']) };
+  const missing = ['date', 'site', 'person', 'start', 'end'].filter(k => c[k] < 0);
+  if (missing.length) { show('rsOut', '✗ The file needs these columns: Date, Site, Known as, Start, Finish (missing: ' + missing.join(', ') + ')', false); return; }
+  const data = rows.slice(1).map((r, i) => ({ line: i + 2, date: r[c.date], day: c.day >= 0 ? r[c.day] : '', site: r[c.site], person: r[c.person], start: r[c.start], end: r[c.end], note: c.note >= 0 ? r[c.note] : '' }));
+  rsUpload = { rows: data, file: file.name };
+  try { const r = await Ops.act('rosterImport', { rows: data, dryRun: true, viewWeek: rsWeek, by: ini() }); showPlan(r.plan); }
+  catch (e) { show('rsOut', '✗ ' + e.message, false); }
+}
+function showPlan(plan) {
+  const name = id => (RS.members.find(m => m.id === id) || team.find(m => m.id === id) || { name: '?' }).name;
+  const line = s => rDate(s.date) + ' · ' + (s.kind === 'na' ? 'N/A · ' + name(s.memberId) + ' not available' : s.site + ' · ' + name(s.memberId) + ' ' + r12(s.start) + '–' + r12(s.end));
+  const adds = plan.weeks.reduce((n, w) => n + w.adds.length, 0);
+  let html = '<h3>Check the upload</h3><div class="meta">' + Ops.esc(rsUpload.file) + ' · ' + plan.rows + ' row' + (plan.rows === 1 ? '' : 's') + '</div>';
+  if (plan.affected) html += '<div class="warnbox2"><b>This replaces ' + plan.affected + ' shift' + (plan.affected === 1 ? '' : 's') + ' already rostered.</b> Check they\'re the ones you mean to change.</div>';
+  for (const w of plan.warnings) html += '<div class="warnbox2">⚠ ' + Ops.esc(w.text) + '</div>';
+  if (plan.errors.length) html += '<div class="errbox"><b>' + plan.errors.length + ' row' + (plan.errors.length === 1 ? ' needs' : 's need') + ' fixing first:</b><div class="plan-list">' + plan.errors.slice(0, 30).map(e => 'Line ' + e.line + ': ' + Ops.esc(e.problem)).join('<br>') + '</div></div>';
+  for (const w of plan.weeks) {
+    html += '<div class="rs-day">Week of ' + rDate(w.week) + (w.emailedAt ? ' <span class="rs-tag">already emailed</span>' : '') + '</div><div class="plan-list">' +
+      (w.adds.length ? '<b>Add ' + w.adds.length + '</b><br>' + w.adds.map(a => '+ ' + Ops.esc(line(a.shift))).join('<br>') + '<br>' : '') +
+      (w.changes.length ? '<b>Change ' + w.changes.length + '</b><br>' + w.changes.map(a => '~ ' + Ops.esc(line(a.shift)) + (a.from.start ? ' (was ' + r12(a.from.start) + '–' + r12(a.from.end) + ')' : ' (note changed)')).join('<br>') + '<br>' : '') +
+      (w.removes.length ? '<b>Remove ' + w.removes.length + '</b><br>' + w.removes.map(a => '− ' + Ops.esc(line(a.shift))).join('<br>') + '<br>' : '') +
+      (w.unchanged ? w.unchanged + ' unchanged' : '') + '</div>';
+  }
+  const label = plan.errors.length ? 'Fix the file first' : plan.affected ? 'Replace ' + plan.affected + ' shift' + (plan.affected === 1 ? '' : 's') : adds ? 'Add ' + adds + ' shift' + (adds === 1 ? '' : 's') : 'Nothing to change';
+  html += '<div class="out" id="upOut"></div><div class="acts"><button class="btn" onclick="closeSheet()">Cancel</button><button class="btn btn-dark" id="upGo"' + (plan.errors.length || (!plan.affected && !adds) ? ' disabled' : '') + '>' + label + '</button></div>';
+  openSheet(html);
+  document.getElementById('upGo').onclick = async () => {
+    try {
+      const r = await Ops.act('rosterImport', { rows: rsUpload.rows, file: rsUpload.file, confirmReplace: plan.affected, by: ini(), viewStart: rsWeek, viewDays: 7 });
+      closeSheet(); rsWeek = plan.weeks.length ? plan.weeks[0].week : rsWeek; await loadRoster();
+      show('rsOut', '✓ Roster updated from ' + rsUpload.file + '. Undo is above the list until the week is edited.', true);
+    } catch (e) {
+      if (e.code === 'confirm' && e.data.plan) { show('upOut', '✗ The roster changed while you were checking. Here is the up-to-date preview.', false); showPlan(e.data.plan); return; }
+      show('upOut', '✗ ' + e.message, false);
+    }
+  };
+}
+// ── v3.10: two areas on one page. /admin is day to day; /config (or a link to one of its cards) is the Configuration.
+(function () {
+  const target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+  const area = location.pathname.startsWith('/config') || (target && target.dataset.area === 'config') ? 'config' : 'ops';
+  document.body.dataset.area = area;
+  document.getElementById('admTitle').textContent = area === 'config' ? 'Configuration' : 'Admin';
+  document.getElementById('admSub').textContent = area === 'config' ? 'Business, guests and sites, maintenance, home screen, configuration file' : 'People, day to day, fleet, data and safety';
+  document.title = document.title.replace(/· (Admin|Configuration)$/, '· ' + (area === 'config' ? 'Configuration' : 'Admin'));
+  if (target) setTimeout(() => target.scrollIntoView(), 50);
+})();
+
+// ── Business (v3.10) ──────────────────────────────────────────────────────
+let BZ = null;
+const $b = id => document.getElementById(id);
+function bzFill(b) {
+  BZ = { ...b };
+  $b('bzName').value = b.name || ''; $b('bzTag').value = b.tagline || '';
+  $b('bzMain').value = b.main; $b('bzMainPick').value = b.main; $b('bzBright').value = b.bright; $b('bzBrightPick').value = b.bright;
+  $b('bzFont').value = b.font || 'baloo'; $b('bzCountry').value = b.country || 'AU';
+  if (![...$b('bzCountry').options].some(o => o.value === b.country)) { const o = document.createElement('option'); o.value = o.textContent = b.country; $b('bzCountry').appendChild(o); $b('bzCountry').value = b.country; }
+  $b('bzShowName').checked = b.showName !== false;
+  bzPreview();
+}
+const bzLogoSrc = () => BZ.logo === 'none' ? '' : BZ.logo || '/assets/brand/logo.png';
+function bzLogoTo(v) { BZ.logo = v; bzPreview(); }
+function bzCol(which, v, typed) {
+  if (!/^#[0-9a-f]{6}$/i.test(v)) return;
+  $b('bz' + which).value = v; $b('bz' + which + 'Pick').value = v.toLowerCase(); bzPreview();
+}
+// Contrast of white text on the main colour, and of the highlight on the page (WCAG ratios).
+function lum(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4).reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0); }
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+function bzPreview() {
+  if (!BZ) return;
+  const main = $b('bzMain').value, bright = $b('bzBright').value, font = $b('bzFont').value === 'app' ? "'Syne',sans-serif" : "'Baloo Bhai 2','Syne',sans-serif";
+  const logo = bzLogoSrc(), name = $b('bzName').value || 'Business name', show = $b('bzShowName').checked;
+  $b('bzLogo').src = logo || ''; $b('bzLogo').style.display = logo ? '' : 'none'; $b('bzNoLogo').style.display = logo ? 'none' : '';
+  const ok = /^#[0-9a-f]{6}$/i.test(main) && /^#[0-9a-f]{6}$/i.test(bright);
+  const warn = ok && ratio(main, '#ffffff') < 4.5 ? 'White text on this main colour is hard to read (' + ratio(main, '#ffffff').toFixed(1) + ' : 1; aim for 4.5 or more). Choose a darker main colour.' : '';
+  $b('bzPreview').innerHTML = '<div class="ph">' + (logo ? '<img src="' + Ops.esc(logo) + '" style="height:1.5em" alt="">' : '') + (show || !logo ? '<span style="font-family:' + font + ';font-weight:800;color:var(--text)">' + Ops.esc(name) + '</span>' : '') + '</div>' +
+    '<div style="font-size:13px;color:var(--text-muted);font-style:italic">' + Ops.esc($b('bzTag').value) + '</div>' +
+    (ok ? '<div class="pbtn" style="background:' + main + '">Start Scanning</div><div style="margin-top:8px;font-family:\'DM Mono\',monospace;font-weight:700;color:' + main + '">EB-012 · added</div><div class="pbar" style="background:' + bright + ';width:70%"></div>' : '') +
+    (warn ? '<div class="warn">⚠ ' + warn + '</div>' : '');
+}
+['bzName', 'bzTag', 'bzFont', 'bzShowName'].forEach(id => $b(id).addEventListener('input', bzPreview));
+$b('bzFont').addEventListener('change', bzPreview);
+// A logo is shrunk on this device before it's sent: at most 256 pixels on its longer side and
+// about 50 KB, as PNG (keeps transparency), or WebP/JPEG if the PNG is still too big.
+async function bzUpload(input) {
+  const f = input.files && input.files[0]; input.value = ''; if (!f) return;
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('That file isn\'t an image this browser can read')); i.src = URL.createObjectURL(f); });
+    const k = Math.min(1, 256 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    let url = c.toDataURL('image/png');
+    if (url.length > 70000) url = c.toDataURL('image/webp', 0.85);
+    if (url.length > 70000 || !url.startsWith('data:image/webp')) { if (url.length > 70000) url = c.toDataURL('image/jpeg', 0.85); }
+    if (url.length > 88000) throw new Error('That image is still too large after shrinking. Try a simpler logo file.');
+    BZ.logo = url; bzPreview(); show('bzOut', 'Logo ready (' + Math.round(url.length * 0.75 / 1024) + ' KB). Tap Save business details to use it.', true);
+  } catch (e) { show('bzOut', '✗ ' + e.message, false); }
+}
+async function bzSave() {
+  try {
+    const business = { name: $b('bzName').value, tagline: $b('bzTag').value, main: $b('bzMain').value, bright: $b('bzBright').value, font: $b('bzFont').value,
+      country: $b('bzCountry').value, showName: $b('bzShowName').checked, logo: BZ.logo || '' };
+    const r = await Ops.act('saveBusiness', { business, baseRev: ST.rev });
+    ST = r.settings; bzFill(r.settings.business);
+    if (window.Brand) Brand.set(r.settings.brand);
+    show('bzOut', '✓ Saved. This phone shows it now; others pick it up from their home screen.', true);
+  } catch (e) { show('bzOut', '✗ ' + e.message, false); if (e.code === 'changed') stLoad(); }
+}
+
+// ── configuration file (v3.10) ────────────────────────────────────────────
+const CFG_SECTIONS = [['business', 'Business details and logo'], ['maintenance', 'Fault types and repeat window'], ['home', 'Home screen'], ['qr', 'QR codes'], ['messages', 'Message templates'], ['checklists', 'Site checklists'], ['locations', 'Locations (added or updated; none removed)']];
+async function cfgDownload() {
+  try {
+    const c = await Ops.view('configExport');
+    Ops.downloadText(JSON.stringify(c, null, 1), (window.Brand ? Brand.file() : 'Operations-Tools') + '-configuration-' + Ops.todayISO() + '.json', 'application/json');
+    show('cfgOut', '✓ Downloaded. Keep it with your backups.', true);
+  } catch (e) { show('cfgOut', '✗ ' + e.message, false); }
+}
+let CFG = null;
+async function cfgPick(input) {
+  const f = input.files && input.files[0]; input.value = ''; if (!f) return;
+  try {
+    CFG = JSON.parse(await f.text());
+    if (CFG.kind !== 'operations-tools-configuration' || !CFG.sections) throw new Error('That isn\'t a configuration file from Operations Tools');
+    const have = CFG_SECTIONS.filter(([k]) => CFG.sections[k]);
+    document.getElementById('cfgLoad').innerHTML = '<p style="margin-top:10px"><b>' + Ops.esc(f.name) + '</b>, saved ' + new Date(CFG.at).toLocaleString('en-AU') + ' from v' + Ops.esc(CFG.appVersion || '?') + '. Choose what to load; each part replaces what\'s here now.</p>' +
+      have.map(([k, l]) => '<label class="cfg-sec"><input type="checkbox" value="' + k + '" checked> ' + l + '</label>').join('') +
+      '<button class="btn btn-primary" style="margin-top:8px" onclick="cfgLoad()">Back up, then load</button>';
+  } catch (e) { CFG = null; document.getElementById('cfgLoad').innerHTML = ''; show('cfgOut', '✗ ' + (e instanceof SyntaxError ? 'That file isn\'t readable' : e.message), false); }
+}
+async function cfgLoad() {
+  const sections = [...document.querySelectorAll('#cfgLoad input:checked')].map(i => i.value);
+  if (!sections.length) { show('cfgOut', 'Choose at least one part to load.', false); return; }
+  if (!confirm('Load ' + sections.length + ' part' + (sections.length === 1 ? '' : 's') + ' from this file?\n\nA backup is taken first, so this can be undone from Admin → Backups.')) return;
+  show('cfgOut', 'Taking a backup, then loading…', true);
+  try {
+    const r = await Ops.act('configImport', { config: CFG, sections });
+    show('cfgOut', '✓ Loaded: ' + r.loaded.join(', ') + '.' + (r.backupId ? ' The backup taken first is in Admin → Backups.' : ''), true);
+    document.getElementById('cfgLoad').innerHTML = ''; CFG = null;
+    setTimeout(() => location.reload(), 1500);
+  } catch (e) { show('cfgOut', '✗ ' + e.message, false); }
+}
+loadTeam();
+loadRoster();
+// ── fault types and the home screen (v3.7) ──────────────────────────────
+let ST = null, FT = [], HM = null;
+const TILE_NAMES = { contacts: "📇 Today's Contacts", checklists: '✅ Site Checklists', roster: '🗓️ Roster', scanner: '📷 Group Scanner', qr: '🔳 Show QR',
+  fleet: '🚲 Asset Register', issues: '⚠️ Issue Reporter', lost: '🧳 Lost Property', manifest: '📋 Load Manifest', help: '❓ Help & SOPs' };
+async function stLoad() {
+  try { ST = await Ops.view('settings'); FT = ST.faultTypes.map(t => ({ ...t })); HM = { order: [...ST.home.order], hidden: [...ST.home.hidden] };
+    if (ST.business) bzFill(ST.business);
+    document.getElementById('bzTz').textContent = 'Time zone: ' + (ST.timeZone || 'Australia/Adelaide') + '. It\'s set for each installation in Netlify (SAEBIKES_TIMEZONE), because the server needs it before it reads any settings.';
+    document.getElementById('ftDays').value = ST.repeatDays; ftRender(); hmRender(); }
+  catch (e) { document.getElementById('ftList').textContent = e.message; document.getElementById('hmList').textContent = e.message; }
+}
+function ftRender() {
+  document.getElementById('ftList').innerHTML = FT.map((t, n) => '<div class="ft-row' + (t.retired ? ' retired' : '') + '">' +
+    '<button onclick="ftMove(' + n + ',-1)" aria-label="Up">↑</button><button onclick="ftMove(' + n + ',1)" aria-label="Down">↓</button>' +
+    '<input type="text" maxlength="50" value="' + Ops.esc(t.label) + '" oninput="FT[' + n + '].label=this.value">' +
+    '<button onclick="FT[' + n + '].retired=!FT[' + n + '].retired;ftRender()">' + (t.retired ? 'Bring back' : 'Retire') + '</button>' +
+    (!t.id ? '<button onclick="FT.splice(' + n + ',1);ftRender()">Remove</button>' : '') + '</div>').join('');
+}
+function ftMove(n, d) { const m = n + d; if (m < 0 || m >= FT.length) return; [FT[n], FT[m]] = [FT[m], FT[n]]; ftRender(); }
+function ftAdd() { FT.push({ label: '' }); ftRender(); const ins = document.querySelectorAll('#ftList input'); ins[ins.length - 1].focus(); }
+async function ftSave() {
+  try {
+    const r = await Ops.act('saveFaultTypes', { types: FT.map(t => ({ id: t.id, label: t.label, retired: !!t.retired })), repeatDays: Number(document.getElementById('ftDays').value), baseRev: ST.rev });
+    ST = r.settings; FT = ST.faultTypes.map(t => ({ ...t })); ftRender();
+    show('ftOut', '✓ Saved ' + FT.filter(t => !t.retired).length + ' fault types in use' + (FT.some(t => t.retired) ? ', ' + FT.filter(t => t.retired).length + ' retired' : '') + '. Phones pick them up when the Issue Reporter next refreshes.', true);
+  } catch (e) { show('ftOut', '✗ ' + e.message, false); if (e.code === 'changed') stLoad(); }
+}
+function hmRender() {
+  document.getElementById('hmList').innerHTML = HM.order.map((id, n) => { const off = HM.hidden.includes(id), fixed = id === 'manifest';
+    return '<div class="hm-row' + (off ? ' off' : '') + '"><button onclick="hmMove(' + n + ',-1)" aria-label="Up">↑</button><button onclick="hmMove(' + n + ',1)" aria-label="Down">↓</button>' +
+      '<span>' + (TILE_NAMES[id] || id) + '</span>' + (fixed ? '<span style="flex:0;font-size:11px;color:var(--text-muted);white-space:nowrap">always shown</span>' : '<button onclick="hmToggle(\'' + id + '\')">' + (off ? 'Show' : 'Hide') + '</button>') + '</div>'; }).join('');
+}
+function hmMove(n, d) { const m = n + d; if (m < 0 || m >= HM.order.length) return; [HM.order[n], HM.order[m]] = [HM.order[m], HM.order[n]]; hmRender(); }
+function hmToggle(id) { HM.hidden = HM.hidden.includes(id) ? HM.hidden.filter(x => x !== id) : [...HM.hidden, id]; hmRender(); }
+async function hmSave() {
+  try { const r = await Ops.act('saveHomeTiles', { order: HM.order, hidden: HM.hidden, baseRev: ST.rev }); ST = r.settings; HM = { order: [...ST.home.order], hidden: [...ST.home.hidden] }; hmRender();
+    show('hmOut', '✓ Saved. Each phone shows it the next time the home screen opens.', true); }
+  catch (e) { show('hmOut', '✗ ' + e.message, false); if (e.code === 'changed') stLoad(); }
+}
+stLoad();
+
+// Admin locks as soon as you leave the page (a link, Back, closing the tab). Switching to the mail
+// or messages app doesn't leave the page, so Email roster and Text about this shift still work.
+// ── Rezdy products and the matching tester (v3.4) ─────────────────────────
+let RZ = { locs: [], seen: [], names: null, loc: '' };
+const rzWordsOf = l => (l.match || []).join(', ');
+const rzParse = t => String(t || '').split(',').map(w => w.trim().toLowerCase()).filter(Boolean);
+async function rzLoad() {
+  try {
+    const [f, p] = await Promise.all([Ops.view('fleet'), Ops.view('rezdyProducts')]);
+    RZ.locs = (f.locations || []).filter(l => !l.retired && (l.kind === 'hire' || l.kind === 'delivery'));
+    RZ.seen = p.products || [];
+    const sel = document.getElementById('rzLoc');
+    sel.innerHTML = '<option value="">Try different words for…</option>' + RZ.locs.map(l => '<option value="' + Ops.esc(l.code) + '">' + Ops.esc(l.code + ' · ' + l.name) + '</option>').join('');
+    if (RZ.loc) sel.value = RZ.loc;
+    rzRenderSeen(); rzRender();
+  } catch (e) { document.getElementById('rzList').innerHTML = '<div class="out show err">' + Ops.esc(e.message) + '</div>'; }
+}
+function rzTag(m) {
+  if (!m.length) return '<span class="rs-tag" style="color:var(--danger-text)">no location</span>';
+  return '<b>' + Ops.esc(m[0].code) + '</b> <span style="color:var(--text-dim)">("' + Ops.esc(m[0].word) + '")</span>' + (m.length > 1 ? ' <span class="rs-tag">also ' + m.slice(1).map(x => Ops.esc(x.code)).join(', ') + '</span>' : '');
+}
+function rzRenderSeen() {
+  const el = document.getElementById('rzList');
+  if (!RZ.seen.length) { el.innerHTML = '<p style="margin:0">No products recorded yet. They\'re added each time a manifest is loaded.</p>'; return; }
+  const flagged = RZ.seen.filter(p => Locs.matchAll(p.name, RZ.locs).length !== 1).length;
+  el.innerHTML = (flagged ? '<div class="warnbox2">' + flagged + ' product' + (flagged > 1 ? 's need' : ' needs') + ' checking: ' + (flagged > 1 ? 'they match' : 'it matches') + ' more than one location, or none.</div>' : '') +
+    RZ.seen.map(p => '<div class="rs-row"><span>' + Ops.esc(p.name) + '<small>' + p.bookings + ' booking' + (p.bookings === 1 ? '' : 's') + ' · seen ' + Ops.esc(p.firstSeen) + (p.lastSeen !== p.firstSeen ? ' to ' + Ops.esc(p.lastSeen) : '') + '</small></span><span style="text-align:right;font-size:13px">' + rzTag(Locs.matchAll(p.name, RZ.locs)) + '</span></div>').join('');
+}
+function rzPickLoc() {
+  RZ.loc = document.getElementById('rzLoc').value;
+  const l = RZ.locs.find(x => x.code === RZ.loc);
+  document.getElementById('rzWords').value = l ? rzWordsOf(l) : '';
+  rzRender();
+}
+// Draft locations: the saved ones, with the words being tried for the chosen one.
+function rzDraft() {
+  if (!RZ.loc) return RZ.locs;
+  const words = rzParse(document.getElementById('rzWords').value);
+  return RZ.locs.map(l => l.code === RZ.loc ? { ...l, match: words } : l);
+}
+function rzRender() {
+  const typed = document.getElementById('rzNames').value.split('\n').map(x => x.trim()).filter(Boolean);
+  const names = typed.length ? typed : RZ.names || RZ.seen.map(p => p.name);
+  const draft = rzDraft(), changedWords = RZ.loc && rzParse(document.getElementById('rzWords').value).join(',') !== (RZ.locs.find(l => l.code === RZ.loc) || { match: [] }).match.join(',');
+  document.getElementById('rzSave').disabled = !changedWords;
+  if (!names.length) { document.getElementById('rzResult').innerHTML = ''; return; }
+  let moved = 0, problems = 0;
+  const rows = names.map(n => {
+    const now = Locs.matchAll(n, RZ.locs), next = Locs.matchAll(n, draft);
+    const was = now[0] ? now[0].code : '', will = next[0] ? next[0].code : '';
+    if (was !== will) moved++;
+    if (next.length !== 1) problems++;
+    return '<div class="rs-row"><span>' + Ops.esc(n) + '</span><span style="text-align:right;font-size:13px">' + rzTag(next) + (was !== will ? '<br><span class="rs-tag">was ' + (was || 'no location') + '</span>' : '') + '</span></div>';
+  });
+  document.getElementById('rzResult').innerHTML = '<div class="out show" style="margin-bottom:6px">' + names.length + ' product' + (names.length === 1 ? '' : 's') +
+    (changedWords ? ' · with the words you\'re trying: ' + moved + ' would change location' : '') + (problems ? ' · ' + problems + ' to check' : ' · each matches exactly one location') + '</div>' + rows.join('');
+}
+async function rzFromFile(input) {
+  const f = input.files[0]; input.value = ''; if (!f) return;
+  const rows = parseCSVText(await f.text());
+  const i = rows.length ? rows[0].map(h => h.trim()).indexOf('Product') : -1;
+  if (i < 0) { show('rzOut', '✗ That file has no Product column', false); return; }
+  RZ.names = [...new Set(rows.slice(1).map(r => (r[i] || '').trim()).filter(Boolean))];
+  document.getElementById('rzNames').value = '';
+  show('rzOut', '✓ ' + RZ.names.length + ' product' + (RZ.names.length === 1 ? '' : 's') + ' from ' + f.name, true);
+  rzRender();
+}
+async function rzSaveWords() {
+  const l = RZ.locs.find(x => x.code === RZ.loc); if (!l) return;
+  const words = rzParse(document.getElementById('rzWords').value);
+  if (!confirm('Save the matching words for ' + l.name + ' as: ' + (words.join(', ') || '(none)') + '?\n\nThis applies to manifests loaded from now on. Groups already loaded keep their location.')) return;
+  try {
+    await Ops.act('updateLocation', { code: l.code, match: words.join(', '), baseV: l.v || 0, by: ini() });
+    show('rzOut', '✓ Saved the words for ' + l.name, true);
+    await rzLoad();
+  } catch (e) { show('rzOut', '✗ ' + e.message + (e.code === 'changed' ? '. The words have been reloaded: try again.' : ''), false); if (e.code === 'changed') rzLoad(); }
+}
+rzLoad();
+window.addEventListener('pagehide', () => Ops.lockAdmin());
+// Coming back with the browser's Back button can show the old page from memory: reload it, so the
+// password is asked for again before anything is shown.
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+
+// ── archives ─────────────────────────────────────────────────
+// Keys look like archive/<tour date>/<saved timestamp>-<reason>.
+const REASONS = { manifest: 'New manifest loaded', reset: 'Scanner reset', 'pre-migration': 'Before data move' };
+const TAKEN_OFF = { swap: 'Swapped', fault: 'Fault', mistake: 'Scanned by mistake', cleared: 'Group cleared', other: 'Removed' };
+let archiveKeys = [];
+// Brand and model from today's register, for archives saved before bikes carried them.
+let register = {};
+async function loadRegister() {
+  try { const v = await Ops.view('fleet'); v.assets.forEach(a => register[a.id] = a); Locs.set(v.locations); } catch {}
+}
+
+function parseKey(k) {
+  const [, date, stamp] = k.split('/');
+  const dash = stamp.indexOf('-');
+  return { key: k, date, savedAt: Number(stamp.slice(0, dash)), reason: stamp.slice(dash + 1) };
+}
+const pad = n => String(n).padStart(2, '0');
+// dd/mm/yyyy hh:mm, which Excel set to Australian dates reads as a date and time.
+function dt(t) { if (!t) return ''; const d = new Date(t); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+const dmy = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.split('-').reverse().join('/') : (iso || '');
+
+async function loadArchives() {
+  const ul = document.getElementById('archiveList');
+  ul.innerHTML = '<li>Loading…</li>';
+  try {
+    if (!Object.keys(register).length) await loadRegister();
+    archiveKeys = (await Ops.view('archives')).archives.map(parseKey);
+    if (!archiveKeys.length) { ul.innerHTML = '<li>No archives yet</li>'; return; }
+    ul.innerHTML = archiveKeys.map((a, n) =>
+      '<li><div class="arch-row"><div><div class="arch-date">' + Ops.esc(dmy(a.date)) + '</div>' +
+      '<div class="arch-meta">' + Ops.esc(REASONS[a.reason] || a.reason) + ' · saved ' + dt(a.savedAt) + '</div></div>' +
+      '<div class="arch-btns"><button class="btn" onclick="viewArchive(' + n + ', this)">View</button>' +
+      '<button class="btn" onclick="downloadArchive(' + n + ')">CSV</button></div></div><div class="arch-slot"></div></li>').join('');
+  } catch (e) { ul.innerHTML = '<li>' + Ops.esc(e.message) + '</li>'; }
+}
+
+// One row per bike: on the group now, or taken off during the day. Empty groups get one row.
+const COLS = ['Tour Date', 'Archived At', 'Archive Reason', 'Group', 'Group Status', 'Group Deleted', 'Bike ID', 'Brand', 'Model', 'Scanned At', 'Taken Off At', 'Taken Off Reason', 'Hire Day', 'Checked In At', 'Not Back Reason', 'Issued By', 'Checked In By', 'Taken Off By', 'M-check Before Hire', 'Hire Location'];
+const EXC = { collect: 'Left at location, to collect', damaged: 'Damaged, issue logged', missing: 'Missing', other: 'Other' };
+function flatRows(meta, data) {
+  const day = (data && data.day) || {};
+  const tour = dmy(day.manifestDate || meta.date);
+  const info = register;
+  const STATUS = { out: 'Out', overnight: 'Out overnight', returned: 'Returned' };
+  const base = g => [tour, dt(data.archivedAt || meta.savedAt), REASONS[data.reason || meta.reason] || meta.reason, g.name || '', STATUS[g.status] || '', g.deletedAt ? 'Yes' : ''];
+  const hireDay = g => {
+    if (!g.startDate || !day.manifestDate) return '';
+    const d = Math.round((Date.parse(day.manifestDate) - Date.parse(g.startDate)) / 864e5) + 1, n = g.hireDays || 1;
+    return d > n ? 'Overdue, out since ' + g.startDate : n > 1 ? d + ' of ' + n : '';
+  };
+  const notBack = (g, b) => { const e = (g.exceptions || []).find(x => x.bikeId === b.id); return e ? EXC[e.reason] + (e.note ? ': ' + e.note : '') : ''; };
+  const bike = b => { const i = b.brand || b.model ? b : info[b.code] || b; return [b.code || '', i.brand || '', i.model || '', dt(b.ts)]; };
+  const rows = [];
+  for (const g of [...(day.groups || []), ...(day.deletedGroups || [])]) {
+    const on = g.bikes || [], off = g.removed || [];
+    // What the record says about the bike's M-check when it went out.
+    const mc = b => b.mcheckDue ? 'NOT CHECKED since last ride' : b.mcheck ? dt(b.mcheck.at) + ' ' + b.mcheck.by : '';
+    const site = g.site ? Locs.name(g.site === 'DEL' ? 'HMD' : g.site) + (g.droppedAt ? ' (dropped at ' + Locs.name(g.droppedAt) + ')' : '') : '';
+    if (!on.length && !off.length) rows.push([...base(g), '', '', '', '', '', '', hireDay(g), '', '', '', '', '', '', site]);
+    on.forEach(b => rows.push([...base(g), ...bike(b), '', '', hireDay(g), dt(b.inAt), notBack(g, b), b.by || '', b.inBy || '', '', mc(b), site]));
+    off.forEach(b => rows.push([...base(g), ...bike(b), dt(b.removedAt), TAKEN_OFF[b.reason] || 'Removed', hireDay(g), '', '', b.by || '', '', b.removedBy || '', mc(b), site]));
+  }
+  if (!rows.length) rows.push([tour, dt(data.archivedAt || meta.savedAt), REASONS[meta.reason] || meta.reason, '(no groups)', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+  return rows;
+}
+const toCSV = rows => [COLS, ...rows].map(r => r.map(Ops.csvCell).join(',')).join('\r\n');
+const fetchArchive = meta => Ops.get({ view: 'archive', key: meta.key });
+
+async function viewArchive(n, btn) {
+  const slot = btn.closest('li').querySelector('.arch-slot');
+  if (slot.innerHTML) { slot.innerHTML = ''; btn.textContent = 'View'; return; }
+  slot.innerHTML = '<div class="arch-meta" style="margin-top:8px">Loading…</div>';
+  try {
+    const rows = flatRows(archiveKeys[n], await fetchArchive(archiveKeys[n]));
+    const shown = [3, 4, 12, 6, 8, 9, 13, 10, 11, 14]; // group, status, day, bike, model, scanned, in, off, reason, not back
+    slot.innerHTML = '<div class="arch-view"><table><tr>' + shown.map(i => '<th>' + COLS[i] + '</th>').join('') + '</tr>' +
+      rows.map(r => '<tr class="' + (r[10] ? 'off' : '') + '">' + shown.map(i => '<td class="' + (i === 6 ? 'mono' : '') + '">' + Ops.esc(i === 9 || i === 10 || i === 13 ? r[i].slice(11) : r[i]) + '</td>').join('') + '</tr>').join('') +
+      '</table></div>';
+    btn.textContent = 'Hide';
+  } catch (e) { slot.innerHTML = '<div class="out err">' + Ops.esc(e.message) + '</div>'; }
+}
+
+async function downloadArchive(n) {
+  const meta = archiveKeys[n];
+  try {
+    Ops.downloadText(toCSV(flatRows(meta, await fetchArchive(meta))), Brand.file() + '-archive-' + meta.date + '-' + meta.savedAt + '.csv', 'text/csv;charset=utf-8');
+  } catch (e) { alert(e.message); }
+}
+
+// Every archive in the date range, oldest first, in one file.
+async function downloadRange() {
+  const from = document.getElementById('fromDate').value, to = document.getElementById('toDate').value;
+  const btn = document.getElementById('allBtn');
+  btn.disabled = true;
+  try {
+    if (!Object.keys(register).length) await loadRegister();
+    if (!archiveKeys.length) archiveKeys = (await Ops.view('archives')).archives.map(parseKey);
+    const pick = archiveKeys.filter(a => (!from || a.date >= from) && (!to || a.date <= to)).reverse();
+    if (!pick.length) { show('rangeOut', 'No archives in that range', false); return; }
+    const rows = [];
+    for (let i = 0; i < pick.length; i += 4) {
+      show('rangeOut', 'Reading ' + Math.min(i + 4, pick.length) + ' of ' + pick.length + '…', true);
+      const got = await Promise.all(pick.slice(i, i + 4).map(fetchArchive));
+      got.forEach((d, j) => rows.push(...flatRows(pick[i + j], d)));
+    }
+    const name = Brand.file() + '-archives-' + (from || pick[0].date) + '-to-' + (to || pick[pick.length - 1].date) + '.csv';
+    Ops.downloadText(toCSV(rows), name, 'text/csv;charset=utf-8');
+    show('rangeOut', '✓ ' + pick.length + ' archive' + (pick.length > 1 ? 's' : '') + ', ' + rows.length + ' rows', true);
+  } catch (e) { show('rangeOut', '✗ ' + e.message, false); }
+  finally { btn.disabled = false; }
+}
+
+</script>
+</body>
+</html>

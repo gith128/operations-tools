@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Bike History</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;              /* warm off-white */
+  --bg-elev:#ffffff;         /* pure white for cards */
+  --bg-soft:#f2efe8;         /* cream */
+  --border:#e4ded2;          /* warm beige border */
+  --border-strong:#d4cdbd;
+  --text:#1f2428;            /* near-black, softer than #000 */
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  /* softer leafy green */
+  /* darker for readable text on light bg */
+  --warn:#d48a2f;            /* warm amber, darker for contrast on light */
+  --warn-soft:rgba(212,138,47,.1);
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;          /* coral red, darker for contrast */
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+#reader-report, #reader-resolve{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader-report video, #reader-resolve video{border-radius:12px}
+#reader-report img, #reader-resolve img{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);min-height:140px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-success{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.manual-entry{display:flex;gap:8px;margin-top:10px}
+.manual-input{flex:1;padding:13px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.field-input,.field-textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted)}
+.field-mono{font-family:'DM Mono',monospace}
+
+.priority-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px}
+.priority-btn{padding:10px 4px;border-radius:10px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;text-align:center;font-family:'Syne',sans-serif;transition:all .15s}
+.priority-btn .num{font-size:18px;font-weight:800;line-height:1}
+.priority-btn .lbl{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.priority-btn.active[data-p="1"]{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.priority-btn.active[data-p="2"]{border-color:#9bb845;color:#5a7a22;background:rgba(155,184,69,.12)}
+.priority-btn.active[data-p="3"]{border-color:#d48a2f;color:#8a5a1a;background:rgba(212,138,47,.12)}
+.priority-btn.active[data-p="4"]{border-color:#c96a5c;color:#9a3530;background:rgba(201,106,92,.14)}
+.priority-btn.active[data-p="5"]{border-color:#b23a35;color:#8a2a26;background:rgba(178,58,53,.14)}
+.priority-help{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5}
+.priority-help strong{color:var(--danger-text)}
+
+.matched-card{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.3);border-radius:14px;padding:14px;margin-bottom:16px}
+.matched-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.matched-id{font-family:'DM Mono',monospace;font-size:15px;color:var(--warn-text);font-weight:600;letter-spacing:1px}
+.matched-issue{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--text)}
+.matched-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.matched-notes{margin-top:6px;font-size:12px;color:var(--text);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+
+.ts-note{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+
+.issue-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.issue-item:active{border-color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.issue-item.p5{border-left:4px solid #b23a35}
+.issue-item.p4{border-left:4px solid #c96a5c}
+.issue-item.p3{border-left:4px solid #d48a2f}
+.issue-item.p2{border-left:4px solid #9bb845}
+.issue-item.p1{border-left:4px solid var(--accent)}
+.issue-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.issue-bike{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent-text);font-weight:600;letter-spacing:1px}
+.issue-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.status{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.8px;white-space:nowrap}
+.status.open{background:var(--danger-soft);color:var(--danger-text);border:1px solid rgba(201,74,69,.25)}
+.status.resolved{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.prio{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.prio.p5{background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.prio.p4{background:rgba(201,106,92,.1);color:#9a3530;border:1px solid rgba(201,106,92,.25)}
+.prio.p3{background:rgba(212,138,47,.1);color:#8a5a1a;border:1px solid rgba(212,138,47,.25)}
+.prio.p2{background:rgba(155,184,69,.1);color:#5a7a22;border:1px solid rgba(155,184,69,.25)}
+.prio.p1{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.issue-desc{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.issue-foot{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.notes-indicator{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:6px}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:6px 13px;border-radius:100px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.detail-section{margin-bottom:18px}
+.detail-section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-body{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:10px}
+.detail-meta-row{display:flex;gap:10px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.detail-meta-label{color:var(--text-muted);min-width:95px}
+.detail-meta-val{color:var(--text)}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.mc-ok{font-family:'DM Mono',monospace;color:var(--accent-text)}
+.mc-due-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--warn-text)}
+.mc-hist-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 4px}
+.mc-hist-head input{font:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.h-row.fail{color:var(--danger-text)}
+.loc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.loc-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.loc-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.loc-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text)}
+.loc-tag.out{color:var(--warn-text)}
+.hist{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.6}
+.hist .h-row{border-bottom:1px solid var(--border);padding:3px 0}
+.move-list{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px}
+.move-list div{padding:5px 0;border-bottom:1px solid var(--border)}
+.move-list .ok{color:var(--accent-text)}.move-list .warn{color:var(--warn-text)}.move-list .dim{color:var(--text-muted)}
+.loc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.loc-row .code{font-family:'DM Mono',monospace;font-weight:700;margin-right:6px}
+.loc-row.retired{opacity:.5}
+.loc-row button{font-size:11px;padding:5px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--text-dim)}
+.toolbar .manual-input{margin:0}
+.add-btn{padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap}
+.add-btn:active{background:var(--accent-dark)}
+.count-line{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px}
+.asset{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.asset:active{border-color:var(--accent)}
+.asset-id{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--accent-text);letter-spacing:1px}
+.asset-key{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);text-align:right;align-self:center}
+.asset-what{font-size:14px;font-weight:700;color:var(--text)}
+.asset-meta{grid-column:1 / -1;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.asset-flags{grid-column:1 / -1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.flag-open{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px solid rgba(212,138,47,.3)}
+.flag-disposed{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border-strong)}
+.asset.disposed{opacity:.6}
+.form-group-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.flag-noserial{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px dashed rgba(212,138,47,.5)}
+.req{color:var(--danger-text)}
+.count-line .warn{color:var(--warn-text);cursor:pointer;text-decoration:underline}
+.flag-oos{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.id-row{display:flex;gap:8px}
+.id-row .field-input{flex:1}
+.scan-mini{padding:0 14px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-soft);font-size:18px;cursor:pointer}
+#reader-asset{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;display:none}
+#reader-asset img{display:none!important}
+.age-note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row .btn{flex:1}
+.import-result{font-family:'DM Mono',monospace;font-size:12px;margin-top:10px;line-height:1.5}
+.import-result.ok{color:var(--accent-text)}.import-result.err{color:var(--danger-text)}
+.file-btn{position:relative;overflow:hidden;display:block;text-align:center}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mc{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:12px}
+.ml{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin:0}
+.mv{font-size:22px;font-weight:800;margin:4px 0 0}
+.ms{font-size:11px;color:var(--text-muted);margin:0}
+.md{font-family:'DM Mono',monospace;font-size:11px;margin:4px 0 0}
+.up{color:var(--accent-text)}.dn{color:var(--danger-text)}.flat{color:var(--text-muted)}
+.sec{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin:22px 0 10px}
+.bar-row{display:grid;grid-template-columns:72px minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:12px;margin-bottom:7px}
+.bar-row .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:10px;background:var(--bg-soft);border-radius:5px;overflow:hidden}
+.fill{height:100%;border-radius:5px;background:var(--accent)}
+.fill.hot{background:#D85A30}.fill.loc{background:#378ADD}.fill.prev{background:#b4b2a9}
+.num{font-family:'DM Mono',monospace;color:var(--text-dim);text-align:right}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border)}
+.pill{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--warn-soft);color:var(--warn-text);white-space:nowrap}
+.note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin:6px 0 0;line-height:1.5}
+.seg{display:flex;gap:6px;margin:0 0 10px}
+.seg button{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:5px 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.seg button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+
+/* Fleet report (v3.6) */
+.dates{display:flex;gap:8px;margin:0 0 10px}.dates input{flex:1;font:inherit;font-size:13px;padding:7px 9px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.rbar{display:grid;grid-template-columns:96px minmax(0,1fr) 112px;gap:8px;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)}
+.rbar.tap{cursor:pointer}.rbar.tap:active{background:var(--bg-soft)}
+.rbar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rbar .lbl small{display:block;color:var(--text-muted);font-size:10px;font-family:'DM Mono',monospace}
+.rbar .num{font-size:11px}
+.fill.low{background:#b4b2a9}
+.tbl-wrap{overflow-x:auto;margin:0 -2px}
+table.t{border-collapse:collapse;font-family:'DM Mono',monospace;font-size:11px;width:100%}
+table.t th,table.t td{padding:5px 6px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left;position:sticky;left:0;background:var(--bg)}
+table.t th{color:var(--text-dim);font-weight:700}
+.days-list{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);line-height:1.7}
+.st-h{color:var(--accent-text);font-weight:700}.st-o{color:var(--danger-text)}.st-s{color:var(--text-muted)}
+.actions{display:flex;gap:8px;margin-top:18px}
+.print-head{display:none}
+@media print{
+  .back-home,header,.no-print,.tm-btn,.tm-back,.toast{display:none!important}
+  .app{max-width:none}main{padding:0}
+  .print-head{display:block;font-size:16px;font-weight:800;margin-bottom:6px}
+  .rbar{break-inside:avoid}.tbl-wrap{overflow:visible}
+  .fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 10px;font-size:13px;margin-bottom:6px}
+.kv .k{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);padding-top:2px}
+.ev{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.45}
+.ev .w{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.ev .x{color:var(--text-dim);font-size:12px}
+.ev.fail .t{color:var(--danger-text)}
+.status-line{font-family:'DM Mono',monospace;font-size:12px;margin:2px 0 14px;color:var(--text-dim)}
+.status-line .bad{color:var(--danger-text);font-weight:700}
+@media print{.ev{break-inside:avoid}}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/fleet">← Asset Register</a>
+<a class="back-home" href="/help#asset-register" style="margin-left:6px">? Help</a>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Bike history · Operations Tools v3.10</div>
+    </div>
+    <div class="sync-indicator" style="cursor:pointer" onclick="load()"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">loading…</span></div>
+  </header>
+  <main>
+    <div id="main"><div class="empty-state"><p>Loading…</p></div></div>
+    <div class="actions no-print" id="actions" style="display:none">
+      <button class="btn btn-secondary" onclick="downloadExcel()">⬇ Excel</button>
+      <button class="btn btn-secondary" onclick="window.print()">🖨 Print or save as PDF</button>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script src="/assets/fleet-report.js"></script>
+<script src="/assets/xlsx-lite.js"></script>
+<script>
+// SA eBikes Operations Tools v3.10: one bike's history, from purchase to disposal: the register and
+// its changes, moves, issues and repairs, M-checks, and the days it was hired (from the fleet records).
+const $ = id => document.getElementById(id);
+const esc = Ops.esc;
+const bikeId = (new URLSearchParams(location.search).get('id') || '').toUpperCase();
+let H = null, filter = 'all';
+
+function showToast(msg, type) { const t = $('toast'); t.textContent = msg; t.className = 'toast show ' + (type || ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', 3500); }
+const fmtD = iso => iso ? iso.split('-').reverse().join('/') : '';
+const fmtWhen = t => { const d = new Date(t); return d.toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }); };
+const fmtMoney = n => n == null || n === '' ? '' : '$' + Number(n).toLocaleString('en-AU', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const pct = x => (x == null ? '—' : Math.round(x * 100) + '%');
+const monthLabel = m => { const [y, mo] = m.split('-').map(Number); return new Date(y, mo - 1, 1).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }); };
+const isoAt = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d, 12).getTime(); };
+const faultLabel = id => ((H.faultTypes || []).find(t => t.id === id) || { label: id }).label;
+const mcLabel = k => ((H.mcheckItems || []).find(i => i.key === k) || { label: k }).label;
+const HOW = { hand: 'by hand', scan: 'scanned', 'check-in': 'checked in', import: 'spreadsheet', 'drop-off': 'dropped off' };
+const FIELD = { serial: 'serial', keyNumber: 'key', brand: 'brand', model: 'model', size: 'size', purchaseDate: 'purchase date', purchasePrice: 'purchase price',
+  disposalDate: 'disposal date', salePrice: 'sale price', disposalNote: 'disposal note', id: 'ID' };
+const changeText = e => e.how === 'added' ? 'Added to the register' + (e.via === 'import' ? ' from a spreadsheet' : '') : e.how === 'removed' ? 'Removed from the register' + (e.error ? ' (in error)' : '') :
+  e.how === 'renamed' ? 'ID changed from ' + e.changes.id[0] + ' to ' + e.changes.id[1] :
+  e.how === 'restored' ? 'Restored to the register (removed in error)' + (e.reason ? ': ' + e.reason : '') :
+  'Register: ' + Object.entries(e.changes || {}).map(([f, [a, b]]) => (FIELD[f] || f) + ' ' + (a === '' ? 'set to ' + b : b === '' ? a + ' cleared' : a + ' → ' + b)).join('; ') + (e.via === 'import' ? ' (spreadsheet)' : '');
+
+// Every event, newest first: { at, kind, icon, text, extra, by, fail }
+function events() {
+  const a = H.asset || {}, out = [];
+  if (a.purchaseDate) out.push({ at: isoAt(a.purchaseDate), day: true, kind: 'register', icon: '🛒', text: 'Bought' + (a.purchasePrice != null && a.purchasePrice !== '' ? ' for ' + fmtMoney(a.purchasePrice) : '') });
+  if (a.disposalDate) out.push({ at: isoAt(a.disposalDate), day: true, kind: 'register', icon: '🏁', text: 'Disposed' + (a.salePrice != null && a.salePrice !== '' ? ', sold for ' + fmtMoney(a.salePrice) : ''), extra: a.disposalNote || '' });
+  for (const e of H.history) out.push({ at: e.at, kind: 'register', icon: '🗂', text: changeText(e), by: e.by });
+  for (const m of H.moves) out.push({ at: m.at, kind: 'moves', icon: '📍', text: (m.from || '—') + ' → ' + m.to + ' (' + (HOW[m.how] || m.how) + ')', extra: m.note || '', by: m.by });
+  for (const i of H.issues) {
+    const faults = (i.faults || []).map(faultLabel).join(', ');
+    out.push({ at: i.reportedAt, kind: 'issues', icon: (i.priority || 3) === 5 ? '🚫' : '⚠️', fail: (i.priority || 3) === 5,
+      text: 'Issue P' + (i.priority || 3) + (faults ? ' · ' + faults : '') + (i.repeats && i.repeats.length ? ' · 🔁 repeat' : '') + (i.source === 'mcheck' ? ' (from an M-check)' : ''), extra: i.issue + (i.odometer != null ? ' · ' + i.odometer + ' km' : ''), by: i.reportedBy });
+    for (const u of i.updates || []) out.push({ at: u.at, kind: 'issues', icon: '💬', text: 'Update' + (u.priorityTo ? ' · P' + u.priorityFrom + ' → P' + u.priorityTo : '') + (u.faultsTo ? ' · fault type ' + u.faultsTo.map(faultLabel).join(', ') : ''), extra: u.text || '', by: u.by });
+    for (const c of i.corrections || []) {
+      if (c.kind === 'reopened') { out.push({ at: c.resolvedAt, kind: 'issues', icon: '✅', text: 'Marked repaired (by mistake)', extra: c.resolution || '', by: c.repairedBy }); out.push({ at: c.at, kind: 'issues', icon: '↶', text: 'Reopened: not fixed', extra: c.reason, by: c.by }); }
+    }
+    if (i.error) out.push({ at: i.resolvedAt, kind: 'issues', icon: '✎', text: 'Closed: logged in error', extra: (i.corrections && i.corrections[0] && i.corrections[0].reason) || '', by: i.repairedBy });
+    else if (i.status === 'resolved') out.push({ at: i.resolvedAt, kind: 'issues', icon: '✅', text: 'Repaired', extra: i.resolution || '', by: i.repairedBy });
+  }
+  for (const c of H.checks) out.push({ at: c.at, kind: 'checks', icon: c.result === 'pass' ? '🔧' : '❌', fail: c.result !== 'pass',
+    text: 'M-check ' + (c.result === 'pass' ? 'passed' + (c.voided ? ' (voided ' + fmtWhen(c.voided.at) + ' by ' + c.voided.by + (c.voided.reason ? ': ' + c.voided.reason : '') + ')' : '') : 'failed: ' + (c.failed || []).map(mcLabel).join('; ')), extra: (c.note || '') + (c.odometer != null ? (c.note ? ' · ' : '') + c.odometer + ' km' : ''), by: c.by });
+  return out.sort((x, y) => y.at - x.at);
+}
+
+function render() {
+  const a = H.asset || {}, days = H.days || {};
+  const wrapped = Object.fromEntries(Object.entries(days).map(([d, b]) => [d, { bikes: { [H.bike]: b }, src: b.src, manifest: true }]));
+  const agg = FleetCore.aggregate(wrapped, 'bike')[0] || { available: 0, hired: 0, hires: 0, oos: 0, storage: 0, days: 0, util: null };
+  const mo = FleetCore.monthly(wrapped, 'bike'), row = mo.rows[0] || { months: {} };
+  const open = H.issues.filter(i => i.status === 'open').length, reps = H.issues.filter(i => i.repeats && i.repeats.length).length;
+  const passes = H.checks.filter(c => c.result === 'pass' && !c.voided).length;
+  const status = H.removed ? '<span class="bad">Removed from the register ' + fmtWhen(H.removed) + '</span>' : a.disposalDate ? 'Disposed ' + fmtD(a.disposalDate)
+    : H.issues.some(i => i.status === 'open' && (i.priority || 3) === 5) ? '<span class="bad">Out of service</span>' : 'In the fleet' + (a.location ? ' · at ' + esc(a.location) : '');
+  let h = '<p class="print-head">' + esc(Brand.name()) + ' · bike history · ' + esc(H.bike) + '</p>' +
+    '<h2 style="font-size:24px;font-weight:800;font-family:\'DM Mono\',monospace;letter-spacing:1px">' + esc(H.bike) + '</h2>' +
+    '<p style="font-size:15px;font-weight:700;margin-top:2px">' + esc([a.brand, a.model].filter(Boolean).join(' ') || 'Brand and model not recorded') + '</p>' +
+    '<p class="status-line">' + status + (H.ids.length > 1 ? ' · also known as ' + esc(H.ids.filter(x => x !== H.bike).join(', ')) : '') + '</p>';
+  const kv = [['Serial', a.serial], ['Key', a.keyNumber], ['Size', a.size],
+    ['Purchased', a.purchaseDate ? fmtD(a.purchaseDate) + (a.purchasePrice != null && a.purchasePrice !== '' ? ' · ' + fmtMoney(a.purchasePrice) : '') + (!a.disposalDate ? ' · ' + Ops.ageLabel(a.purchaseDate) : '') : 'Not recorded'],
+    ...(a.disposalDate ? [['Disposed', fmtD(a.disposalDate) + (a.salePrice != null && a.salePrice !== '' ? ' · sold ' + fmtMoney(a.salePrice) : '') + (a.disposalNote ? ' · ' + a.disposalNote : '')]] : [])].filter(([, v]) => v);
+  h += '<div class="kv">' + kv.map(([k, v]) => '<span class="k">' + k + '</span><span>' + esc(v) + '</span>').join('') + '</div>';
+  h += '<div class="mgrid" style="margin-top:14px">' +
+    '<div class="mc"><p class="ml">Utilisation</p><p class="mv">' + pct(agg.util) + '</p><p class="ms">' + agg.hired + ' of ' + agg.available + ' days available</p></div>' +
+    '<div class="mc"><p class="ml">Out of service</p><p class="mv">' + agg.oos + '</p><p class="ms">days at 8 am' + (agg.storage ? ' · ' + agg.storage + ' in storage' : '') + '</p></div>' +
+    '<div class="mc"><p class="ml">Issues</p><p class="mv">' + H.issues.length + '</p><p class="ms">' + open + ' open' + (reps ? ' · ' + reps + ' repeat' + (reps === 1 ? '' : 's') : '') + '</p></div>' +
+    '<div class="mc"><p class="ml">M-checks</p><p class="mv">' + H.checks.length + '</p><p class="ms">' + passes + ' passed · ' + (H.checks.length - passes) + ' failed</p></div></div>';
+  const first = Object.keys(days).sort()[0];
+  h += '<p class="note">Hire figures are from the fleet records' + (first ? ', which for this bike start ' + fmtD(first) : ' (none yet for this bike)') + '.</p>';
+
+  // faults by type
+  const byType = {};
+  for (const i of H.issues.filter(x => !x.error)) for (const t of (i.faults || []).length ? i.faults : ['']) { const x = byType[t] = byType[t] || { n: 0, rep: 0 }; x.n++; if ((i.repeats || []).some(r => r.type === t)) x.rep++; }
+  if (H.issues.length) h += '<p class="sec">Faults by type</p>' + Object.entries(byType).sort((p, q) => q[1].n - p[1].n).map(([t, x]) =>
+    '<div class="row"><span>' + esc(t ? faultLabel(t) : 'Type not set') + '</span><span>' + x.n + (x.rep ? ' <span class="pill">' + x.rep + ' repeat' + (x.rep === 1 ? '' : 's') + '</span>' : '') + '</span></div>').join('') +
+    '<p class="note">A repeat is the same fault type logged again within ' + (H.repeatDays || 90) + ' days.</p>';
+
+  // month by month
+  if (mo.months.length) {
+    h += '<p class="sec">Month by month</p><div class="tbl-wrap"><table class="t"><tr><th>Month</th><th>Available</th><th>Hired</th><th>Out of service</th><th>Utilisation</th></tr>' +
+      [...mo.months].reverse().map(m => { const c = row.months[m] || { available: 0, hired: 0, util: null }; const oos = Object.entries(days).filter(([d, b]) => d.startsWith(m) && b.s === 'o').length;
+        return '<tr><td>' + monthLabel(m) + '</td><td>' + c.available + '</td><td>' + c.hired + '</td><td>' + oos + '</td><td>' + pct(c.util) + '</td></tr>'; }).join('') + '</table></div>';
+  }
+
+  // timeline
+  const ev = events(), kinds = [['all', 'All'], ['issues', 'Issues'], ['checks', 'M-checks'], ['moves', 'Moves'], ['register', 'Register']];
+  const list = ev.filter(e => filter === 'all' || e.kind === filter);
+  h += '<p class="sec">History, newest first</p><div class="seg no-print" style="flex-wrap:wrap">' + kinds.map(([k, l]) => '<button class="' + (filter === k ? 'on' : '') + '" onclick="filter=\'' + k + '\';render()">' + l + ' ' + (k === 'all' ? ev.length : ev.filter(e => e.kind === k).length) + '</button>').join('') + '</div>' +
+    (list.length ? list.map(e => '<div class="ev' + (e.fail ? ' fail' : '') + '"><span>' + e.icon + '</span><div><div class="w">' + (e.day ? fmtD(new Date(e.at).toISOString().slice(0, 10)) : fmtWhen(e.at)) + (e.by ? ' · ' + esc(e.by) : '') + '</div><div class="t">' + esc(e.text) + '</div>' + (e.extra ? '<div class="x">' + esc(e.extra) + '</div>' : '') + '</div></div>').join('')
+      : '<p class="note">Nothing recorded yet.</p>');
+  $('main').innerHTML = h;
+  $('actions').style.display = 'flex';
+}
+
+function downloadExcel() {
+  const a = H.asset || {}, days = H.days || {};
+  const wrapped = Object.fromEntries(Object.entries(days).map(([d, b]) => [d, { bikes: { [H.bike]: b } }]));
+  const agg = FleetCore.aggregate(wrapped, 'bike')[0] || { available: 0, hired: 0, hires: 0, oos: 0, storage: 0, util: null };
+  const mo = FleetCore.monthly(wrapped, 'bike'), row = mo.rows[0] || { months: {} };
+  const STATUS = { h: 'Hired', a: 'Available', o: 'Out of service', s: 'In storage' };
+  const sheets = [
+    { name: 'Details', widths: [24, 50], rows: [['Bike', H.bike], ['Other IDs', H.ids.filter(x => x !== H.bike).join(', ')], ['Brand', a.brand || ''], ['Model', a.model || ''], ['Serial', a.serial || ''],
+      ['Key', a.keyNumber || ''], ['Size', a.size || ''], ['Purchase date', a.purchaseDate || ''], ['Purchase price', a.purchasePrice != null && a.purchasePrice !== '' ? Number(a.purchasePrice) : ''],
+      ['Disposal date', a.disposalDate || ''], ['Sale price', a.salePrice != null && a.salePrice !== '' ? Number(a.salePrice) : ''], ['Disposal note', a.disposalNote || ''],
+      ['Removed from register', H.removed ? fmtWhen(H.removed) : ''], ['', ''],
+      ['Days available', agg.available], ['Days hired', agg.hired], ['Utilisation', agg.util == null ? '' : agg.util], ['Days out of service', agg.oos], ['Days in storage', agg.storage],
+      ['Issues', H.issues.length], ['Repeat faults', H.issues.filter(i => (i.repeats || []).length).length], ['M-checks', H.checks.length],
+      ['Hire figures from', Object.keys(days).sort()[0] || 'no records yet'], ['Exported', new Date().toLocaleString('en-AU')]] },
+    { name: 'By month', widths: [10, 11, 9, 15, 12], pct: [4], rows: [['Month', 'Available', 'Hired', 'Out of service', 'Utilisation'],
+      ...mo.months.map(m => { const c = row.months[m] || { available: 0, hired: 0, util: null }; return [m, c.available, c.hired, Object.entries(days).filter(([d, b]) => d.startsWith(m) && b.s === 'o').length, c.util == null ? '' : c.util]; })] },
+    { name: 'History', widths: [16, 10, 8, 44, 50], rows: [['Date and time', 'Kind', 'By', 'What', 'Detail'], ...events().map(e => [e.day ? new Date(e.at).toISOString().slice(0, 10) : fmtWhen(e.at), { issues: 'Issue', checks: 'M-check', moves: 'Move', register: 'Register' }[e.kind], e.by || '', e.text, e.extra || ''])] },
+    { name: 'Issues', widths: [16, 9, 5, 26, 44, 8, 9, 16, 40, 12, 10], rows: [['Reported', 'Bike ID', 'P', 'Fault types', 'Issue', 'Km', 'Status', 'Repaired', 'Repair', 'Repaired by', 'Repeat'],
+      ...H.issues.map(i => [fmtWhen(i.reportedAt), i.bikeId, i.priority || 3, (i.faults || []).map(faultLabel).join(', '), i.issue, i.odometer != null ? i.odometer : '', i.status,
+        i.resolvedAt ? fmtWhen(i.resolvedAt) : '', i.resolution || '', i.repairedBy || '', (i.repeats || []).length ? 'yes' : ''])] },
+    { name: 'M-checks', widths: [16, 6, 8, 44, 30, 8], rows: [['Date and time', 'By', 'Result', 'Failed', 'Note', 'Km'], ...H.checks.map(c => [fmtWhen(c.at), c.by, c.result, (c.failed || []).map(mcLabel).join('; '), c.note || '', c.odometer != null ? c.odometer : ''])] },
+    { name: 'Moves', widths: [16, 8, 8, 12, 6, 24], rows: [['Date and time', 'From', 'To', 'How', 'By', 'Note'], ...[...H.moves].reverse().map(m => [fmtWhen(m.at), m.from || '', m.to, HOW[m.how] || m.how, m.by || '', m.note || ''])] },
+    { name: 'Daily records', widths: [11, 20, 11, 14, 14, 10, 18], rows: [['Date', 'Model', 'At opening', 'Status', 'Went out from', 'Day of hire', 'Record'],
+      ...Object.keys(days).sort().map(d => { const b = days[d]; return [d, b.m, b.l || '', STATUS[b.s], (b.h || []).join(', '), b.d || '', b.src === 'live' ? 'recorded on the day' : 'rebuilt']; })] },
+  ];
+  XlsxLite.download('Bike_history_' + H.bike + '_' + Ops.todayISO() + '.xlsx', sheets);
+}
+
+async function load() {
+  if (!bikeId) { $('main').innerHTML = '<div class="empty-state"><p>Open a bike from the Asset Register to see its history.</p></div>'; return; }
+  $('syncDot').className = 'sync-dot syncing'; $('syncLabel').textContent = 'loading…';
+  try {
+    H = await Ops.get({ view: 'bikeHistory', bike: bikeId });
+    document.title = Brand.name() + ' · Operations Tools v3.10 · ' + H.bike + ' history';
+    render(); $('syncDot').className = 'sync-dot synced'; $('syncLabel').textContent = 'live ✓';
+  } catch (e) {
+    $('syncDot').className = 'sync-dot error'; $('syncLabel').textContent = e.status === 0 ? 'offline' : 'error';
+    $('main').innerHTML = '<div class="empty-state"><p>' + esc(e.message) + '</p></div>';
+  }
+}
+load();
+</script>
+</body>
+</html>

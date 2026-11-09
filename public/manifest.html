@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SA eBikes · Operations Tools v3.10 · Load Manifest</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;--bg-elev:#ffffff;--bg-soft:#f2efe8;
+  --border:#e4ded2;--border-strong:#d4cdbd;
+  --text:#1f2428;--text-dim:#5a6269;--text-muted:#8b8f93;
+  --warn:#d48a2f;--warn-text:#8a5a1a;
+  --danger:#c94a45;--danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;padding:24px 16px}
+.wrap{max-width:680px;margin:0 auto}
+h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:24px}
+.card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 6px;border-bottom:1.5px solid var(--border);font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:10px;letter-spacing:1px;font-family:'DM Mono',monospace}
+td{padding:10px 6px;border-bottom:1px solid var(--border);vertical-align:middle}
+td.mono{font-family:'DM Mono',monospace;font-size:12px}
+.special{font-family:'Syne',sans-serif;font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;white-space:pre-wrap}
+.special.open{display:block;-webkit-line-clamp:unset}
+.site{display:inline-block;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;margin-top:4px;background:rgba(29,158,117,.12);color:#085041}
+.site.DEL{background:rgba(239,159,39,.18);color:#633806}
+.site.unk{background:rgba(201,74,69,.12);color:#a33a35}
+.days-sel{font:inherit;font-size:12px;padding:4px 6px;border-radius:8px;border:1.5px solid var(--border);background:#fff}
+.days-sel.multi{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+tr.flagged{background:rgba(212,138,47,.05)}
+tr.flagged td.mono{color:var(--warn-text);font-weight:500}
+.pill{display:inline-block;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px}
+.pill.am{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.pill.pm{background:rgba(212,138,47,.1);color:var(--warn-text);border:1px solid rgba(212,138,47,.3)}
+.flag-pill{display:inline-block;padding:2px 7px;border-radius:100px;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;background:rgba(212,138,47,.12);color:var(--warn-text);border:1px solid rgba(212,138,47,.3);margin:2px 2px 0 0}
+.btn{width:100%;padding:16px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border:none;margin-top:12px;letter-spacing:.3px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-dark)}
+.btn-primary:disabled{background:#c0c0c0;cursor:not-allowed}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding-top:12px;margin-top:4px;border-top:1.5px solid var(--border);font-weight:800;font-size:14px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:13px;color:var(--text-dim);border-top:1px solid var(--border)}
+.summary-row strong{color:var(--text);font-weight:700}
+.log{background:var(--bg-soft);border-radius:10px;padding:12px 14px;font-family:'DM Mono',monospace;font-size:12px;white-space:pre-wrap;line-height:1.6;margin-top:12px;max-height:300px;overflow-y:auto;display:none}
+.log.show{display:block}
+.log .ok{color:var(--accent-text)}
+.log .err{color:var(--danger-text)}
+.no-book{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
+.no-book-or{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:8px}
+.no-book-row{display:flex;gap:8px;align-items:center}
+.no-book-row input{font-family:'DM Mono',monospace;font-size:13px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.no-book-row .btn{flex:1}
+.empty-warn{margin-top:10px;padding:12px;border-radius:10px;background:rgba(212,138,47,.08);border:1.5px solid rgba(212,138,47,.45);font-size:13px}
+.empty-warn .btns{display:flex;gap:8px;margin-top:10px}
+.empty-warn .btn{margin:0;flex:1}
+.log .warn{color:var(--warn-text,#9a5a12);font-weight:700}
+.warning-box{background:rgba(212,138,47,.1);border:1.5px solid rgba(212,138,47,.35);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--warn-text);margin-bottom:14px;line-height:1.5}
+.flag-note{font-size:12px;color:var(--warn-text);margin-top:10px;padding:10px 12px;background:rgba(212,138,47,.08);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+.upload-zone{border:2px dashed var(--border-strong);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-soft);position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.upload-zone.loaded{border-color:var(--accent);border-style:solid;background:var(--accent-soft)}
+.upload-icon{font-size:32px;margin-bottom:8px}
+.upload-label{font-size:14px;font-weight:700;color:var(--text-dim);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text-muted);font-family:'DM Mono',monospace}
+.upload-success{font-size:13px;font-weight:700;color:var(--accent-text);margin-top:6px}
+#pdfInput{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.step-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:100px;font-family:'DM Mono',monospace;margin-bottom:10px}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+.date-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.date-row label{font-size:13px;font-weight:700}
+.date-row input{padding:9px 12px;border-radius:10px;border:1.5px solid var(--border-strong);background:var(--bg-elev);font-family:'DM Mono',monospace;font-size:14px;color:var(--text)}
+.date-row input:focus{outline:none;border-color:var(--accent)}
+.date-source{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace}
+.product-check{margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(212,138,47,.1);border:1.5px solid rgba(212,138,47,.45);line-height:1.6}
+.product-check div{margin-top:4px}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#load-manifest" style="margin-left:6px">? Help</a>
+<a class="back-home" href="/dashboard" style="margin-left:6px">📊 Dashboard</a>
+<a class="back-home" href="/admin" style="margin-left:6px">⚙️ Admin</a>
+<div class="wrap">
+  <h1>🚴 Load Manifest → Scanner + Contacts</h1>
+  <div class="sub" id="pageSub">Upload today's Rezdy CSV to begin</div>
+
+  <div class="card">
+    <div class="step-badge">Step 1</div>
+    <div class="label">Upload Rezdy Pickup Manifest (CSV)</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="pdfInput" accept=".csv" onchange="handleFile(this.files[0])">
+      <div class="upload-icon">📄</div>
+      <div class="upload-label">Drop CSV here or tap to choose</div>
+      <div class="upload-sub">Rezdy pickup manifest export · CSV format</div>
+      <div class="upload-success" id="uploadSuccess" style="display:none"></div>
+    </div>
+    <div class="no-book">
+      <div class="no-book-or">or, on a day with nothing booked</div>
+      <div class="no-book-row">
+        <input type="date" id="noBookDate" aria-label="Date with no bookings">
+        <button class="btn btn-secondary" style="margin:0" onclick="noBookings()">🚫 No bookings today</button>
+      </div>
+    </div>
+    <div id="parseError" style="display:none;margin-top:10px;font-size:13px;color:var(--danger-text);padding:10px;background:rgba(201,74,69,.07);border-radius:8px;border:1px solid rgba(201,74,69,.2)"></div>
+  </div>
+
+  <div id="step2Section" style="display:none">
+    <div class="card">
+      <div class="step-badge">Step 2</div>
+      <div class="label">Check the date and groups</div>
+      <div class="date-row">
+        <label for="manifestDateInput">Tour date</label>
+        <input type="date" id="manifestDateInput" onchange="onDateChange()">
+        <span class="date-source" id="dateSource"></span>
+      </div>
+      <div id="dateWarn" class="flag-note" style="display:none;margin:0 0 12px"></div>
+      <table>
+        <thead>
+          <tr><th>Group</th><th>Bikes</th><th>Days</th><th>Flags</th></tr>
+        </thead>
+        <tbody id="groupTable"></tbody>
+      </table>
+      <div class="total-row">
+        <span>Total participants</span>
+        <span id="totalParticipants">—</span>
+      </div>
+      <div class="summary-row">
+        <span>Contacts to push</span>
+        <strong id="contactCount">—</strong>
+      </div>
+      <div id="flagNote" style="display:none" class="flag-note"></div>
+    </div>
+
+    <div class="warning-box">
+      <strong>⚠ Heads up:</strong> <em>Push to Scanner + Contacts</em> replaces the groups on every phone. Multi-day hires still running, and any group with bikes not yet checked in, are carried over with their bikes. The current groups and scans are archived on the server first, and also downloaded here as <strong id="archiveName">Group_File_…</strong>. Scanners update within about 10 seconds; the Contacts page within a minute.
+    </div>
+
+    <button class="btn btn-primary" id="pushBtn" onclick="archiveAndPush()">📤 Push to Scanner + Contacts</button>
+    <a class="btn btn-primary" id="goScanner" href="/scanner#start" style="display:none;text-align:center;text-decoration:none">Go to the Group Scanner →</a>
+    <button class="btn btn-secondary" onclick="archiveOnly()">📄 Download Archive CSV Only</button>
+  </div>
+
+  <div class="log" id="log"></div>
+</div>
+
+
+<script src="/assets/vendor/libphonenumber-min.js"></script>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// ============================================================
+// Load Manifest v3.2 — sends the day's groups and contacts to /api/ops
+// in a single action. The server archives the previous day before
+// replacing it, so nothing is lost even if the CSV download fails.
+// ============================================================
+let TODAYS_GROUPS   = [];   // { id, surname, qty, flags, flagged }
+let TODAYS_CONTACTS = [];
+let manifestDateISO = '';
+const esc = Ops.esc;
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+async function handleFile(file) {
+  if (!file) return;
+  clearError();
+  showUploadState('loading', file.name);
+  try {
+    const result = await parseCSV(file);
+    if (!result.groups.length) { showUploadState('idle'); showEmptyWarning(result.dateISO, file.name); return; }
+    TODAYS_GROUPS   = result.groups;
+    TODAYS_CONTACTS = result.contacts;
+    document.getElementById('manifestDateInput').value = result.dateISO || Ops.todayISO();
+    document.getElementById('dateSource').textContent = result.dateISO
+      ? 'from the file name — change it if that\'s wrong'
+      : 'no date in the file name — set to today, change it if needed';
+    onDateChange();
+    showUploadState('done', file.name);
+    document.getElementById('pushBtn').disabled = false;
+  } catch (e) {
+    showUploadState('idle');
+    showError(e.message);
+  }
+}
+
+function dateFromFilename(name) {
+  const m = name.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (!m) return '';
+  const mo = parseInt(m[2], 10), dy = parseInt(m[3], 10);
+  if (mo < 1 || mo > 12 || dy < 1 || dy > 31) return '';
+  return m[1] + '-' + String(mo).padStart(2, '0') + '-' + String(dy).padStart(2, '0');
+}
+
+async function parseCSV(file) {
+  await loadLocations();
+  const text = await file.text();
+  const dateISO = dateFromFilename(file.name);
+
+  const rows = parseCSVRows(text);
+  if (rows.length < 2) return { groups: [], contacts: [], dateISO, empty: true }; // header only, or blank: no bookings
+
+  const headers = rows[0].map(h => h.trim());
+  const iCode  = headers.indexOf('Order Number');
+  const iName  = headers.indexOf('Customer Full Name');
+  const iPhone = headers.indexOf('Customer Phone');
+  const iQty   = headers.indexOf('Quantities');
+  const iPTime = headers.indexOf('Pick-up Time');
+  const iPLoc  = headers.indexOf('Pick-up Location');
+  // Session manifest columns. The mobile and daily exports drop columns that are empty that day,
+  // so every one of these is optional.
+  const iSpec  = headers.indexOf('Order Special Requirements');
+  const iNotes = headers.indexOf('Order internal notes');
+  const iDrop  = headers.indexOf('Dropoff Location');
+  // Pickup manifest columns: Product says where the hire is (Visitor Centre, Oxenberry, delivery),
+  // Session is the start time, Agent Code the reseller.
+  const iProd  = headers.indexOf('Product');
+  const iSess  = headers.indexOf('Session');
+  const iAgent = headers.indexOf('Agent Code');
+  if (iCode < 0 || iName < 0 || iQty < 0) throw new Error('Unexpected CSV format — missing expected columns');
+
+  const seen = new Set(), groups = [], contacts = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row   = rows[i];
+    const code  = (row[iCode] || '').trim();
+    const name  = (row[iName] || '').trim();
+    // Checked and corrected where needed (Rezdy sometimes tags Australian numbers as +1).
+    const ph = window.Phones ? Phones.fields(iPhone >= 0 ? row[iPhone] : '') : { phone: iPhone >= 0 ? (row[iPhone] || '').trim() : '' };
+    const phone = ph.phone;
+    const qstr  = (row[iQty] || '').trim();
+    const product = iProd >= 0 ? (row[iProd] || '').trim() : '';
+    const site = siteFromProduct(product);
+    const agent = iAgent >= 0 ? agentName((row[iAgent] || '').trim()) : '';
+    const ptime = (iPTime >= 0 ? (row[iPTime] || '').trim() : '') || (iSess >= 0 ? (row[iSess] || '').trim() : '');
+    const ploc  = iPLoc  >= 0 ? (row[iPLoc]  || '').trim() : '';
+    const special = iSpec >= 0 ? (row[iSpec] || '').trim() : '';
+    const dropoff = iDrop >= 0 ? (row[iDrop] || '').trim() : '';
+    // "2 day hire" in the internal notes (or one day in the product name) sets the hire length.
+    // Nothing else from the internal notes is kept.
+    const hireDays = hireDaysFrom(iNotes >= 0 ? row[iNotes] : '') || hireDaysFrom(qstr) || productDays(product) || 1;
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+
+    const words   = name.split(' ');
+    const surname = words[words.length - 1] || code;
+
+    let totalBikes = 0;
+    for (const line of qstr.split('\n')) {
+      const m = line.trim().match(/^(\d+)/);
+      if (m) totalBikes += parseInt(m[1], 10);
+    }
+    if (!totalBikes) totalBikes = 1;
+
+    const bikeLines = qstr.split('\n').map(l => l.trim()).filter(Boolean).map(l => l.replace(/\s*\$[\d.,]+\s*$/, '').trim());
+    const flags = getBikeFlags(qstr);
+    if (product && site === '?') flags.push('Unrecognised product');
+    const many = product ? Locs.matchAll(product) : [];
+    if (many.length > 1) flags.push('Product matches ' + many.map(m => m.code).join(' and ') + ': check the location');
+
+    groups.push({ id: Ops.uid(), code, surname, qty: totalBikes, flagged: flags.length > 0, flags, special, dropoff, hireDays, site, product, agent, ptime });
+    groups[groups.length - 1].ph = ph;
+    contacts.push({ code, name, ...ph, ptime, ploc, bikeLines, totalBikes, flags, special, dropoff, hireDays, site, product, agent });
+  }
+  return { groups, contacts, dateISO };
+}
+
+function groupTitle(g) {
+  const [, mo, dy] = (manifestDateISO || Ops.todayISO()).split('-').map(Number);
+  const flagStr = g.flags.length ? (' \u26a0\ufe0f ' + g.flags.join(', ')) : '';
+  return g.surname + ' (x' + g.qty + ') \u00b7 ' + dy + ' ' + Ops.MONTHS[mo - 1] + flagStr;
+}
+
+// Where the hire happens, from the Rezdy product name, using each location's matching words
+// (Asset Register → Locations). "?" means nothing matched: it's flagged on Step 2 so a new product
+// never slips through unnoticed. Teach the app a new product by adding a word to its location.
+let locsReady = null;
+function loadLocations() {
+  if (!locsReady) locsReady = Ops.view('fleet').then(v => Locs.set(v.locations)).catch(() => { locsReady = null; });
+  return locsReady;
+}
+loadLocations();
+document.getElementById('noBookDate').value = Ops.todayISO();
+// Rezdy product names seen in earlier manifests (v3.4), to spot new ones.
+let SEEN = null;
+Ops.get({ view: 'rezdyProducts' }).then(v => { SEEN = v.products || []; if (TODAYS_GROUPS.length && typeof renderGroups === 'function') renderGroups(); }).catch(() => {});
+function siteFromProduct(product) { return Locs.fromProduct(product); }
+const siteLabel = code => code === '?' ? 'Unrecognised product' : Locs.name(code);
+// "GETYOURGUIDE" → "GetYourGuide"; other agent codes in plain title case.
+function agentName(code) {
+  if (!code) return '';
+  // Add agent codes here as they turn up, so they read as names.
+  const known = { GETYOURGUIDE: 'GetYourGuide', VIATOR: 'Viator', KLOOK: 'Klook', MVVIC: 'MVVIC', EXPEDIA: 'Expedia', KARAWATHACOTTAGES: 'Karawatha Cottages' };
+  return known[code.toUpperCase()] || code.charAt(0).toUpperCase() + code.slice(1).toLowerCase();
+}
+// A multi-day product name: "Two Day", "2 Day", "3-Day". "One Day" and "Full Day" don't count.
+function productDays(product) {
+  const m = String(product || '').toLowerCase().match(/\b(two|three|four|five|2|3|4|5)[\s-]*days?\b/);
+  return m ? ({ two: 2, three: 3, four: 4, five: 5 }[m[1]] || parseInt(m[1], 10)) : 0;
+}
+
+// "2 day hire", "2-Day Hire", "2 days hire" → 2. Anything from 2 to 7 days.
+function hireDaysFrom(text) {
+  const m = String(text || '').match(/\b([2-7])\s*-?\s*days?\s+hire\b/i);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function getBikeFlags(qstr) {
+  // STANDARD (no flag): plain 'N eBike' or 'N eBike (Unisex style)'
+  // NON-STANDARD (flagged): Child Seat, Cargo, Surf, TukTuk, or any other qualifier
+  // Multi-line quantities supported (one booking, multiple bike types)
+  const NON_STD = [
+    ['child seat', 'Child Seat'],
+    ['cargo',      'Cargo'],
+    ['surf',       'Surf'],
+    ['etuktuk',    'eTukTuk'],
+    ['tuk tuk',    'TukTuk'],
+  ];
+  const lines = qstr.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  const flags  = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const q    = line.toLowerCase();
+    let found  = false;
+    for (let j = 0; j < NON_STD.length; j++) {
+      if (q.indexOf(NON_STD[j][0]) >= 0) {
+        const qtyM = line.trim().match(/^(\d+)/);
+        flags.push((qtyM ? qtyM[1] : '1') + '× ' + NON_STD[j][1]);
+        found = true; break;
+      }
+    }
+    if (found) continue;
+    if (q.indexOf('ebike') >= 0) {
+      // A plain eBike however it's written: "2 eBike", "2 eBike (Unisex style)", "7 unisex ebike".
+      const core = q.replace(/^\d+\s*/, '').replace(/\(unisex style\)/, '').replace(/\bunisex\b/, '').replace(/\$[\d.,]+/, '').replace(/\s+/g, ' ').trim();
+      if (/^e-?bikes?$/.test(core)) continue;
+      const after = q.replace(/^[\d\s]+ebike\s*/, '').trim();
+      if (after === '') continue;
+      if (after.indexOf('(unisex style)') === 0) continue;
+      if (/^\$[\d.]+$/.test(after)) continue;
+      const qtyM  = line.trim().match(/^(\d+)/);
+      const qty   = qtyM ? qtyM[1] : '1';
+      const lblM  = line.match(/eBike\s+([A-Za-z][^($\n]+?)(?:\s*[(]|\s*\$|$)/i);
+      if (lblM) { flags.push(qty + '× ' + lblM[1].trim().replace(/^with\s+/i, '')); continue; }
+      const parM  = line.match(/\(([^)]+)\)/);
+      flags.push(qty + '× ' + (parM ? parM[1].trim() : 'non-standard'));
+    }
+  }
+  return flags;
+}
+
+function parseCSVRows(text) {
+  const rows = [];
+  let row = [], field = '', inQuote = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuote) {
+      if (ch === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (ch === '"') inQuote = false;
+      else field += ch;
+    } else {
+      if      (ch === '"')  inQuote = true;
+      else if (ch === ',')  { row.push(field); field = ''; }
+      else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (ch === '\r') { /* skip */ }
+      else field += ch;
+    }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim()));
+}
+
+function onDateChange() {
+  manifestDateISO = document.getElementById('manifestDateInput').value || '';
+  const warn = document.getElementById('dateWarn');
+  const today = Ops.todayISO();
+  if (!manifestDateISO) {
+    warn.style.display = ''; warn.textContent = '\u26a0\ufe0f Choose the tour date before pushing.';
+  } else if (manifestDateISO < today) {
+    warn.style.display = ''; warn.textContent = '\u26a0\ufe0f This date is in the past. The Contacts page will show it as out of date.';
+  } else if (manifestDateISO > Ops.addDaysISO(today, 1)) {
+    warn.style.display = ''; warn.textContent = '\u26a0\ufe0f This date is more than a day ahead. The Contacts page only shows today\'s and tomorrow\'s manifest.';
+  } else warn.style.display = 'none';
+  renderGroups();
+}
+
+function renderGroups() {
+  const tbody = document.getElementById('groupTable');
+  tbody.innerHTML = TODAYS_GROUPS.map((g, n) =>
+    '<tr class="' + (g.flagged ? 'flagged' : '') + '">' +
+    '<td class="mono">' + esc(groupTitle(g)) +
+      (g.site ? '<div><span class="site ' + (g.site === '?' ? 'unk' : Locs.isDelivery(g.site) ? 'DEL' : '') + '">' + Locs.icon(g.site) + ' ' + esc(siteLabel(g.site)) + '</span>' +
+        (g.ptime ? ' <span class="special" style="display:inline">' + esc(g.ptime) + (g.agent ? ' \u00b7 ' + esc(g.agent) : '') + '</span>' : '') +
+        (g.site === '?' ? '<div class="special">Product: ' + esc(g.product) + '</div>' : '') + '</div>' : '') +
+      (g.special ? '<div class="special" onclick="this.classList.toggle(\'open\')">' + esc(g.special) + '</div>' : '') +
+      (g.dropoff ? '<div class="special">Drop-off: ' + esc(g.dropoff) + '</div>' : '') +
+      (g.ph && g.ph.phoneNote ? '<div class="special" style="color:var(--accent-text)">📞 Phone corrected: ' + esc(g.ph.phoneFrom) + ' → ' + esc(g.ph.phoneDisplay) + ' (' + esc(g.ph.phoneNote) + ')</div>' : '') +
+      (g.ph && g.ph.phoneCheck ? '<div class="special" style="color:#a33a35">📞 Check number: ' + esc(g.ph.phone) + ' doesn\'t look valid</div>' : '') + '</td>' +
+    '<td>' + g.qty + '</td>' +
+    '<td><select class="days-sel' + (g.hireDays > 1 ? ' multi' : '') + '" aria-label="Hire length" onchange="setDays(' + n + ', this.value)">' +
+      [1, 2, 3, 4, 5, 6, 7].map(d => '<option value="' + d + '"' + (d === g.hireDays ? ' selected' : '') + '>' + d + '</option>').join('') + '</select></td>' +
+    '<td>' + g.flags.map(f => '<span class="flag-pill">' + esc(f) + '</span>').join('') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const total        = TODAYS_GROUPS.reduce((s, g) => s + g.qty, 0);
+  const flaggedCount = TODAYS_GROUPS.filter(g => g.flagged).length;
+  const phoneCount   = TODAYS_CONTACTS.filter(c => c.phone).length;
+  document.getElementById('totalParticipants').textContent = total;
+  document.getElementById('contactCount').innerHTML =
+    TODAYS_CONTACTS.length + ' bookings · ' +
+    '<span style="color:var(--accent-text)">' + phoneCount + ' with phone</span>' +
+    (TODAYS_CONTACTS.length - phoneCount ? ' · <span style="color:var(--warn-text)">' + (TODAYS_CONTACTS.length - phoneCount) + ' missing</span>' : '');
+
+  // Notes under the table: equipment flags, where the hires are, multi-day hires.
+  const flagNote = document.getElementById('flagNote');
+  const notes = [];
+  // Products to check before loading (v3.4): never seen before, matching more than one location, or none.
+  const seenNames = SEEN ? new Set(SEEN.map(p => p.name.toLowerCase())) : null;
+  const distinct = [...new Set(TODAYS_GROUPS.map(g => g.product).filter(Boolean))];
+  const review = distinct.map(p => {
+    const m = Locs.matchAll(p), isNew = seenNames && !seenNames.has(p.toLowerCase());
+    return { p, m, isNew, many: m.length > 1, none: !m.length };
+  }).filter(r => r.isNew || r.many || r.none);
+  if (review.length) notes.push('<div class="product-check"><strong>Check before loading:</strong>' + review.map(r =>
+    '<div>' + (r.isNew ? '🆕 <b>New product</b>' : r.none ? '❓ <b>No location</b>' : '⚠ <b>Matches ' + r.m.length + ' locations</b>') + ': ' + esc(r.p) + ' → ' +
+    (r.none ? 'no location (set it on the scanner, or add a matching word in Asset Register → Locations)' :
+      esc(Locs.name(r.m[0].code)) + ' (matched "' + esc(r.m[0].word) + '"' + (r.many ? '; also ' + r.m.slice(1).map(x => esc(x.code) + ' ("' + esc(x.word) + '")').join(', ') : '') + ')') +
+    (r.isNew && !r.none && !r.many ? '. Check this is right.' : '') + '</div>').join('') + '</div>');
+  if (flaggedCount) notes.push('\u26a0\ufe0f <strong>' + flaggedCount + ' group' + (flaggedCount > 1 ? 's' : '') + ' flagged</strong>. Check booking details before dispatching.');
+  const bySite = [...Locs.hire().map(l => l.code), '?'].map(k => [k, TODAYS_GROUPS.filter(g => g.site === k).length]).filter(([, n]) => n);
+  if (bySite.length) notes.push('\ud83d\udccd ' + bySite.map(([k, n]) => esc(siteLabel(k)) + ' ' + n).join(' \u00b7 ') +
+    (bySite.some(([k]) => k === '?') ? '<br><strong>Check the unrecognised product</strong> against the booking in Rezdy, and add a matching word to its location under Asset Register \u2192 Locations.' : ''));
+  const multi = TODAYS_GROUPS.filter(g => g.hireDays > 1).length;
+  const fixed = TODAYS_CONTACTS.filter(c => c.phoneNote).length, bad = TODAYS_CONTACTS.filter(c => c.phoneCheck).length;
+  if (fixed || bad) notes.push('\ud83d\udcde ' + (fixed ? fixed + ' phone number' + (fixed > 1 ? 's' : '') + ' corrected' : '') + (fixed && bad ? ' \u00b7 ' : '') + (bad ? '<strong>' + bad + ' to check</strong> at check-in' : '') + '. Details under each group.');
+  if (multi) notes.push('\ud83d\udcc5 <strong>' + multi + ' multi-day hire' + (multi > 1 ? 's' : '') + '</strong>. They\'ll be carried into the following days automatically. Check the Days column against the bookings.');
+  flagNote.style.display = notes.length ? '' : 'none';
+  flagNote.innerHTML = notes.join('<br>');
+
+  const label = manifestDateISO ? Ops.displayDate(manifestDateISO) + ' \u00b7 ' : '';
+  document.getElementById('pageSub').textContent = label + total + ' participants across ' + TODAYS_GROUPS.length + ' groups';
+  document.getElementById('archiveName').textContent = archiveFilename();
+  document.getElementById('step2Section').style.display = '';
+}
+
+// Hire length set by hand on Step 2, for a booking whose internal note was missed.
+function setDays(n, v) {
+  const g = TODAYS_GROUPS[n]; if (!g) return;
+  g.hireDays = parseInt(v, 10) || 1;
+  const c = TODAYS_CONTACTS.find(x => x.code === g.code); if (c) c.hireDays = g.hireDays;
+  renderGroups();
+}
+
+function archiveFilename(dateISO) {
+  return 'Group_File_' + (dateISO || Ops.todayISO()) + '.csv';
+}
+
+function buildArchiveCSV(day) {
+  const cv = Ops.csvCell;
+  const fmt = t => new Date(t).toLocaleString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const now = fmt(Date.now());
+  const rows = [['Archive Date', 'Tour Date', 'Group Name', 'Status', 'Bike ID', 'Brand', 'Model', 'Scan Time', 'Taken Off At', 'Reason', 'Hire Day', 'Checked In At', 'Exception'].map(cv).join(',')];
+  const EXC = { collect: 'Left at location, to collect', damaged: 'Damaged, issue logged', missing: 'Missing', other: 'Other' };
+  const hireDay = g => {
+    if (!g.startDate || !day.manifestDate) return '';
+    const d = Math.round((Date.parse(day.manifestDate) - Date.parse(g.startDate)) / 864e5) + 1, n = g.hireDays || 1;
+    return d > n ? 'Overdue, out since ' + g.startDate : n > 1 ? d + ' of ' + n : '';
+  };
+  const exc = (g, b) => { const e = (g.exceptions || []).find(x => x.bikeId === b.id); return e ? EXC[e.reason] + (e.note ? ': ' + e.note : '') : ''; };
+  const tourDate = day.manifestDateDisplay || day.manifestDate || '';
+  for (const g of (day.groups || [])) {
+    const bikes = g.bikes || [];
+    if (!bikes.length) rows.push([cv(now), cv(tourDate), cv(g.name || '(unnamed)'), cv(g.status || ''), cv('(no bikes scanned)'), '', '', '', '', '', cv(hireDay(g)), '', ''].join(','));
+    else for (const b of bikes) { const info = (day.bikeInfo || {})[b.code] || b; rows.push([cv(now), cv(tourDate), cv(g.name || ''), cv(g.status || ''), cv(b.code || ''), cv(info.brand || ''), cv(info.model || ''), cv(b.ts ? fmt(b.ts) : ''), '', '', cv(hireDay(g)), cv(b.inAt ? fmt(b.inAt) : ''), cv(exc(g, b))].join(',')); }
+    // Bikes taken off the group (swaps, faults, mistakes) stay in the archive.
+    const why = { swap: 'swapped', fault: 'fault', mistake: 'scanned by mistake', cleared: 'group cleared' };
+    for (const b of (g.removed || [])) { const info = (day.bikeInfo || {})[b.code] || b; rows.push([cv(now), cv(tourDate), cv(g.name || ''), cv('TAKEN OFF'), cv(b.code || ''), cv(info.brand || ''), cv(info.model || ''), cv(b.ts ? fmt(b.ts) : ''), cv(b.removedAt ? fmt(b.removedAt) : ''), cv(why[b.reason] || 'removed'), cv(hireDay(g)), '', ''].join(',')); }
+  }
+  if (!(day.groups || []).length) rows.push([cv(now), cv(tourDate), cv('(no groups)'), '', '', '', '', '', '', '', '', '', ''].join(','));
+  return rows.join('\r\n');
+}
+
+async function archiveOnly() {
+  try {
+    log('Fetching current scanner state...');
+    const current = await Ops.view('scanner');
+    const bc = (current.groups || []).reduce((s, g) => s + (g.bikes || []).length, 0);
+    log('Current: ' + (current.groups || []).length + ' groups, ' + bc + ' scanned bikes', 'ok');
+    const fn = archiveFilename(current.manifestDate);
+    Ops.downloadText(buildArchiveCSV(current), fn, 'text/csv;charset=utf-8');
+    log('\u2713 Downloaded ' + fn, 'ok');
+  } catch (e) { log('\u2717 ' + e.message, 'err'); }
+}
+
+// "No bookings today": a blank manifest for the chosen date. Everything a real upload does still happens:
+// the current day is archived (and downloaded), its summary saved, carried-over groups kept.
+function noBookings(dateISO) {
+  const d = dateISO || document.getElementById('noBookDate').value || Ops.todayISO();
+  if (!confirm('Load a blank manifest for ' + Ops.displayDate(d) + '?\n\nThe current groups will be archived and replaced with no bookings. Multi-day and overdue groups still carry over, and walk-ins can be added in the Group Scanner.')) return;
+  TODAYS_GROUPS = []; TODAYS_CONTACTS = [];
+  document.getElementById('manifestDateInput').value = d;
+  onDateChange();
+  archiveAndPush({ empty: true });
+}
+// A file with no bookings in it: say so, rather than refusing it.
+function showEmptyWarning(dateISO, name) {
+  const el = document.getElementById('parseError');
+  const d = dateISO || Ops.todayISO();
+  el.style.display = '';
+  el.className = 'empty-warn';
+  el.innerHTML = '\u26a0\ufe0f <strong>This manifest has no bookings for ' + Ops.displayDate(d) + '.</strong> (' + esc(name) + ')' +
+    '<div class="btns"><button class="btn btn-secondary" onclick="noBookings(\'' + d + '\')">Continue: no bookings</button>' +
+    '<button class="btn btn-secondary" onclick="document.getElementById(\'pdfInput\').click()">Choose another file</button></div>';
+}
+
+async function archiveAndPush(opts = {}) {
+  if (!TODAYS_GROUPS.length && !opts.empty) { alert('Upload a Rezdy CSV first.'); return; }
+  if (!manifestDateISO) { alert('Choose the tour date first.'); return; }
+  const btn = document.getElementById('pushBtn');
+  btn.disabled = true;
+  // Loading the same day again replaces its groups, scans included (they stay in the archive).
+  // Ask first if bikes have already been scanned for that day.
+  try {
+    const cur = await Ops.view('scanner');
+    const scanned = (cur.groups || []).filter(g => (g.startDate || cur.manifestDate) === manifestDateISO).reduce((n, g) => n + (g.bikes || []).length, 0);
+    if (cur.manifestDate === manifestDateISO && scanned && !confirm(Ops.displayDate(manifestDateISO) + ' is already loaded, with ' + scanned + ' bike' + (scanned > 1 ? 's' : '') + ' scanned.\n\n' +
+      'Loading it again replaces that day\'s groups, and those scans come off every scanner. (They are kept in the day\'s archive.)\n\nLoad it again anyway?')) {
+      log('Cancelled: nothing was changed.'); btn.disabled = false; return;
+    }
+  } catch (e) { log('Could not check what is already loaded (' + e.message + '). Loading anyway.'); }
+  try {
+    log(opts.empty ? 'Loading a day with no bookings for ' + Ops.displayDate(manifestDateISO) + '...' : 'Pushing ' + TODAYS_GROUPS.length + ' groups + ' + TODAYS_CONTACTS.length + ' contacts for ' + Ops.displayDate(manifestDateISO) + '...');
+    // One id per load, so a load retried after no answer is recognised and changes nothing.
+    window.__loadId = window.__loadId || Ops.uid();
+    const res = await Ops.act('loadManifest', {
+      loadId: window.__loadId,
+      manifestDate: manifestDateISO,
+      manifestDateDisplay: Ops.displayDate(manifestDateISO),
+      groups: TODAYS_GROUPS.map(g => ({ id: g.id, name: groupTitle(g), code: g.code, special: g.special, dropoff: g.dropoff, hireDays: g.hireDays,
+        site: g.site === '?' ? '' : g.site, product: g.product, agent: g.agent, ptime: g.ptime,
+        qty: g.qty, equip: g.flags.filter(f => /^\d+× /.test(f)) })),
+      contacts: TODAYS_CONTACTS,
+      ...(opts.empty ? { empty: true } : {}),
+    });
+    window.__loadId = null;
+    log('  \u2713 Scanner + Contacts updated', 'ok');
+    // Next job: issuing bikes. Go straight to the scanner, unless there's something on this page to
+    // check first (a product with no location or two), in which case the button waits.
+    const toCheck = TODAYS_GROUPS.some(g => g.flags.some(f => !/^\d+× /.test(f)));
+    document.getElementById('goScanner').style.display = 'block';
+    if (!opts.empty && !toCheck) {
+      log('  Opening the Group Scanner…', 'ok');
+      setTimeout(() => { location.href = '/scanner#start'; }, 2500);
+    }
+    if (res.archiveKey) log('  \u2713 Previous day archived on the server', 'ok');
+    if (res.carried - (res.overdue || 0) > 0) log('  \u2713 ' + (res.carried - res.overdue) + ' multi-day hire' + (res.carried - res.overdue > 1 ? 's' : '') + ' carried over, with their bikes', 'ok');
+    if (res.overdue) log('  \u26a0 ' + res.overdue + ' overdue group' + (res.overdue > 1 ? 's' : '') + ' carried over: bikes not checked in yet', 'warn');
+
+    const prev = res.previous || {};
+    if ((prev.groups || []).length) {
+      const fn = archiveFilename(prev.manifestDate);
+      Ops.downloadText(buildArchiveCSV(prev), fn, 'text/csv;charset=utf-8');
+      log('  \u2713 Saved ' + fn, 'ok');
+    } else log('  (No previous groups to archive)', 'ok');
+
+    log('', '');
+    log('=== DONE ===', 'ok');
+    log('Scanners update within ~10s · Contacts page within a minute.', 'ok');
+    TODAYS_GROUPS.forEach(g => log('  - ' + groupTitle(g), 'ok'));
+    btn.textContent = '\u2713 Pushed';
+  } catch (e) {
+    log('\u2717 ' + e.message, 'err');
+    btn.disabled = false;
+  }
+}
+
+function showUploadState(state, filename) {
+  const icon = zone.querySelector('.upload-icon');
+  const lbl  = zone.querySelector('.upload-label');
+  const sub  = zone.querySelector('.upload-sub');
+  const succ = document.getElementById('uploadSuccess');
+  if (state === 'loading') {
+    icon.textContent = '\u23f3'; lbl.textContent = 'Reading CSV...'; sub.textContent = filename;
+    succ.style.display = 'none'; zone.classList.remove('loaded');
+  } else if (state === 'done') {
+    icon.textContent = '\u2705'; lbl.textContent = 'CSV loaded'; sub.textContent = filename;
+    const phoneCount = TODAYS_CONTACTS.filter(c => c.phone).length;
+    succ.style.display = '';
+    succ.textContent = TODAYS_GROUPS.length + ' groups · ' + TODAYS_CONTACTS.length + ' contacts (' + phoneCount + ' with phone)';
+    zone.classList.add('loaded');
+  } else {
+    icon.textContent = '\ud83d\udccb'; lbl.textContent = 'Drop CSV here or tap to choose';
+    sub.textContent = 'Rezdy pickup manifest export \u00b7 CSV format';
+    succ.style.display = 'none'; zone.classList.remove('loaded');
+  }
+}
+
+function showError(msg) { const el = document.getElementById('parseError'); el.style.display = ''; el.className = ''; el.textContent = '\u26a0 ' + msg; }
+function clearError() { const el = document.getElementById('parseError'); el.style.display = 'none'; el.className = ''; }
+
+function log(msg, cls) {
+  const el = document.getElementById('log');
+  el.classList.add('show');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+</script>
+</body>
+</html>

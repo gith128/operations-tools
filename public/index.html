@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SA eBikes · Operations Tools v3.10 · Operations Tools</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;--bg-elev:#ffffff;--bg-soft:#f2efe8;
+  --border:#e4ded2;--border-strong:#d4cdbd;
+  --text:#1f2428;--text-dim:#5a6269;--text-muted:#8b8f93;
+  }
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  min-height:100dvh;
+  padding:32px 20px;
+}
+.wrap{max-width:680px;margin:0 auto}
+
+.brand{margin-bottom:6px}
+.brand h1{
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:-0.5px;
+  color:var(--text);
+}
+.brand h1 .accent{color:var(--accent)}
+.brand .sub{
+  font-size:12px;
+  font-family:'DM Mono',monospace;
+  color:var(--text-dim);
+  margin-top:4px;
+}
+.tagline{
+  font-size:13px;
+  font-style:italic;
+  color:var(--text-muted);
+  margin-bottom:28px;
+}
+
+.tiles{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+}
+
+.tile{
+  display:block;
+  background:var(--bg-elev);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:22px 22px;
+  text-decoration:none;
+  color:var(--text);
+  transition:all .18s ease;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+}
+.tile:hover{
+  border-color:var(--accent);
+  box-shadow:0 6px 18px var(--accent-soft);
+  transform:translateY(-2px);
+}
+.tile:active{transform:scale(.98)}
+
+.tile-icon{
+  font-size:34px;
+  line-height:1;
+  margin-bottom:14px;
+}
+.tile-title{
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-0.2px;
+  margin-bottom:8px;
+}
+.tile-desc{
+  font-size:13px;
+  font-family:'DM Mono',monospace;
+  color:var(--text-dim);
+  line-height:1.55;
+}
+
+.footer{
+  margin-top:32px;
+  font-size:11px;
+  color:var(--text-muted);
+  font-family:'DM Mono',monospace;
+}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+.tile-count{display:inline-block;min-width:20px;padding:1px 7px;margin-left:4px;border-radius:100px;background:rgba(212,138,47,.15);color:#8a5a1a;font-size:12px;font-weight:800;vertical-align:middle}
+.tile-count:empty{display:none}
+.site-alert{display:none;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(212,138,47,.1);border:1.5px solid rgba(212,138,47,.5);color:#8a5a1a;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-decoration:none}
+.site-alert div{margin:2px 0}
+.backup-line{display:none;margin:0 0 14px;padding:9px 14px;border-radius:12px;font-family:'DM Mono',monospace;font-size:12px;text-decoration:none;border:1.5px solid var(--border);color:var(--text-dim);background:var(--bg-elev)}
+.backup-line.red{background:rgba(201,74,69,.08);border-color:rgba(201,74,69,.55);color:#9a3530;font-family:'Syne',sans-serif;font-size:13px;font-weight:700}
+.backup-line .amber{display:block;margin-top:3px;color:#8a5a1a;font-weight:700}
+.backup-line.amberline{background:rgba(212,138,47,.08);border-color:rgba(212,138,47,.55);color:#8a5a1a}
+.ontoday{display:none;margin:0 0 14px;padding:14px 16px;border-radius:16px;background:var(--bg-elev);border:1.5px solid var(--border-strong,#d4cdbd);text-decoration:none;color:var(--text)}
+.ontoday .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.ontoday .h b{font-size:16px;font-weight:800}
+.ontoday .h span{font:400 12px 'DM Mono',monospace;color:var(--text-dim)}
+.ontoday .r{display:flex;gap:10px;font-size:14px;margin:5px 0}
+.ontoday .c{font:500 12px 'DM Mono',monospace;color:var(--accent-text,var(--accent-text));width:38px;flex:none;padding-top:2px}
+.ontoday .mine{border-top:1px solid var(--border);margin-top:9px;padding-top:9px;font-size:13px}
+.preview-banner{display:none;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(90,110,200,.1);border:1.5px solid rgba(90,110,200,.5);color:#2f3c80;font-size:13px;font-weight:700}
+
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <h1 data-brand="home">SA <span class="accent">eBikes</span></h1>
+    <div class="sub">Operations Tools v3.10 · Internal use only</div>
+  </div>
+  <div class="tagline" data-brand="tagline">Just like riding a bike... just more fun</div>
+
+  <div class="preview-banner" id="previewBanner"></div>
+  <a class="site-alert" id="siteAlert" href="/checklists"></a>
+  <a class="backup-line" id="backupLine" href="/admin#backups"></a>
+  <a class="ontoday" id="onToday" href="/roster"></a>
+
+  <div class="tiles">
+
+    <a class="tile" href="/contacts" data-tile="contacts">
+      <div class="tile-icon">📇</div>
+      <div class="tile-title">Today's Contacts</div>
+      <div class="tile-desc">Tap-to-call, WhatsApp, SMS, or save vCard for today's customers.</div>
+    </a>
+
+    <a class="tile" href="/checklists" data-tile="checklists">
+      <div class="tile-icon">✅</div>
+      <div class="tile-title">Site Checklists</div>
+      <div class="tile-desc">Opening and closing checklists for each site, signed off and kept on record.</div>
+    </a>
+
+    <a class="tile" href="/roster" data-tile="roster">
+      <div class="tile-icon">🗓️</div>
+      <div class="tile-title">Roster</div>
+      <div class="tile-desc">Who's working where this week, with notes for each shift. Your own shifts, and add them to your calendar.</div>
+    </a>
+
+    <a class="tile" href="/scanner" data-tile="scanner">
+      <div class="tile-icon">📷</div>
+      <div class="tile-title">Group Scanner</div>
+      <div class="tile-desc">Scan bikes to tour groups. Real-time multi-device sync. OOS alerts.</div>
+    </a>
+
+    <a class="tile" href="/qr" data-tile="qr">
+      <div class="tile-icon">🔳</div>
+      <div class="tile-title">Show QR</div>
+      <div class="tile-desc">Ride Guide, online waiver and Google review codes, full screen for guests to scan.</div>
+    </a>
+
+    <a class="tile" href="/fleet" data-tile="fleet">
+      <div class="tile-icon">🚲</div>
+      <div class="tile-title">Asset Register</div>
+      <div class="tile-desc">Every bike by barcode and serial number: where it is, key, brand, model and age. Shows open issues.</div>
+    </a>
+
+    <a class="tile" href="/issues" data-tile="issues">
+      <div class="tile-icon">⚠️</div>
+      <div class="tile-title">Issue Reporter</div>
+      <div class="tile-desc">Log and resolve bike maintenance issues. P1–P5 priority. Live fleet status.</div>
+    </a>
+
+    <a class="tile" href="/lost" data-tile="lost">
+      <div class="tile-icon">🧳</div>
+      <div class="tile-title">Lost Property <span class="tile-count" id="lostCount"></span></div>
+      <div class="tile-desc">Items left by guests: where they're kept, who's been contacted, and what happened to them.</div>
+    </a>
+
+    <a class="tile" href="/manifest" data-tile="manifest">
+      <div class="tile-icon">📤</div>
+      <div class="tile-title">Load Manifest</div>
+      <div class="tile-desc">Push today's tour groups + contacts to the scanner. Archive previous day's data.</div>
+    </a>
+
+    <a class="tile" href="/help" data-tile="help">
+      <div class="tile-icon">📖</div>
+      <div class="tile-title">Help &amp; SOPs</div>
+      <div class="tile-desc">How each tool works, and the step-by-step procedures for the hire day.</div>
+    </a>
+
+  </div>
+
+
+</div>
+<script src="/assets/ops-client.js"></script>
+<script>
+// Home screen order and hidden tiles, set in Admin for every phone (v3.7). The last setting seen is
+// kept on the phone, so the tiles don't jump about while the latest is fetched.
+function applyTiles(home) {
+  if (!home || !Array.isArray(home.order)) return;
+  const box = document.querySelector('.tiles'); if (!box) return;
+  const tiles = Object.fromEntries([...box.querySelectorAll('[data-tile]')].map(el => [el.dataset.tile, el]));
+  for (const id of home.order) if (tiles[id]) box.appendChild(tiles[id]);
+  for (const [id, el] of Object.entries(tiles)) el.style.display = (home.hidden || []).includes(id) ? 'none' : '';
+}
+try { applyTiles(JSON.parse(localStorage.getItem('saeb-home') || 'null')); } catch {}
+Ops.view('settings').then(v => { applyTiles(v.home); if (v.brand && window.Brand) Brand.set(v.brand); try { localStorage.setItem('saeb-home', JSON.stringify(v.home)); } catch {} }).catch(() => {});
+// How many lost property items are still open, on the tile.
+Ops.view('lost').then(v => { const n = (v.items || []).filter(i => i.status === 'open').length; if (n) document.getElementById('lostCount').textContent = n; }).catch(() => {});
+// Backup status: green (last good backup), red (none for 36 hours, or the last one failed), and a
+// reminder when the off-site copy is due. On a preview, a banner says it isn't the live site.
+Ops.view('backupStatus').then(st => {
+  const el = document.getElementById('backupLine');
+  const when = t => { const d = new Date(t), today = new Date().toDateString() === d.toDateString();
+    return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }) + (today ? ' today' : ', ' + d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })); };
+  let html = st.state === 'green' ? '✓ Backup: last good ' + when(st.lastOk.at)
+    : st.state === 'amber' ? '✓ Backup: last good ' + when(st.lastOk.at) + '<span class="amber">Some daily archives weren\'t copied. They\'ll be tried again tonight.</span>'
+    : '⛔ ' + (st.unfinished ? 'The last backup didn\'t finish' : st.lastOk ? 'No good backup since ' + when(st.lastOk.at) : 'No backup taken yet') + '. Tell the manager, or open Admin › Backups.';
+  if (st.offsiteDue) html += '<span class="amber">📥 Off-site backup download due (Admin › Backups)</span>';
+  el.innerHTML = html; el.className = 'backup-line' + (st.state === 'red' ? ' red' : st.state === 'amber' ? ' amberline' : ''); el.style.display = 'block';
+  if (st.isLive === false) {
+    const b = document.getElementById('previewBanner');
+    b.textContent = '🧪 PREVIEW (' + st.context + '): test data only. This is not the live site; nothing done here reaches it.';
+    b.style.display = 'block';
+  }
+}).catch(() => {});
+// On today: who's working where, from the roster, and this phone's user's next shift.
+(async () => {
+  try {
+    const t = Ops.todayISO();
+    const r = await Ops.get({ view: 'roster', start: t, days: 14 });
+    const today = r.shifts.filter(s => s.date === t && s.kind !== 'na'), away = r.shifts.filter(s => s.date === t && s.kind === 'na');
+    let me = null; try { me = JSON.parse(localStorage.getItem('saeb-me') || 'null'); } catch {}
+    const next = me ? r.shifts.find(s => s.memberId === me.id && s.date >= t && s.kind !== 'na') : null;
+    if (!today.length && !next && !away.length) return;
+    const t12 = x => { if (x === 'close') return 'close'; const [h, m] = x.split(':').map(Number); return (h % 12 || 12) + ':' + String(m).padStart(2, '0'); };
+    const bySite = {};
+    for (const s of today) (bySite[s.site] = bySite[s.site] || []).push(Ops.esc(s.name) + ' ' + t12(s.start) + '–' + t12(s.end));
+    const d = new Date();
+    const el = document.getElementById('onToday');
+    el.innerHTML = '<div class="h"><b>On today</b><span>' + d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }) + '</span></div>' +
+      (today.length ? Object.entries(bySite).map(([site, list]) => '<div class="r"><div class="c">' + Ops.esc(site) + '</div><div>' + list.join(' · ') + '</div></div>').join('') : '<div class="r">No one rostered today.</div>') +
+      (away.length ? '<div class="r"><div class="c">N/A</div><div>' + away.map(s => Ops.esc(s.name)).join(' · ') + ' not available</div></div>' : '') +
+      (next ? '<div class="mine"><b>Your next shift:</b> ' + (next.date === t ? 'today' : new Date(next.date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })) + ', ' + Ops.esc(next.site) + ' ' + t12(next.start) + '–' + t12(next.end) + '</div>' : '');
+    el.style.display = 'block';
+  } catch {}
+})();
+// Reminder: this phone's site not opened yet today, not closed yet this afternoon, or not closed yesterday.
+(async () => {
+  try {
+    const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const now = new Date(), y = new Date(now.getTime() - 864e5);
+    const site = localStorage.getItem('saeb-phone-location') || 'VIC';
+    const [t, yd] = await Promise.all([Ops.get({ view: 'sitechecks', date: iso(now) }), Ops.get({ view: 'sitechecks', date: iso(y) })]);
+    const st = t.sites[site], ys = yd.sites[site];
+    if (!st) return;
+    const lines = [];
+    // A day marked "not required" needs neither an opening nor a closing.
+    if (ys && ys.open && !ys.close) lines.push('⚠️ ' + site + ' wasn\'t closed yesterday');
+    if (st.skip && !st.open) { /* not required today */ }
+    else if (!st.open) lines.push('☀️ ' + site + ' not opened yet today');
+    else if (!st.close && now.getHours() >= 15) lines.push('🌙 ' + site + ' not closed yet today');
+    if (!lines.length) return;
+    const el = document.getElementById('siteAlert');
+    el.innerHTML = lines.map(l => '<div>' + l + ' ›</div>').join('');
+    el.style.display = 'block';
+  } catch {}
+})();
+// The new scanner's decoder (about 930 KB) is fetched once in the background, so the first scan of the
+// day doesn't wait on it. Skipped on phones set to the classic scanner or on data saver. (v3.5.1)
+window.addEventListener('load', () => setTimeout(() => {
+  try {
+    if (localStorage.getItem('saeb-scan-engine') === 'classic') return;
+    if (navigator.connection && navigator.connection.saveData) return;
+    ['/assets/vendor/zxing-reader.js', '/assets/vendor/zxing_reader.wasm'].forEach(u => fetch(u).catch(() => {}));
+  } catch {}
+}, 3000));
+</script>
+</body>
+</html>

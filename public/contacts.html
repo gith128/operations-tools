@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SA eBikes · Operations Tools v3.10 · Today's Contacts</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;--bg-elev:#ffffff;--bg-soft:#f2efe8;
+  --border:#e4ded2;--border-strong:#d4cdbd;
+  --text:#1f2428;--text-dim:#5a6269;--text-muted:#8b8f93;
+  --warn:#d48a2f;--warn-text:#8a5a1a;
+  --danger:#c94a45;--danger-text:#9a3530;
+  --wa:#25D366;--wa-dark:#1ea855;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;padding:24px 16px}
+.wrap{max-width:680px;margin:0 auto}
+
+h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:6px}
+.tagline{font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:24px}
+
+.card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+
+/* Sync status card */
+.sync-card{display:flex;align-items:center;gap:14px;padding:14px 16px}
+.sync-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--text-muted)}
+.sync-dot.live{background:var(--accent);box-shadow:0 0 0 0 var(--accent-glow);animation:pulse 2.5s infinite}
+.sync-dot.stale{background:var(--warn)}
+.sync-dot.error{background:var(--danger)}
+.sync-dot.loading{background:var(--text-dim);animation:blink 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--accent-glow)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-info{flex:1;min-width:0}
+.sync-status{font-size:13px;font-weight:700;color:var(--text)}
+.sync-detail{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:2px}
+.sync-refresh{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;flex-shrink:0;transition:all .15s}
+.sync-refresh:hover{background:var(--border)}
+.sync-refresh:active{transform:scale(.95)}
+.sync-refresh.spinning{opacity:.5;pointer-events:none}
+.sync-refresh.spinning svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Empty / stale state */
+.empty-state{text-align:center;padding:32px 16px;color:var(--text-dim);font-size:14px;line-height:1.6}
+.empty-state .big{font-size:48px;margin-bottom:12px;opacity:.6}
+.empty-state strong{color:var(--text);font-weight:700}
+
+/* Master button */
+.master-btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border:1.5px solid var(--border-strong);background:var(--bg-elev);color:var(--text);margin-bottom:16px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.master-btn:hover{background:var(--bg-soft)}
+.master-btn:active{transform:scale(.98)}
+
+/* Contact cards */
+.card-head{margin-bottom:14px}
+.cust-name{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.cust-meta{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:3px;letter-spacing:.5px}
+.cust-bikes{font-size:13px;color:var(--text-dim);margin-top:8px;line-height:1.5}
+.cust-bikes .flag{display:inline-block;background:rgba(212,138,47,.12);color:var(--warn-text);border:1px solid rgba(212,138,47,.3);padding:2px 7px;border-radius:100px;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;margin-left:4px;vertical-align:1px}
+.pickup-info{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:6px}
+
+.phone-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-soft);border-radius:10px;margin-bottom:12px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text)}
+.act-send{grid-column:1 / -1}
+.msg-last{font-size:11px;font-weight:700;margin:-2px 0 8px;color:var(--accent-text)}
+.msg-last.opened{color:#9a5a12}.msg-last.not-sent{color:#a33a35}
+.send-back{position:fixed;inset:0;background:rgba(20,22,24,.45);display:none;align-items:flex-end;justify-content:center;z-index:200}
+.send-back.open{display:flex}
+.send-sheet{background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:80vh;overflow-y:auto}
+.send-sheet h3{font-size:18px;margin:0 0 12px}
+.send-row{border-top:1px solid #e4ded2;padding:10px 0}
+.send-label{font-weight:700;font-size:14px;margin-bottom:8px}
+.send-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ph-edit{font:inherit;font-size:11px;font-weight:700;margin-left:8px;padding:3px 9px;border-radius:100px;border:1.5px solid #d4cdbd;background:#fff;color:var(--accent-text);cursor:pointer}
+.ph-check{font-size:10px;font-weight:700;margin-left:8px;padding:2px 7px;border-radius:100px;background:rgba(201,74,69,.1);color:#a33a35}
+.ph-note{font-size:11px;color:var(--accent-text);margin:-4px 0 8px 2px}
+.walkin-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;margin:6px 6px 0 0;background:#f2efe8;color:#5a6269}
+.site{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;margin:6px 6px 0 0;background:rgba(29,158,117,.12);color:#085041}
+.site.DEL{background:rgba(239,159,39,.18);color:#633806}
+.card.delivery{border-color:rgba(239,159,39,.7)}
+.sort-switch{display:flex;gap:6px;align-items:center;margin:0 0 12px;font-size:11px;color:#8b8f93}
+.sort-switch button{font-family:inherit;font-size:12px;font-weight:700;padding:5px 11px;border-radius:100px;border:1.5px solid #e4ded2;background:#fff;color:#5a6269;cursor:pointer}
+.sort-switch button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.sec-head{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5a6269;margin:16px 0 8px}
+.sec-head.attn{color:#a33a35}
+.day-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 14px;background:#f2efe8;padding:4px;border-radius:12px;border:1px solid #e4ded2}
+.day-switch button{font-family:inherit;font-size:13px;font-weight:800;padding:9px 6px;border:none;border-radius:9px;background:transparent;color:#5a6269;cursor:pointer}
+.day-switch button.on{background:#fff;color:#1f2428;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.overdue-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:rgba(201,74,69,.1);color:#a33a35;border:1.5px solid rgba(201,74,69,.4);margin-left:6px}
+.day-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:rgba(80,120,200,.1);color:#2d4f8f;border:1.5px solid rgba(80,120,200,.3);margin-left:6px}
+.special{font-size:11px;color:var(--text-dim);line-height:1.4;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;white-space:pre-wrap}
+.special.open{display:block;-webkit-line-clamp:unset}
+.phone-row .flag-emoji{font-size:16px}
+.phone-row.no-phone{color:var(--text-muted);font-style:italic;font-family:'Syne',sans-serif;font-size:12px}
+
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.act{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 10px;border-radius:11px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:all .15s;letter-spacing:.2px}
+.act:active{transform:scale(.97)}
+.act:disabled,.act.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.act svg{width:18px;height:18px;flex-shrink:0}
+.act-call{background:var(--accent);color:#fff}
+.act-call:hover{background:var(--accent-dark)}
+.act-wa{background:var(--wa);color:#fff}
+.act-wa:hover{background:var(--wa-dark)}
+.act-sms{background:var(--bg-soft);color:var(--text);border:1px solid var(--border)}
+.act-sms:hover{background:var(--border)}
+.act-vcf{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.act-vcf:hover{background:var(--bg-soft)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--text);color:#fff;padding:12px 20px;border-radius:100px;font-size:13px;font-family:'DM Mono',monospace;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .25s ease;z-index:100}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.footer-note{text-align:center;font-size:11px;color:var(--text-muted);margin-top:20px;font-family:'DM Mono',monospace;line-height:1.6}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#todays-contacts" style="margin-left:6px">? Help</a>
+<div class="wrap">
+  <h1>📇 Today's Contacts</h1>
+  <div class="sub" id="dateSub">Loading…</div>
+  <div class="tagline">Just like riding a bike... just more fun</div>
+  <div class="day-switch"><button id="dsToday" class="on" onclick="setShowPrev(false)">Today</button><button id="dsPrev" onclick="setShowPrev(true)">Previous day</button></div>
+
+  <!-- Sync status card -->
+  <div class="card sync-card">
+    <div class="sync-dot loading" id="syncDot"></div>
+    <div class="sync-info">
+      <div class="sync-status" id="syncStatus">Connecting…</div>
+      <div class="sync-detail" id="syncDetail">Reading from cloud</div>
+    </div>
+    <button class="sync-refresh" id="syncRefresh" onclick="manualRefresh()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div id="contactSection" style="display:none">
+    <button class="master-btn" id="saveAllBtn" onclick="downloadAllVCard()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+      <span id="saveAllLabel">Save all to Contacts (.vcf)</span>
+    </button>
+
+    <div class="sort-switch">Order <button id="soTime" onclick="setSort('time')">By time</button><button id="soLoc" onclick="setSort('location')">By location</button></div>
+    <div id="cards"></div>
+
+    <div class="footer-note">
+      Tap any number to call, message,<br>or open WhatsApp.
+    </div>
+  </div>
+
+  <div id="emptySection" class="card" style="display:none">
+    <div class="empty-state" id="emptyContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">vCard downloaded</div>
+
+
+<script src="/assets/vendor/libphonenumber-min.js"></script>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// ============================================================
+// Today's Contacts v3.2 — reads from /api/ops (Netlify Blobs)
+// Contact details change once a day, so this checks every 60s while the
+// screen is on and stops entirely when the phone is locked.
+// ============================================================
+const POLL_MS = 60000;
+
+let CONTACTS       = [];
+let bookingDate    = '';   // "28 Apr 2026"
+let bookingDateISO = '';   // "2026-04-28"
+let lastFetchTs    = 0;
+let lastRev        = -1;
+
+// Previous day: the last manifest's contacts, read-only, until switched back to Today.
+let showPrev = false;
+async function setShowPrev(on) {
+  showPrev = on;
+  document.getElementById('dsToday').classList.toggle('on', !on);
+  document.getElementById('dsPrev').classList.toggle('on', on);
+  if (!on) { loadContacts(true).catch(() => {}); return; }
+  setSyncState('loading', 'Loading the previous day…', '');
+  try {
+    const prev = await Ops.view('previous');
+    if (!prev.found || !(prev.contacts || []).length) { showEmpty('no-contacts'); setSyncState('stale', 'No previous day saved yet', 'One appears after the next manifest is loaded'); return; }
+    CONTACTS = prev.contacts; bookingDate = prev.manifestDateDisplay || prev.manifestDate; bookingDateISO = prev.manifestDate;
+    renderContacts();
+    setSyncState('stale', 'Previous day · ' + bookingDate, 'Read-only · tap Today to go back');
+  } catch (e) { setSyncState('error', 'Connection error', e.message); }
+}
+
+async function loadContacts(isManual) {
+  if (showPrev) return; // the poll doesn't replace the previous day while it's open
+  if (isManual) setSyncState('loading', 'Refreshing…', '');
+  let record;
+  try {
+    record = await Ops.view('contacts', { interactive: !!isManual });
+  } catch (e) {
+    setSyncState('error', e.isAuth ? 'Staff PIN needed' : 'Connection error',
+      e.isAuth ? 'Tap Refresh to enter the PIN' : e.message + ' · will retry');
+    throw e;
+  }
+  lastFetchTs = Date.now();
+  const incoming = record.contacts || [];
+  if (record.locations) Locs.set(record.locations);
+  const iso      = record.manifestDate || '';
+  const display  = record.manifestDateDisplay || iso;
+  const unchanged = record.rev === lastRev;
+  lastRev = record.rev;
+
+  if (!incoming.length) {
+    CONTACTS = []; bookingDate = ''; bookingDateISO = '';
+    showEmpty('no-contacts');
+    setSyncState('stale', 'Waiting for today\'s manifest', 'Last checked just now · nothing loaded yet');
+    return;
+  }
+
+  CONTACTS = incoming; bookingDate = display; bookingDateISO = iso;
+  const today = Ops.todayISO();
+  const tomorrow = Ops.addDaysISO(today, 1);
+
+  if (iso === today || iso === tomorrow) {
+    if (!unchanged || isManual || document.getElementById('contactSection').style.display === 'none') renderContacts();
+    const label = iso === today ? 'Today · ' + display : 'Tomorrow · ' + display;
+    setSyncState('live', label, CONTACTS.length + ' contacts · checked just now');
+    if (isManual) showToast('Refreshed');
+    return;
+  }
+  showEmpty('stale');
+  setSyncState('stale', 'Showing ' + (display || 'an undated manifest') + ' (not today)', 'Load today\'s manifest to update');
+}
+
+const poll = Ops.poller(() => loadContacts(false), { interval: POLL_MS, idleInterval: 5 * 60000, idleAfter: 5 * 60000 });
+
+function manualRefresh() {
+  const btn = document.getElementById('syncRefresh');
+  btn.classList.add('spinning');
+  if (document.getElementById('syncStatus').textContent.startsWith('Staff PIN')) Ops.forgetPin();
+  loadContacts(true).catch(() => {}).finally(() => setTimeout(() => btn.classList.remove('spinning'), 400));
+}
+
+// Update "checked … ago" every 30s without asking the server
+setInterval(() => {
+  if (lastFetchTs && document.getElementById('syncDot').classList.contains('live')) {
+    const secs = Math.floor((Date.now() - lastFetchTs) / 1000);
+    const ago = secs < 10 ? 'just now' : secs < 60 ? secs + 's ago' : secs < 3600 ? Math.floor(secs / 60) + ' min ago' : Math.floor(secs / 3600) + ' hr ago';
+    document.getElementById('syncDetail').textContent = CONTACTS.length + ' contacts · checked ' + ago;
+  }
+}, 30000);
+
+// ============================================================
+// COUNTRY FLAGS FROM PHONE PREFIX
+// ============================================================
+const COUNTRY_PREFIXES = [
+  ['1242','🇧🇸'],['1246','🇧🇧'],['1264','🇦🇮'],['1268','🇦🇬'],['1284','🇻🇬'],
+  ['1340','🇻🇮'],['1345','🇰🇾'],['1441','🇧🇲'],['1473','🇬🇩'],['1649','🇹🇨'],
+  ['1664','🇲🇸'],['1670','🇲🇵'],['1671','🇬🇺'],['1684','🇦🇸'],['1721','🇸🇽'],
+  ['1758','🇱🇨'],['1767','🇩🇲'],['1784','🇻🇨'],['1809','🇩🇴'],['1829','🇩🇴'],
+  ['1849','🇩🇴'],['1868','🇹🇹'],['1869','🇰🇳'],['1876','🇯🇲'],['1939','🇵🇷'],
+  ['852','🇭🇰'],['853','🇲🇴'],['886','🇹🇼'],['960','🇲🇻'],['962','🇯🇴'],
+  ['964','🇮🇶'],['965','🇰🇼'],['966','🇸🇦'],['967','🇾🇪'],['968','🇴🇲'],
+  ['971','🇦🇪'],['972','🇮🇱'],['973','🇧🇭'],['974','🇶🇦'],['975','🇧🇹'],
+  ['976','🇲🇳'],['977','🇳🇵'],['992','🇹🇯'],['993','🇹🇲'],['994','🇦🇿'],
+  ['995','🇬🇪'],['996','🇰🇬'],['998','🇺🇿'],
+  ['351','🇵🇹'],['352','🇱🇺'],['353','🇮🇪'],['354','🇮🇸'],['355','🇦🇱'],
+  ['356','🇲🇹'],['357','🇨🇾'],['358','🇫🇮'],['359','🇧🇬'],
+  ['370','🇱🇹'],['371','🇱🇻'],['372','🇪🇪'],['373','🇲🇩'],['374','🇦🇲'],
+  ['375','🇧🇾'],['376','🇦🇩'],['377','🇲🇨'],['378','🇸🇲'],['380','🇺🇦'],
+  ['381','🇷🇸'],['382','🇲🇪'],['383','🇽🇰'],['385','🇭🇷'],['386','🇸🇮'],
+  ['387','🇧🇦'],['389','🇲🇰'],
+  ['420','🇨🇿'],['421','🇸🇰'],['423','🇱🇮'],
+  ['501','🇧🇿'],['502','🇬🇹'],['503','🇸🇻'],['504','🇭🇳'],['505','🇳🇮'],
+  ['506','🇨🇷'],['507','🇵🇦'],['509','🇭🇹'],
+  ['670','🇹🇱'],['673','🇧🇳'],['674','🇳🇷'],['675','🇵🇬'],['676','🇹🇴'],
+  ['677','🇸🇧'],['678','🇻🇺'],['679','🇫🇯'],['680','🇵🇼'],['681','🇼🇫'],
+  ['682','🇨🇰'],['683','🇳🇺'],['685','🇼🇸'],['686','🇰🇮'],['687','🇳🇨'],
+  ['688','🇹🇻'],['689','🇵🇫'],['690','🇹🇰'],['691','🇫🇲'],['692','🇲🇭'],
+  ['20','🇪🇬'],['27','🇿🇦'],['30','🇬🇷'],['31','🇳🇱'],['32','🇧🇪'],
+  ['33','🇫🇷'],['34','🇪🇸'],['36','🇭🇺'],['39','🇮🇹'],['40','🇷🇴'],
+  ['41','🇨🇭'],['43','🇦🇹'],['44','🇬🇧'],['45','🇩🇰'],['46','🇸🇪'],
+  ['47','🇳🇴'],['48','🇵🇱'],['49','🇩🇪'],['51','🇵🇪'],['52','🇲🇽'],
+  ['53','🇨🇺'],['54','🇦🇷'],['55','🇧🇷'],['56','🇨🇱'],['57','🇨🇴'],
+  ['58','🇻🇪'],['60','🇲🇾'],['61','🇦🇺'],['62','🇮🇩'],['63','🇵🇭'],
+  ['64','🇳🇿'],['65','🇸🇬'],['66','🇹🇭'],['81','🇯🇵'],['82','🇰🇷'],
+  ['84','🇻🇳'],['86','🇨🇳'],['90','🇹🇷'],['91','🇮🇳'],['92','🇵🇰'],
+  ['93','🇦🇫'],['94','🇱🇰'],['95','🇲🇲'],['98','🇮🇷'],
+  ['1','🇺🇸'],['7','🇷🇺']
+];
+function flagFromPhone(phone) {
+  if (!phone) return '🌐';
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (!digits) return '🌐';
+  for (const [prefix, flag] of COUNTRY_PREFIXES) {
+    if (digits.startsWith(prefix)) return flag;
+  }
+  return '🌐';
+}
+
+// ============================================================
+// ICONS
+// ============================================================
+const ICON_CALL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>';
+const ICON_WA   = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>';
+const ICON_SMS  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
+const ICON_VCF  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>';
+
+// ============================================================
+// UI STATE
+// ============================================================
+function setSyncState(state, status, detail) {
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot ' + state;
+  document.getElementById('syncStatus').textContent = status;
+  document.getElementById('syncDetail').textContent = detail || '';
+}
+
+function showEmpty(reason) {
+  document.getElementById('contactSection').style.display = 'none';
+  document.getElementById('emptySection').style.display = 'block';
+  const el = document.getElementById('emptyContent');
+  if (reason === 'no-contacts') {
+    document.getElementById('dateSub').textContent = 'No manifest pushed yet';
+    el.innerHTML = '<div class="big">📭</div>' +
+      '<strong>No contacts pushed yet today.</strong><br>' +
+      'Open Load Manifest, drop today\'s Rezdy CSV, and tap<br>' +
+      '<em>Push to Scanner + Contacts</em>. This page checks every minute.';
+  } else if (reason === 'stale') {
+    document.getElementById('dateSub').textContent = 'Stale data · ' + (bookingDate || bookingDateISO);
+    el.innerHTML = '<div class="big">⏳</div>' +
+      '<strong>Showing ' + esc(bookingDate || bookingDateISO) + '.</strong><br>' +
+      'This is not today\'s manifest. Load today\'s Rezdy CSV in the<br>' +
+      'Load Manifest tool, then tap Refresh above.';
+  }
+}
+
+// ============================================================
+// vCard
+// ============================================================
+function buildVCard(c) {
+  const parts = c.name.split(' ');
+  const first = parts.slice(0, -1).join(' ');
+  const last  = parts[parts.length - 1] || '';
+  const dateStr = bookingDate || 'today';
+  const noteParts = [
+    Brand.name() + ' hire ' + dateStr,
+    'Order ' + c.code,
+    (c.bikeLines || []).join(' + ')
+  ];
+  if (c.ptime) noteParts.push('Pickup ' + c.ptime);
+  if (c.ploc)  noteParts.push(c.ploc);
+  const note = noteParts.join(' · ').replace(/[\r\n]+/g, ' ');
+
+  const lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    'FN:' + c.name,
+    'N:' + last + ';' + first + ';;;'
+  ];
+  if (c.phone) lines.push('TEL;TYPE=CELL,VOICE:' + c.phone);
+  lines.push('ORG:' + Brand.name() + ' hire');
+  lines.push('NOTE:' + note);
+  lines.push('END:VCARD');
+  return lines.join('\r\n');
+}
+
+function downloadVCard(content, filename) { Ops.downloadText(content, filename, 'text/vcard;charset=utf-8'); }
+
+function downloadOne(idx) {
+  const c = CONTACTS[idx];
+  const safeName = c.name.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_-]/g, '');
+  downloadVCard(buildVCard(c), safeName + '_' + c.code + '.vcf');
+  showToast(c.name + ' saved');
+}
+
+function downloadAllVCard() {
+  const all = CONTACTS.map(buildVCard).join('\r\n');
+  const fn  = Brand.file() + '_contacts_' + (bookingDateISO || 'today') + '.vcf';
+  downloadVCard(all, fn);
+  showToast('All ' + CONTACTS.length + ' contacts saved');
+}
+
+// ============================================================
+// LINKS
+// ============================================================
+function waLink(phone)  { return 'https://wa.me/' + phone.replace(/[^0-9]/g, ''); }
+function smsLink(phone) { return 'sms:' + phone; }
+function telLink(phone) { return 'tel:' + phone; }
+
+// ============================================================
+// RENDER
+// ============================================================
+// "Day 2 of 2" for a multi-day hire, worked out from when it started.
+// ── order: by time or by location ──────────────────────────────
+// Overdue hires and multi-day hires carried over from earlier days always come first.
+let sortMode = localStorage.getItem('saeb-sort') === 'location' ? 'location' : 'time';
+function setSort(m) { sortMode = m; try { localStorage.setItem('saeb-sort', m); } catch {} renderContacts(); }
+function timeMins(t) {
+  const m = String(t || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!m) return 1e9;
+  let h = parseInt(m[1], 10) % 24; const min = parseInt(m[2] || '0', 10), ap = (m[3] || '').toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12; if (ap === 'am' && h === 12) h = 0;
+  return h * 60 + min;
+}
+function sectionedContacts() {
+  const idx = CONTACTS.map((c, i) => i);
+  const surname = c => String(c.name || '').split(' ').pop();
+  const byTime = (a, b) => timeMins(CONTACTS[a].ptime) - timeMins(CONTACTS[b].ptime) || surname(CONTACTS[a]).localeCompare(surname(CONTACTS[b]));
+  const carried = c => c.startDate && bookingDateISO && c.startDate < bookingDateISO;
+  const attn = idx.filter(i => carried(CONTACTS[i])).sort(byTime);
+  const rest = idx.filter(i => !attn.includes(i)).sort(byTime);
+  const items = [];
+  if (attn.length) { items.push({ head: 'Carried over · ' + attn.length, attn: true }); attn.forEach(i => items.push({ i })); }
+  if (sortMode === 'location') {
+    const codes = Locs.hire().map(l => l.code);
+    rest.forEach(i => { const c = CONTACTS[i].site; if (c && !codes.includes(c)) codes.push(c); });
+    for (const [k, label] of [...codes.map(c => [c, Locs.name(c)]), ['', 'No location']]) {
+      const list = rest.filter(i => (CONTACTS[i].site || '') === k);
+      if (!list.length) continue;
+      items.push({ head: label + ' · ' + list.length }); list.forEach(i => items.push({ i }));
+    }
+  } else {
+    if (attn.length && rest.length) items.push({ head: 'Today · ' + rest.length });
+    rest.forEach(i => items.push({ i }));
+  }
+  return items;
+}
+
+// Where the hire is, from the pickup manifest's product name.
+function siteHTML(c) {
+  if (!c.site) return '';
+  return '<span class="site' + (Locs.isDelivery(c.site) ? ' DEL' : '') + '">' + Locs.icon(c.site) + ' ' + esc(Locs.name(c.site)) + '</span>';
+}
+
+function dayBadgeHTML(c) {
+  const day = c.startDate && bookingDateISO ? Math.round((Date.parse(bookingDateISO) - Date.parse(c.startDate)) / 864e5) + 1 : 1;
+  if (day > (c.hireDays || 1)) return '<span class="overdue-badge">Overdue · out since ' + esc(c.startDate.split('-').reverse().join('/')) + '</span>';
+  if (!(c.hireDays > 1)) return '';
+  return '<span class="day-badge">Day ' + day + ' of ' + c.hireDays + '</span>';
+}
+
+function flagsHTML(flags) {
+  if (!flags || !flags.length) return '';
+  return ' ' + flags.map(f => '<span class="flag">' + esc(f) + '</span>').join('');
+}
+
+function bikeLinesHTML(lines) {
+  return (lines || []).map(esc).join('<br>');
+}
+
+function pickupHTML(c) {
+  const bits = [];
+  // The start time is shown beside the order number.
+  if (c.ploc)  bits.push('📍 ' + esc(c.ploc));
+  return bits.length ? '<div class="pickup-info">' + bits.join(' &nbsp; ') + '</div>' : '';
+}
+
+// The number as checked on loading: corrected numbers say what was changed; doubtful ones say "check number".
+// A walk-in can have its phone added or changed here, after it has left.
+function phoneRowHTML(c) {
+  const idx = CONTACTS.indexOf(c);
+  const edit = c.walkin && c.groupId ? ' <button class="ph-edit" onclick="editPhone(' + idx + ')">' + (c.phone ? 'Edit' : '+ Add phone') + '</button>' : '';
+  if (!c.phone) {
+    return '<div class="phone-row no-phone">' + (c.walkin ? 'No phone yet' : 'No phone number on this booking') + edit + '</div>';
+  }
+  return '<div class="phone-row"><span class="flag-emoji">' + flagFromPhone(c.phone) +
+         '</span><span>' + esc(c.phoneDisplay || c.phone) + '</span>' + (c.phoneCheck ? '<span class="ph-check">check number</span>' : '') + edit + '</div>' +
+    (c.phoneNote ? '<div class="ph-note">Corrected from ' + esc(c.phoneFrom) + ': ' + esc(c.phoneNote) + '</div>' : '');
+}
+async function editPhone(idx) {
+  const c = CONTACTS[idx]; if (!c) return;
+  const raw = prompt('Phone number for ' + c.name + ':', c.phoneFrom || c.phone || '');
+  if (raw === null) return;
+  const ph = window.Phones ? Phones.fields(raw) : { phone: raw.trim() };
+  if (ph.phoneCheck && !confirm(raw + " doesn't look like a valid number. Save it anyway?")) return;
+  try {
+    await Ops.act('setGroupContact', { groupId: c.groupId, baseV: c.v || 0, contact: { name: c.name, ...ph }, by: window.Team ? Team.initials() : '' });
+    loadContacts(true);
+  } catch (e) { alert(e.code === 'changed' ? e.message + '. The list now shows the latest number.' : e.message); if (e.code === 'changed') loadContacts(true); }
+}
+
+function actionsHTML(c, idx) {
+  const cls = c.phone ? '' : ' disabled';
+  const tel = c.phone ? telLink(c.phone) : '#';
+  const wa  = c.phone ? waLink(c.phone)  : '#';
+  const sms = c.phone ? smsLink(c.phone) : '#';
+  return '<div class="actions">' +
+    '<a class="act act-call' + cls + '" href="' + tel + '">' + ICON_CALL + ' Call</a>' +
+    '<a class="act act-wa'   + cls + '" href="' + wa  + '" target="_blank" rel="noopener">' + ICON_WA + ' WhatsApp</a>' +
+    '<a class="act act-sms'  + cls + '" href="' + sms + '">' + ICON_SMS + ' Text</a>' +
+    '<button class="act act-vcf" onclick="downloadOne(' + idx + ')">' + ICON_VCF + ' Save</button>' +
+    (c.phone ? '<button class="act act-send" onclick="openMessage(' + idx + ')">💬 Message</button>' : '') +
+  '</div>';
+}
+
+// A message to the guest: late for pickup, late returning, weather, or one of the guest links.
+// Before 1 pm, "late for pickup" is suggested; after, "late returning".
+function openMessage(idx) {
+  const c = CONTACTS[idx]; if (!c || !c.phone) return;
+  Msg.open(c, { suggest: new Date().getHours() < 13 ? 'late-pickup' : 'late-return', onChange: () => loadContacts(false).catch(() => {}) });
+}
+// The latest message to this guest and whether it went.
+const MSG_STATUS = { opened: 'not confirmed', sent: 'sent', 'not-sent': 'NOT sent' };
+function lastMessageHTML(c) {
+  const m = (c.messages || []).slice(-1)[0];
+  if (!m) return '';
+  const t = new Date(m.confirmedAt || m.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+  return '<div class="msg-last ' + m.status + '">💬 ' + esc(m.label) + ' · ' + MSG_STATUS[m.status] + ' ' + t + (m.by ? ' · ' + esc(m.by) : '') + (m.reason ? ' (' + esc(m.reason) + ')' : '') + '</div>';
+}
+
+function renderContacts() {
+  document.getElementById('emptySection').style.display = 'none';
+  document.getElementById('contactSection').style.display = 'block';
+
+  const total      = CONTACTS.length;
+  const totalBikes = CONTACTS.reduce((s, c) => s + (c.totalBikes || 0), 0);
+  const dateLabel  = bookingDate || 'Today';
+  const SITE_SHORT = k => Locs.isDelivery(k) ? 'delivery' : k;
+  const bySite = Locs.hire().map(l => l.code).map(k => [k, CONTACTS.filter(c => c.site === k).length]).filter(([, n]) => n);
+  document.getElementById('dateSub').textContent =
+    dateLabel + ' · ' + total + ' booking' + (total !== 1 ? 's' : '') + ' · ' + totalBikes + ' bikes' +
+    (bySite.length ? ' · ' + bySite.map(([k, n]) => SITE_SHORT(k) + ' ' + n).join(' · ') : '');
+
+  document.getElementById('saveAllLabel').textContent =
+    'Save all ' + total + ' to Contacts (.vcf)';
+
+  document.getElementById('soTime').classList.toggle('on', sortMode === 'time');
+  document.getElementById('soLoc').classList.toggle('on', sortMode === 'location');
+  const card = (c, i) =>
+    '<div class="card' + (Locs.isDelivery(c.site) ? ' delivery' : '') + '">' +
+      '<div class="card-head">' +
+        '<div class="cust-name">' + esc(c.name) + '</div>' +
+        '<div class="cust-meta">' + esc(c.code) + ' · ' + esc(c.ptime || bookingDate || '') + (c.agent ? ' · ' + esc(c.agent) : '') + dayBadgeHTML(c) + '</div>' +
+        siteHTML(c) + (c.walkin ? '<span class="walkin-tag">Walk-in</span>' : '') +
+        '<div class="cust-bikes">' + bikeLinesHTML(c.bikeLines) + flagsHTML(c.flags) + '</div>' +
+        (c.special ? '<div class="special" onclick="this.classList.toggle(\'open\')">' + esc(c.special) + '</div>' : '') +
+        (c.dropoff ? '<div class="special">Drop-off: ' + esc(c.dropoff) + '</div>' : '') +
+        pickupHTML(c) +
+      '</div>' +
+      phoneRowHTML(c) + lastMessageHTML(c) +
+      actionsHTML(c, i) +
+    '</div>';
+  document.getElementById('cards').innerHTML = sectionedContacts().map(it => it.head
+    ? '<div class="sec-head' + (it.attn ? ' attn' : '') + '">' + esc(it.head) + '</div>' : card(CONTACTS[it.i], it.i)).join('');
+}
+
+// ============================================================
+// MISC
+// ============================================================
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+const esc = Ops.esc;
+
+
+// ============================================================
+// BOOT
+// ============================================================
+loadContacts(true).catch(() => {}).finally(() => poll.start());
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* SA eBikes Operations Tools v3.10: the business's colours and heading font, shared by every page.
+   These are SA eBikes' defaults; theme.js replaces them with the colours set in Admin → Configuration
+   (cached on the phone, so pages never wait for them). html:root outranks each page's own :root.
+   --accent      main colour: buttons with white text, green text (dark enough to read)
+   --bright      highlight: flashes, ticks, bars, the live light (never under white text)
+   --accent-soft / --accent-line / --accent-glow   tints for backgrounds, borders and glows */
+@font-face{font-family:'Baloo Bhai 2';font-weight:800;font-style:normal;font-display:swap;src:url(/assets/fonts/baloo-bhai-2-800.woff2) format('woff2')}
+html:root{
+  --accent:#415b30;--accent-dark:#2f4322;--accent-text:#415b30;--bright:#5fd64f;
+  --accent-soft:rgba(95,214,79,.14);--accent-line:rgba(65,91,48,.3);--accent-glow:rgba(95,214,79,.5);
+  --brand-font:'Baloo Bhai 2','Syne',sans-serif;
+}
+.brand-mark{height:1.35em;width:auto;vertical-align:-.3em;margin-right:.35em}
+.brand-name{font-family:var(--brand-font);font-weight:800;letter-spacing:0;color:var(--text,#1f2428)}
+.logo .brand-name,[data-brand="home"] .brand-name{color:var(--text,#1f2428)}
+[data-brand="home"]{display:flex;align-items:center;gap:12px}
+[data-brand="home"] .brand-mark{height:1.6em;vertical-align:0;margin:0}
+/* The highlight colour: the live light and the bars on the Dashboard, Fleet report and bike history. */
+.sync-dot.synced{background:var(--bright)!important;box-shadow:0 0 6px var(--accent-glow)!important}
+.track .fill:not(.hot):not(.low):not(.loc):not(.prev){background:var(--bright)}

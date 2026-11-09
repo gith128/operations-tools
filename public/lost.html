@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Lost Property</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;              /* warm off-white */
+  --bg-elev:#ffffff;         /* pure white for cards */
+  --bg-soft:#f2efe8;         /* cream */
+  --border:#e4ded2;          /* warm beige border */
+  --border-strong:#d4cdbd;
+  --text:#1f2428;            /* near-black, softer than #000 */
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  /* softer leafy green */
+  /* darker for readable text on light bg */
+  --warn:#d48a2f;            /* warm amber, darker for contrast on light */
+  --warn-soft:rgba(212,138,47,.1);
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;          /* coral red, darker for contrast */
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+#reader-report, #reader-resolve{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader-report video, #reader-resolve video{border-radius:12px}
+#reader-report img, #reader-resolve img{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);min-height:140px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-success{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.manual-entry{display:flex;gap:8px;margin-top:10px}
+.manual-input{flex:1;padding:13px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.field-input,.field-textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted)}
+.field-mono{font-family:'DM Mono',monospace}
+
+.priority-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px}
+.priority-btn{padding:10px 4px;border-radius:10px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;text-align:center;font-family:'Syne',sans-serif;transition:all .15s}
+.priority-btn .num{font-size:18px;font-weight:800;line-height:1}
+.priority-btn .lbl{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.priority-btn.active[data-p="1"]{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.priority-btn.active[data-p="2"]{border-color:#9bb845;color:#5a7a22;background:rgba(155,184,69,.12)}
+.priority-btn.active[data-p="3"]{border-color:#d48a2f;color:#8a5a1a;background:rgba(212,138,47,.12)}
+.priority-btn.active[data-p="4"]{border-color:#c96a5c;color:#9a3530;background:rgba(201,106,92,.14)}
+.priority-btn.active[data-p="5"]{border-color:#b23a35;color:#8a2a26;background:rgba(178,58,53,.14)}
+.priority-help{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5}
+.priority-help strong{color:var(--danger-text)}
+
+.matched-card{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.3);border-radius:14px;padding:14px;margin-bottom:16px}
+.matched-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.matched-id{font-family:'DM Mono',monospace;font-size:15px;color:var(--warn-text);font-weight:600;letter-spacing:1px}
+.matched-issue{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--text)}
+.matched-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.matched-notes{margin-top:6px;font-size:12px;color:var(--text);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+
+.ts-note{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+
+.issue-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.issue-item:active{border-color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.issue-item.p5{border-left:4px solid #b23a35}
+.issue-item.p4{border-left:4px solid #c96a5c}
+.issue-item.p3{border-left:4px solid #d48a2f}
+.issue-item.p2{border-left:4px solid #9bb845}
+.issue-item.p1{border-left:4px solid var(--accent)}
+.issue-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.issue-bike{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent-text);font-weight:600;letter-spacing:1px}
+.issue-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.status{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.8px;white-space:nowrap}
+.status.open{background:var(--danger-soft);color:var(--danger-text);border:1px solid rgba(201,74,69,.25)}
+.status.resolved{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.prio{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.prio.p5{background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.prio.p4{background:rgba(201,106,92,.1);color:#9a3530;border:1px solid rgba(201,106,92,.25)}
+.prio.p3{background:rgba(212,138,47,.1);color:#8a5a1a;border:1px solid rgba(212,138,47,.25)}
+.prio.p2{background:rgba(155,184,69,.1);color:#5a7a22;border:1px solid rgba(155,184,69,.25)}
+.prio.p1{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.issue-desc{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.issue-foot{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.notes-indicator{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:6px}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:6px 13px;border-radius:100px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.detail-section{margin-bottom:18px}
+.detail-section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-body{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:10px}
+.detail-meta-row{display:flex;gap:10px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.detail-meta-label{color:var(--text-muted);min-width:95px}
+.detail-meta-val{color:var(--text)}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.mc-ok{font-family:'DM Mono',monospace;color:var(--accent-text)}
+.mc-due-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--warn-text)}
+.mc-hist-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 4px}
+.mc-hist-head input{font:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.h-row.fail{color:var(--danger-text)}
+.loc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.loc-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.loc-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.loc-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text)}
+.loc-tag.out{color:var(--warn-text)}
+.hist{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.6}
+.hist .h-row{border-bottom:1px solid var(--border);padding:3px 0}
+.move-list{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px}
+.move-list div{padding:5px 0;border-bottom:1px solid var(--border)}
+.move-list .ok{color:var(--accent-text)}.move-list .warn{color:var(--warn-text)}.move-list .dim{color:var(--text-muted)}
+.loc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.loc-row .code{font-family:'DM Mono',monospace;font-weight:700;margin-right:6px}
+.loc-row.retired{opacity:.5}
+.loc-row button{font-size:11px;padding:5px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--text-dim)}
+.toolbar .manual-input{margin:0}
+.add-btn{padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap}
+.add-btn:active{background:var(--accent-dark)}
+.count-line{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px}
+.asset{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.asset:active{border-color:var(--accent)}
+.asset-id{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--accent-text);letter-spacing:1px}
+.asset-key{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);text-align:right;align-self:center}
+.asset-what{font-size:14px;font-weight:700;color:var(--text)}
+.asset-meta{grid-column:1 / -1;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.asset-flags{grid-column:1 / -1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.flag-open{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px solid rgba(212,138,47,.3)}
+.flag-disposed{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border-strong)}
+.asset.disposed{opacity:.6}
+.form-group-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.flag-noserial{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px dashed rgba(212,138,47,.5)}
+.req{color:var(--danger-text)}
+.count-line .warn{color:var(--warn-text);cursor:pointer;text-decoration:underline}
+.flag-oos{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.id-row{display:flex;gap:8px}
+.id-row .field-input{flex:1}
+.scan-mini{padding:0 14px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-soft);font-size:18px;cursor:pointer}
+#reader-asset{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;display:none}
+#reader-asset img{display:none!important}
+.age-note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row .btn{flex:1}
+.import-result{font-family:'DM Mono',monospace;font-size:12px;margin-top:10px;line-height:1.5}
+.import-result.ok{color:var(--accent-text)}.import-result.err{color:var(--danger-text)}
+.file-btn{position:relative;overflow:hidden;display:block;text-align:center}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+
+.lp-card{display:flex;gap:12px;background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:10px;margin-bottom:10px;cursor:pointer}
+.lp-thumb{width:64px;height:64px;flex:none;border-radius:10px;background:var(--bg-soft);object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+.lp-thumb img{width:100%;height:100%;object-fit:cover}
+.lp-desc{font-weight:800;font-size:14px;line-height:1.3}
+.lp-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:3px;line-height:1.5}
+.lp-tag{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);margin-left:4px}
+.lp-tag.ok{background:var(--accent-soft);color:var(--accent-text)}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px}
+.fld input,.fld select,.fld textarea{width:100%;font-family:'Syne',sans-serif;font-size:14px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.photo-box{width:100%;aspect-ratio:4/3;border-radius:12px;border:1.5px dashed var(--border-strong);background:var(--bg-soft);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;overflow:hidden;cursor:pointer}
+.photo-box img{width:100%;height:100%;object-fit:contain;background:#000}
+.lp-log{font-size:13px;border-left:2px solid var(--border-strong);padding-left:10px;margin:8px 0}
+.lp-log div{margin-bottom:6px}
+.lp-log .when{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.detail-h{font-size:20px;font-weight:800;margin:4px 0 6px}
+.kv{font-size:13px;margin:4px 0}.kv b{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-right:6px}
+.btn-row{display:flex;gap:8px;margin:8px 0}.btn-row .btn{margin:0;flex:1;text-decoration:none;text-align:center}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#lost-property" style="margin-left:6px">? Help</a>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Lost Property</div>
+    </div>
+    <div class="sync-indicator" style="cursor:pointer" onclick="load()"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">loading…</span></div>
+  </header>
+  <div class="tabs">
+    <button class="tab active" id="tab-open" onclick="setTab('open')">Open</button>
+    <button class="tab" id="tab-closed" onclick="setTab('closed')">Closed</button>
+    <button class="tab" id="tab-add" onclick="setTab('add')">+ Add item</button>
+  </div>
+  <main>
+    <div id="view-list"></div>
+    <div id="view-add" style="display:none"></div>
+    <div id="view-detail" style="display:none"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/assets/vendor/libphonenumber-min.js"></script>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// SA eBikes Operations Tools v3.10: lost property register. Items, where they're kept, follow-ups and outcomes.
+const $ = id => document.getElementById(id);
+const esc = Ops.esc;
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const dmy = s => s ? s.split('-').reverse().join('/') : '';
+const daysSince = s => Math.floor((Date.now() - new Date(s + 'T00:00:00').getTime()) / 864e5);
+const OUTCOMES = { returned: 'Returned to owner', posted: 'Posted to owner', donated: 'Donated', disposed: 'Disposed of', police: 'Handed to police', other: 'Other' };
+let ITEMS = [], tab = 'open', current = null, busy = false;
+const photos = {}; // id → data URL, fetched as needed
+let toastTimer;
+function showToast(msg, type) { const t = $('toast'); t.textContent = msg; t.className = 'toast show ' + (type || ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 3200); }
+const by = () => window.Team ? Team.initials() : '';
+
+async function load() {
+  try {
+    const [v, f] = await Promise.all([Ops.view('lost'), Locs.list.length ? null : Ops.view('fleet')]);
+    if (f) Locs.set(f.locations);
+    ITEMS = v.items; $('syncDot').className = 'sync-dot synced'; $('syncLabel').textContent = 'live ✓';
+    render();
+  } catch (e) { $('syncDot').className = 'sync-dot error'; $('syncLabel').textContent = e.status === 0 ? 'offline' : 'error'; }
+}
+function setTab(t) {
+  tab = t; current = null;
+  ['open', 'closed', 'add'].forEach(x => $('tab-' + x).classList.toggle('active', x === t));
+  render();
+}
+function render() {
+  const open = ITEMS.filter(i => i.status === 'open');
+  $('tab-open').textContent = 'Open' + (open.length ? ' · ' + open.length : '');
+  $('view-list').style.display = !current && tab !== 'add' ? '' : 'none';
+  $('view-add').style.display = !current && tab === 'add' ? '' : 'none';
+  $('view-detail').style.display = current ? '' : 'none';
+  if (current) return renderDetail();
+  if (tab === 'add') return renderAdd();
+  const list = ITEMS.filter(i => i.status === tab);
+  $('view-list').innerHTML = (!list.length ? '<div class="empty-state"><div class="icon">🧳</div><p>' + (tab === 'open' ? 'Nothing waiting to be claimed.' : 'No closed items yet.') + '</p></div>' :
+    list.map(i => {
+      const held = daysSince(i.foundDate);
+      return '<div class="lp-card" onclick="openItem(\'' + i.id + '\')"><div class="lp-thumb" id="th-' + i.id + '">' + (i.hasPhoto ? '' : '🧳') + '</div><div>' +
+        '<div class="lp-desc">' + esc(i.description) + (i.status === 'open' && held >= 30 ? '<span class="lp-tag">held ' + held + ' days</span>' : '') + (i.status === 'closed' ? '<span class="lp-tag ok">' + esc(OUTCOMES[i.outcome] || i.outcome) + '</span>' : '') + '</div>' +
+        '<div class="lp-meta">Found ' + dmy(i.foundDate) + (i.foundSite ? ' at ' + esc(Locs.name(i.foundSite)) : '') + ' · kept at ' + esc(i.storedAt ? Locs.name(i.storedAt) : '?') +
+        (i.guestName ? '<br>👤 ' + esc(i.guestName) : '') + (i.log.length ? '<br>' + esc(i.log[i.log.length - 1].text.slice(0, 60)) : '') + '</div></div></div>';
+    }).join('')) + '<button class="btn btn-secondary" style="margin-top:12px" onclick="exportCSV()">Download CSV (all items)</button>';
+  list.filter(i => i.hasPhoto).forEach(i => loadPhoto(i.id).then(src => { const el = $('th-' + i.id); if (el && src) el.innerHTML = '<img src="' + src + '" alt="">'; }));
+}
+async function loadPhoto(id) {
+  if (photos[id] !== undefined) return photos[id];
+  try { photos[id] = (await Ops.get({ view: 'lostphoto', id })).photo || ''; } catch { photos[id] = ''; }
+  return photos[id];
+}
+const locOptions = (sel, blank) => (blank ? '<option value="">' + blank + '</option>' : '') + Locs.list.filter(l => !l.retired).map(l => '<option value="' + esc(l.code) + '"' + (l.code === sel ? ' selected' : '') + '>' + esc(l.code) + ' · ' + esc(l.name) + '</option>').join('');
+
+// ── a new item ──
+let newPhoto = '', bookings = [];
+async function renderAdd() {
+  const phoneLoc = localStorage.getItem('saeb-phone-location') || 'VIC';
+  $('view-add').innerHTML =
+    '<div class="fld"><label>Photo</label><div class="photo-box" id="photoBox" onclick="$(\'photoIn\').click()">' + (newPhoto ? '<img src="' + newPhoto + '" alt="">' : '📷 Tap to take or choose a photo') + '</div>' +
+    '<input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="takePhoto(this.files[0])"></div>' +
+    '<div class="fld"><label for="aDesc">What is it?</label><input id="aDesc" maxlength="200" placeholder="e.g. Black North Face jacket, size M"></div>' +
+    '<div class="fld-row"><div class="fld"><label for="aDate">Date found</label><input type="date" id="aDate" value="' + today() + '"></div>' +
+    '<div class="fld"><label for="aSite">Found at</label><select id="aSite">' + locOptions(phoneLoc, 'Somewhere else') + '</select></div></div>' +
+    '<div class="fld"><label for="aFoundNote">Where exactly</label><input id="aFoundNote" maxlength="200" placeholder="e.g. in EB-012\'s basket, tasting room"></div>' +
+    '<div class="fld-row"><div class="fld"><label for="aStored">Kept at</label><select id="aStored">' + locOptions(phoneLoc) + '</select></div>' +
+    '<div class="fld"><label for="aStoredNote">Where in there</label><input id="aStoredNote" maxlength="200" placeholder="e.g. lost property box"></div></div>' +
+    '<div class="fld"><label for="aBooking">Whose is it? (if known)</label><select id="aBooking" onchange="pickBooking(this.value)"><option value="">Not known, or enter below</option></select></div>' +
+    '<div class="fld-row"><div class="fld"><label for="aGuest">Guest name</label><input id="aGuest" maxlength="120"></div>' +
+    '<div class="fld"><label for="aPhone">Guest phone</label><input id="aPhone" maxlength="30" inputmode="tel"></div></div>' +
+    '<button class="btn btn-primary" id="addBtn" onclick="addItem()">Save to the register</button>';
+  // bookings from today and the previous day, to link the item to
+  try {
+    const [t, p] = await Promise.all([Ops.view('contacts'), Ops.view('previous').catch(() => ({}))]);
+    bookings = [...(t.contacts || []).map(c => ({ ...c, when: 'Today' })), ...((p.contacts || []).map(c => ({ ...c, when: p.manifestDateDisplay || 'Previous day' })))];
+    $('aBooking').innerHTML = '<option value="">Not known, or enter below</option>' + bookings.map((c, n) => '<option value="' + n + '">' + esc(c.when) + ' · ' + esc(c.name) + ' (' + esc(c.code) + ')</option>').join('');
+  } catch {}
+}
+function pickBooking(n) {
+  const c = bookings[n]; if (!c) return;
+  $('aGuest').value = c.name || ''; $('aPhone').value = c.phoneDisplay || c.phone || '';
+}
+// Photos are shrunk on the phone to about 800 px before saving.
+function takePhoto(file) {
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(1, 800 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    newPhoto = c.toDataURL('image/jpeg', 0.72);
+    URL.revokeObjectURL(img.src);
+    const box = $('photoBox') || $('editPhotoBox'); if (box) box.innerHTML = '<img src="' + newPhoto + '" alt="">';
+    if (current && $('editPhotoBox')) savePhoto();
+  };
+  img.src = URL.createObjectURL(file);
+}
+async function addItem() {
+  if (busy) return;
+  const desc = $('aDesc').value.trim();
+  if (!desc) { showToast('Say what the item is', 'warning'); $('aDesc').focus(); return; }
+  const c = bookings[$('aBooking').value];
+  const ph = $('aPhone').value.trim() ? Phones.fields($('aPhone').value) : {};
+  busy = true; $('addBtn').disabled = true; $('addBtn').textContent = 'Saving…';
+  try {
+    // One id per item being added, kept until it's saved, so tapping Save again can't add it twice.
+    addId = addId || Ops.uid();
+    const res = await Ops.act('lostAdd', { by: by(), photo: newPhoto || undefined, item: {
+      id: addId, description: desc, foundDate: $('aDate').value || today(), foundSite: $('aSite').value, foundNote: $('aFoundNote').value.trim(),
+      storedAt: $('aStored').value, storedNote: $('aStoredNote').value.trim(), groupName: c ? c.name : '', orderCode: c ? c.code : '',
+      guestName: $('aGuest').value.trim(), guestPhone: ph.phone || '', phoneDisplay: ph.phoneDisplay || '', phoneFrom: ph.phoneFrom || '', phoneNote: ph.phoneNote || '', phoneCheck: !!ph.phoneCheck } });
+    ITEMS = res.view.items; newPhoto = ''; addId = null;
+    showToast('✓ Added to the register', 'success');
+    setTab('open');
+  } catch (e) { showToast(e.message, 'error'); }
+  finally { busy = false; const b = $('addBtn'); if (b) { b.disabled = false; b.textContent = 'Save to the register'; } }
+}
+
+// ── one item ──
+function openItem(id) { current = id; render(); window.scrollTo(0, 0); }
+async function renderDetail() {
+  const i = ITEMS.find(x => x.id === current); if (!i) { current = null; return render(); }
+  const held = daysSince(i.foundDate);
+  const phone = i.phoneDisplay || i.guestPhone;
+  $('view-detail').innerHTML = '<button class="btn btn-secondary" style="margin-bottom:10px" onclick="current=null;render()">← Back to the list</button>' +
+    '<div class="photo-box" id="editPhotoBox" onclick="$(\'photoIn2\').click()">' + (i.hasPhoto ? 'Loading photo…' : '📷 Add a photo') + '</div>' +
+    '<input type="file" id="photoIn2" accept="image/*" capture="environment" style="display:none" onchange="takePhoto(this.files[0])">' +
+    '<div class="detail-h">' + esc(i.description) + '</div>' +
+    '<div class="kv"><b>Found</b>' + dmy(i.foundDate) + (i.foundSite ? ' at ' + esc(Locs.name(i.foundSite)) : '') + (i.foundNote ? ', ' + esc(i.foundNote) : '') + (i.foundBy ? ' · ' + esc(i.foundBy) : '') + '</div>' +
+    '<div class="kv"><b>Held</b>' + (i.status === 'open' ? held + ' day' + (held === 1 ? '' : 's') : 'closed') + '</div>' +
+    (i.guestName || phone ? '<div class="kv"><b>Owner</b>' + esc(i.guestName || '') + (phone ? ' · ' + esc(phone) : '') + (i.groupName ? ' · booking ' + esc(i.orderCode || '') : '') + (i.phoneCheck ? ' <span class="lp-tag">check number</span>' : '') + '</div>' : '') +
+    (i.status === 'closed' ? '<div class="kv"><b>Outcome</b>' + esc(OUTCOMES[i.outcome] || i.outcome) + ', ' + dmy(i.closedDate) + (i.closedBy ? ' · ' + esc(i.closedBy) : '') + (i.closedNote ? ': ' + esc(i.closedNote) : '') + '</div>' : '') +
+    (i.status === 'open' ?
+      '<div class="fld-row" style="margin-top:12px"><div class="fld"><label for="dStored">Kept at</label><select id="dStored">' + locOptions(i.storedAt) + '</select></div>' +
+      '<div class="fld"><label for="dStoredNote">Where in there</label><input id="dStoredNote" maxlength="200" value="' + esc(i.storedNote || '') + '"></div></div>' +
+      '<button class="btn btn-secondary" onclick="saveStored()">Save where it\'s kept</button>' +
+      (i.guestPhone ? '<div class="btn-row"><a class="btn btn-secondary" href="#" onclick="return messageOwner(\'sms\', this)">💬 Text owner</a><a class="btn btn-secondary" href="#" target="_blank" rel="noopener" onclick="return messageOwner(\'whatsapp\', this)">WhatsApp owner</a></div>' : '') : '') +
+    '<div class="section-label" style="margin-top:16px">Follow-up notes</div><div class="lp-log">' + (i.log.length ? i.log.map(l => '<div><span class="when">' + new Date(l.at).toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) + (l.by ? ' · ' + esc(l.by) : '') + '</span><br>' + esc(l.text) + '</div>').join('') : '<div class="when">No notes yet.</div>') + '</div>' +
+    (i.status === 'open' ?
+      '<div class="fld"><input id="dNote" maxlength="500" placeholder="e.g. Called, no answer. Left a voicemail."></div><button class="btn btn-secondary" onclick="addNote()">Add note</button>' +
+      '<div class="section-label" style="margin-top:18px">Close this item</div>' +
+      '<div class="fld-row"><div class="fld"><label for="dOutcome">What happened</label><select id="dOutcome">' + Object.entries(OUTCOMES).map(([k, v]) => '<option value="' + k + '">' + v + '</option>').join('') + '</select></div>' +
+      '<div class="fld"><label for="dClosed">Date</label><input type="date" id="dClosed" value="' + today() + '"></div></div>' +
+      '<div class="fld"><input id="dCloseNote" maxlength="300" placeholder="Note, e.g. collected by owner, posted Express"></div><button class="btn btn-primary" onclick="closeItem()">Close item</button>'
+      : '<button class="btn btn-secondary" style="margin-top:12px" onclick="reopenItem()">Reopen</button>');
+  if (i.hasPhoto) { const src = await loadPhoto(i.id); const box = $('editPhotoBox'); if (box && current === i.id) box.innerHTML = src ? '<img src="' + src + '" alt="">' : '📷 Add a photo'; }
+}
+let addId = null, noteDraft = { text: '', id: '' };
+async function act(action, payload, ok) {
+  if (busy) return; busy = true;
+  if (action === 'lostEdit') { const it = ITEMS.find(x => x.id === payload.id); payload = { ...payload, baseV: it ? it.v || 0 : undefined }; }
+  try { const res = await Ops.act(action, { ...payload, by: by() }); ITEMS = res.view.items; if (ok) showToast(ok, 'success'); render(); return true; }
+  catch (e) {
+    if (e.code === 'changed') { showToast(e.message + '. It now shows the latest version: make your change again.', 'error'); try { ITEMS = (await Ops.view('lost')).items; render(); } catch {} return false; }
+    showToast(e.message, 'error'); return false;
+  }
+  finally { busy = false; }
+}
+function saveStored() { act('lostEdit', { id: current, fields: { storedAt: $('dStored').value, storedNote: $('dStoredNote').value.trim() } }, '✓ Saved'); }
+// The same note tapped again (after no answer) keeps its id, so it can't be added twice.
+async function addNote() {
+  const t = $('dNote').value.trim(); if (!t) return;
+  if (noteDraft.text !== current + '|' + t) noteDraft = { text: current + '|' + t, id: Ops.uid() };
+  if (await act('lostNote', { id: current, noteId: noteDraft.id, text: t }, '✓ Note added')) noteDraft = { text: '', id: '' };
+}
+function closeItem() { act('lostClose', { id: current, outcome: $('dOutcome').value, closedDate: $('dClosed').value || today(), note: $('dCloseNote').value.trim() }, '✓ Closed'); }
+function reopenItem() { act('lostReopen', { id: current }, 'Reopened'); }
+async function savePhoto() { const id = current; photos[id] = newPhoto; await act('lostEdit', { id, fields: {}, photo: newPhoto }, '✓ Photo saved'); newPhoto = ''; }
+// Text or WhatsApp the owner; the item's notes record that it was opened, and whether it went.
+function messageOwner(channel, el) {
+  const i = ITEMS.find(x => x.id === current); if (!i) return false;
+  const first = String(i.guestName || '').split(' ')[0] || 'there';
+  const text = 'Hi ' + first + ", it's the " + Brand.name() + " team. We think you left your " + i.description.replace(/^[A-Z]/, c => c.toLowerCase()) + ' with us on ' + dmy(i.foundDate) + ". Reply and we'll arrange to get it back to you.";
+  const phone = i.guestPhone;
+  el.href = channel === 'sms' ? 'sms:' + phone + (/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(text) : 'https://wa.me/' + phone.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(text);
+  const label = channel === 'sms' ? 'Text' : 'WhatsApp';
+  setTimeout(() => {
+    const sent = confirm(label + ' message to ' + (i.guestName || 'the owner') + ': was it sent?\n\nOK = sent · Cancel = not sent');
+    act('lostNote', { id: i.id, noteId: Ops.uid(), text: label + ' message to owner ' + (sent ? 'sent' : 'not sent') });
+  }, 800);
+  return true;
+}
+async function exportCSV() {
+  const cv = Ops.csvCell;
+  const rows = [['Description', 'Date Found', 'Found At', 'Where Found', 'Found By', 'Kept At', 'Where Kept', 'Guest', 'Phone', 'Booking', 'Status', 'Days Held', 'Outcome', 'Closed', 'Closed By', 'Closing Note', 'Follow-up Notes', 'Photo'].map(cv).join(',')];
+  ITEMS.forEach(i => rows.push([i.description, dmy(i.foundDate), i.foundSite ? Locs.name(i.foundSite) : '', i.foundNote, i.foundBy, i.storedAt ? Locs.name(i.storedAt) : '', i.storedNote, i.guestName, i.phoneDisplay || i.guestPhone, i.orderCode,
+    i.status === 'open' ? 'Open' : 'Closed', i.status === 'open' ? daysSince(i.foundDate) : '', OUTCOMES[i.outcome] || '', dmy(i.closedDate), i.closedBy, i.closedNote,
+    i.log.map(l => new Date(l.at).toLocaleDateString('en-AU') + ' ' + (l.by || '') + ': ' + l.text).join(' | '), i.hasPhoto ? 'Yes' : ''].map(cv).join(',')));
+  Ops.downloadText(rows.join('\r\n'), Brand.file() + '-Lost-Property-' + today() + '.csv', 'text/csv;charset=utf-8');
+}
+load();
+</script>
+</body>
+</html>

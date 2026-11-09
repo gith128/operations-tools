@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SA eBikes · Operations Tools v3.10 · Help &amp; SOPs</title>
+<!-- Built from docs/manual.md by tools/build_help.py. Edit the manual, not this file. -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{--bg:#fbfaf7;--bg-elev:#fff;--bg-soft:#f2efe8;--border:#e4ded2;--border-strong:#d4cdbd;--text:#1f2428;--text-dim:#5a6269;--text-muted:#8b8f93}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:120px}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;line-height:1.6}
+.head-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.back-home{flex:none;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:999px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+header{position:sticky;top:0;z-index:10;background:rgba(251,250,247,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:14px 16px 10px}
+.head-row{max-width:720px;margin:0 auto}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace}
+nav.toc{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+nav.toc::-webkit-scrollbar{display:none}
+nav.toc a{flex:none;padding:6px 12px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}
+nav.toc a.here{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+main{max-width:720px;margin:0 auto;padding:18px 16px 80px}
+section{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:16px;padding:20px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+h2{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:8px}
+h3{font-size:16px;font-weight:800;margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--border)}
+h3[id^="sop-"]{color:var(--accent-text)}
+p{margin:0 0 10px}
+ul,ol{margin:0 0 12px 22px} li{margin:4px 0} li ul{margin:4px 0 4px 18px}
+ol>li::marker{font-family:'DM Mono',monospace;font-weight:500;color:var(--accent-text)}
+code{font-family:'DM Mono',monospace;font-size:13px;background:var(--bg-soft);padding:1px 5px;border-radius:5px}
+.table-wrap{overflow-x:auto;margin:6px 0 14px;border:1px solid var(--border);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:440px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border)}
+th{background:var(--bg-soft);font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text-dim)}
+tr:last-child td{border-bottom:none}
+.top{display:inline-block;margin-top:8px;font-size:12px;color:var(--text-muted);text-decoration:none;font-family:'DM Mono',monospace}
+@media print{header{position:static} nav.toc,.back-home,.top{display:none} section{break-inside:auto;box-shadow:none}}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<header><div class="head-row">
+  <div class="head-top">
+    <div><div class="logo">SA <span>eBikes</span></div>
+    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.10</div></div>
+    <a class="back-home" href="/">← Tools</a>
+  </div>
+  <nav class="toc"><a href="#getting-started">Getting started</a><a href="#load-manifest">Load Manifest</a><a href="#todays-contacts">Today&#x27;s Contacts</a><a href="#group-scanner">Group Scanner</a><a href="#issue-reporter">Issue Reporter</a><a href="#asset-register">Asset Register</a><a href="#site-checklists">Site Checklists</a><a href="#roster">Roster</a><a href="#lost-property">Lost Property</a><a href="#show-qr">Show QR</a><a href="#dashboard">Dashboard</a><a href="#fleet-report">Fleet report</a><a href="#admin">Admin</a><a href="#daily-routine-and-troubleshooting">Daily routine and troubleshooting</a></nav>
+</div></header>
+<main>
+<section><h2 id="getting-started">Getting started</h2>
+<p>Operations Tools is the staff web app we use to issue bikes, contact customers, track faults and keep the fleet register. It runs in the phone's browser, and every phone sees the same data within seconds.</p>
+<p>Each section of this manual has two parts. <strong>How it works</strong> explains the screen. <strong>SOP</strong> is the procedure staff follow, step by step.</p>
+<h3 id="opening-the-app">Opening the app</h3>
+<ol>
+<li>Open the Operations Tools address in Safari or Chrome. Add it to the home screen so it opens like an app.</li>
+<li>The first time on a phone, the app asks for the <strong>staff PIN</strong>. Enter it once; the phone remembers it.</li>
+<li>The home screen lists the tools in the order of a typical day: Today's Contacts, Site Checklists, Roster, Group Scanner, Show QR, Asset Register, Issue Reporter, Lost Property, Load Manifest, and Help &amp; SOPs. Admin and the Dashboard are opened from links at the top of Load Manifest. The Fleet report is opened from the Dashboard or the Asset Register. Admin can change the order of the tools and hide any of them (<strong>Configuration → Home screen</strong>), the same on every phone; a hidden tool still opens from its address.</li>
+<li>Every page has a <strong>Back to Operations Tools</strong> button at the top left.</li>
+</ol>
+<p>Under the heading, the home screen shows the <strong>backup line</strong>:</p>
+<ul>
+<li><strong>Green, "✓ Backup: last good 2:31 am today":</strong> the data was backed up and checked overnight. Nothing to do.</li>
+<li><strong>Amber, "Some daily archives weren't copied":</strong> last night's backup is good, but copying some daily archives failed. They're tried again the next night. Mention it to the manager if it's still amber after two days.</li>
+<li><strong>Red, "⛔ No good backup since …" or "The last backup didn't finish":</strong> the last backup failed or was cut off, or none has been taken for 36 hours. Tell the manager the same day. See "SOP: The backup line is red" under Admin.</li>
+<li><strong>"📥 Off-site backup download due":</strong> it's more than 30 days since a copy was downloaded. This is the manager's job, not the counter's.</li>
+</ul>
+<p>When there's a roster, <strong>On today</strong> sits under the backup line: who's working where today, and your own next shift. Tap it to open the Roster.</p>
+<p>A blue <strong>PREVIEW</strong> banner means you're on a test copy of the app, not the live site. Nothing done there reaches the live data. Staff phones should never be on a preview; if one is, go back to the usual address.</p>
+<p>The staff PIN protects customer names and phone numbers. Don't write it on the phone or share it outside the team. If a phone is lost, change the PIN in Netlify and give staff the new one.</p>
+<h3 id="your-name-on-this-phone">Your name on this phone</h3>
+<p>The first time the app opens on a phone, it asks <strong>Who's using this phone?</strong> Tap your name. The 👤 button at the top of each page shows your initials; tap it to change or clear them.</p>
+<p>Your initials then fill in automatically on issue reports, updates, repairs and bike moves (you can still change them on the form). They're also recorded against bikes you issue, check in or take off a group, and groups you mark Returned. If your name isn't on the list, add it under <strong>Admin → Team</strong>.</p>
+<h3 id="typing-a-bike-id">Typing a bike ID</h3>
+<p>When you type a bike ID instead of scanning it, leave out the leading zeros and the dash: <strong>12</strong> or <strong>eb12</strong> finds EB-012. The full ID is what gets recorded. If more than one bike matches, the app asks you to type more of the ID.</p>
+<h3 id="scanning-barcodes">Scanning barcodes</h3>
+<p>Every phone uses the <strong>new scanner</strong> unless someone has chosen otherwise. It uses a sharper camera picture and reads only what's inside the green box: fill the box with the barcode, about 15–20 cm away. Labels on flat parts of the frame read best; on round tubes, the curve can stop any scanner reading them.</p>
+<ul>
+<li><strong>Starting the scanner…</strong> shows briefly the first time on a phone, while it downloads the scanner (about 1 MB). The home screen fetches it in the background, so usually it's already there.</li>
+<li><strong>Trouble scanning?</strong> Tap <strong>Use the classic scanner</strong> under the camera, then stop and start scanning. It's set per phone, and <strong>Use the new scanner</strong> switches back.</li>
+<li><strong>"Classic scanner (the new one couldn't start here)"</strong> means the phone has fallen back to the classic scanner by itself, usually because the download didn't finish on a poor signal. Scanning still works. It tries the new one again next time you start scanning.</li>
+</ul>
+<h3 id="the-status-light-top-right">The status light (top right)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Shows</th>
+<th>Means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Green, "live"</td>
+<td>Connected and up to date</td>
+<td>Nothing</td>
+</tr>
+<tr>
+<td>Amber, "saving 2…"</td>
+<td>Changes are on their way to the server</td>
+<td>Wait a few seconds</td>
+</tr>
+<tr>
+<td>Red, "1 unsaved · retrying"</td>
+<td>No signal; changes are held on the phone</td>
+<td>Keep working. They send when signal returns. Don't close the browser tab.</td>
+</tr>
+<tr>
+<td>Red, "offline"</td>
+<td>Can't reach the server</td>
+<td>Check signal, then tap the light to retry</td>
+</tr>
+<tr>
+<td>Red, "PIN needed · tap here"</td>
+<td>The PIN was wrong or has changed</td>
+<td>Tap the light and re-enter the PIN</td>
+</tr>
+<tr>
+<td>Red, "1 not saved · tap" (Group Scanner)</td>
+<td>The server refused a change, for example an out-of-service bike, or a Delete group sent after a new day was loaded</td>
+<td>Tap the light to see what wasn't saved and why. OK clears the list.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="bad-signal">Bad signal</h3>
+<p>The Group Scanner keeps working with no signal. Scans are queued on the phone and survive a page reload. Other pages need a connection to save. When you save, you'll see one of three things:</p>
+<ul>
+<li><strong>✓ Saved</strong> (or similar): it's saved.</li>
+<li><strong>Not confirmed:</strong> no answer came back, so it may or may not have saved. The form stays filled in. Tap Save again when you have signal: it can't make a duplicate, and if the first one did save, it just says so.</li>
+<li><strong>Not saved, with a reason:</strong> the server refused it (for example, someone else changed the same record since you opened it). Read the reason; nothing was saved.</li>
+</ul>
+<p>A save that gets no answer is tried once more by itself a few seconds later, so most dropouts sort themselves out without you noticing.</p>
+<p><strong>Two people changing the same thing.</strong> If someone else changed a bike, a lost item, a contact, a location or an Admin setting after you opened it, your save is refused rather than quietly overwriting theirs. The page shows their latest version: open it again and make your change.</p>
+<p><strong>Delete group, Clear all and Reset day</strong> made on a phone with no signal are refused if a new day's manifest has been loaded before the phone reconnects, so yesterday's tidy-up can't wipe today's groups.</p>
+<p>Pages check for updates less often when nobody is touching the screen, and stop completely when the phone is locked. Tap the status light to refresh straight away.</p>
+<h3 id="undo-and-corrections">Undo and corrections</h3>
+<p>Mistakes are put right in one of three ways. Nothing is erased: the original stays on the record, and the record shows who put it right and when.</p>
+<ul>
+<li><strong>Undo (10 seconds).</strong> After adding a bike to a group, checking a bike in, marking a group Out, a Dandelion drop-off or signing off an M-check, a dark bar at the bottom of the screen offers <strong>Undo</strong> for 10 seconds. One tap reverses it; no reason is asked. A bike checked in goes back to where it was; an M-check sign-off undone leaves the bike due again. The record shows <strong>↶ Undone</strong> with the time and initials.</li>
+<li><strong>Correction (any time after).</strong> A sheet asks for your initials and a reason, then shows <strong>✎ Corrected</strong> with the time, initials and reason on the record. Each record can be corrected once. Corrections are:<ul>
+<li><strong>Untick a checked-in bike</strong> (Groups tab): it goes back to being out, and moves back to where it was.</li>
+<li><strong>↶ Undo drop-off</strong> on a group dropped at Dandelion: its bikes go back to being out, move back, and the group is open again.</li>
+<li><strong>↶ Restore</strong> a group deleted today (Deleted today, at the bottom of Groups). Any of its bikes that have since gone out with another group stay with that group.</li>
+<li><strong>Void</strong> an M-check signed off wrongly (Asset Register → the bike → M-check history): the bike is due again.</li>
+<li><strong>↶ Reopen: not fixed</strong> on an issue marked repaired by mistake (Issue Reporter → the issue).</li>
+<li><strong>✎ Logged in error</strong> on an issue logged on the wrong bike, or that wasn't a real fault: it's closed and left out of repeats, time out of service and the Dashboard. Log it again on the right bike.</li>
+<li><strong>↶ Restore</strong> a bike removed from the register by mistake (Asset Register → Removed bikes): it comes back as it was, and past days count it as in the fleet all along.</li>
+</ul>
+</li>
+<li><strong>Just edit it.</strong> Asset details, contacts, a group's location or hire length, lost property details and notes are simply edited, as before.</li>
+</ul>
+<p><strong>Not reversible here:</strong> loading a manifest (Load Manifest warns first), Reset day, a message already sent to a guest, and site checklist sign-offs (sign again instead). Anything else lost can be recovered from the nightly backups in Admin.</p>
+</section><section><h2 id="load-manifest">Load Manifest</h2>
+<p>Load Manifest takes the day's Rezdy <strong>pickup manifest</strong> and sets up the scanner groups and the contact list on every phone. It is the first job of each hire day. It replaces the previous day's groups, except multi-day hires still running and groups with bikes still out, which carry over with their bikes.</p>
+<h3 id="how-it-works">How it works</h3>
+<ul>
+<li><strong>Step 1</strong> takes the Rezdy <strong>pickup manifest</strong> export (CSV). Each booking becomes a group named after the customer and bike count, for example "Smith (x2)". Use the pickup manifest: it's the only export that says where each hire is.</li>
+<li><strong>Step 2</strong> shows the tour date (taken from the file name, which you can change) and, for each group:<ul>
+<li>where the hire is, read from the Rezdy product name using each location's matching words (for example "Beresford" → <strong>📍 Beresford</strong>, "Deliver" → <strong>🚚 Home Delivery</strong>), with the start time and the agent (for example GetYourGuide);</li>
+<li>its bike count, and a flag on any group booked with non-standard equipment: child seat, cargo, eTukTuk, surf rack or another named bike type;</li>
+<li>the booking's <strong>Order Special Requirements</strong> in small grey text (tap to read all of it);</li>
+<li>any phone number that was corrected (for example "+1 0411… → +61 411…"), or that still doesn't look valid (<strong>Check number</strong>);</li>
+<li>a <strong>Days</strong> column with the hire length. It reads "2 day hire" (or 3, up to 7) from the booking's internal notes in Rezdy. Change it here if the note was missed.</li>
+</ul>
+</li>
+<li>Under the table, a line counts bookings at each location. A product whose name matches no location is flagged <strong>Unrecognised product</strong>, and one that matches more than one location is flagged with both, so the wrong location can't be picked silently. The <strong>📊 Dashboard</strong> link at the top of the page opens the Dashboard.</li>
+<li>
+<p><strong>Check before loading</strong> appears under the table when the file has a product to look at:</p>
+<ul>
+<li><strong>🆕 New product:</strong> a product name the app has never seen in a manifest before, with the location it will go to and the word that matched. New and renamed Rezdy products are when a booking is most likely to land in the wrong place, so check it's right.</li>
+<li><strong>⚠ Matches 2 locations:</strong> it shows which wins (the first) and which else matched.</li>
+<li><strong>❓ No location:</strong> no location's words appear in the name.</li>
+</ul>
+<p>Every product name and where it went is kept in <strong>Admin → Rezdy products</strong>.
+- The date warning appears if the date is in the past, or more than a day ahead. The Contacts page only treats today's and tomorrow's manifest as current.
+- <strong>Push to Scanner + Contacts</strong> replaces the groups on every phone. If the same date is already loaded and bikes have been scanned for it, it asks first: loading it again takes those scans off every scanner (they stay in the day's archive). Before it replaces anything, the server archives the current groups and scans, and the page downloads them as <code>Group_File_&lt;date&gt;.csv</code>. Multi-day hires still running, and any group with bikes not yet checked in (marked Overdue), are carried into the new day with their bikes, and the log says how many. Then it opens the Group Scanner by itself, unless there's a product to check first.
+- <strong>No bookings today</strong> (under the upload box, with a date): loads a day with no bookings, after you confirm. Everything a real upload does still happens: the current day is archived and downloaded, its summary saved, and multi-day and overdue groups carried over. A file with no bookings in it shows a warning with <strong>Continue: no bookings</strong> or <strong>Choose another file</strong>.
+- <strong>📊 Dashboard</strong> and <strong>⚙️ Admin</strong> links sit at the top of the page.
+- <strong>Download Archive CSV Only</strong> saves the current groups without loading anything new.</p>
+</li>
+</ul>
+<p>Only the hire length is read from the internal notes. Nothing else in that field is shown to staff.</p>
+<h3 id="sop-booking-details-in-rezdy">SOP: Booking details in Rezdy</h3>
+<p>Who: whoever takes the booking. When: as soon as it's booked, or when details change.</p>
+<ol>
+<li><strong>Multi-day hire:</strong> in <strong>internal notes</strong>, write the hire length exactly like this: <strong>2 day hire</strong> (or 3 day hire, and so on). It can sit anywhere among other notes. Don't write that phrase for any other reason.</li>
+<li><strong>Home delivery:</strong> put the delivery address and collection time in <strong>Order Special Requirements</strong>, for example "Deliver to Unwind Cottage, Karawatha Cottages. Collect 5pm." The pickup manifest doesn't carry the delivery address anywhere else.</li>
+<li><strong>Rider requirements:</strong> heights, experience, a nervous rider, anything the team should know at hand-over, also go in <strong>Order Special Requirements</strong>.</li>
+</ol>
+<h3 id="sop-loading-the-days-manifest">SOP: Loading the day's manifest</h3>
+<p>Who: whoever opens. When: before the first booking arrives, or the evening before for an early start.</p>
+<ol>
+<li>Check the previous day's groups are returned. Any with bikes still out carry over as Overdue, and multi-day hires carry over on their own.</li>
+<li>In Rezdy, export the <strong>pickup manifest</strong> for the day as CSV.</li>
+<li>Open <strong>Load Manifest</strong> and choose the file in Step 1.</li>
+<li>In Step 2, confirm the <strong>tour date</strong> is correct. Fix it if the file was renamed.</li>
+<li>Read the group list. Check each booking's location: deliveries need bikes on the trailer, Oxenberry bookings need bikes at Oxenberry. For every flagged group, check the booking in Rezdy and set aside the right equipment. Read any special requirements.</li>
+<li>If <strong>Check before loading</strong> lists a <strong>new product</strong>, check the location it shows is right. If a booking shows <strong>Unrecognised product</strong> or matches two locations, check in Rezdy where it's hired from, then teach the app: in <strong>Admin → Rezdy products</strong>, try a word on that location and save it (or tap <strong>Words</strong> on the location in <strong>Asset Register → Locations</strong>). Reload the manifest file to pick it up.</li>
+<li>Check the <strong>Days</strong> column against the multi-day bookings you know about. Set it by hand if a longer booking shows 1.</li>
+<li>Note any bookings missing a phone number or marked <strong>Check number</strong>, and confirm the number at check-in.</li>
+<li>Tap <strong>Push to Scanner + Contacts</strong>. Keep the downloaded <code>Group_File</code> CSV if you want a local copy; the server has its own. When it's loaded, the page goes straight to the Group Scanner, ready to issue the first booking. If there was something to check (a product with no location, or two), it waits instead: tap <strong>Go to the Group Scanner →</strong> when you're ready.</li>
+<li>Open the Group Scanner on the hire phone and check the groups have appeared (within about 10 seconds), including any multi-day hires carried over.</li>
+</ol>
+<p>If a walk-in or late booking arrives after loading, don't reload the manifest. Add the group by hand in the Group Scanner (see below), so scans already made aren't archived away.</p>
+</section><section><h2 id="todays-contacts">Today's Contacts</h2>
+<p>Today's Contacts lists every booking from the loaded manifest with one-tap call, SMS and WhatsApp buttons. Staff use it to reach a customer who is late, lost or overdue, without opening Rezdy.</p>
+<h3 id="how-it-works_1">How it works</h3>
+<ul>
+<li>Each card shows the customer's name, order number, start time and agent, where the hire is (for example 📍 Visitor Centre or 📍 Beresford, or 🚚 Home Delivery with an amber border), the bikes booked and any equipment flags. The heading counts bookings at each location.</li>
+<li>A multi-day hire shows a badge such as <strong>Day 2 of 2</strong> beside the order number. Special requirements and any drop-off location appear in small grey text; tap to read all of it.</li>
+<li>Tap a number to call, or use the SMS and WhatsApp buttons. The contact button saves that one customer to the phone as a vCard.</li>
+<li><strong>Save all to Contacts (.vcf)</strong> saves every customer at once. This helps WhatsApp show names in group chats.</li>
+<li>The heading shows the manifest date. If the loaded manifest isn't today's or tomorrow's, the page says it is out of date and shows no customers.</li>
+<li>The list refreshes about once a minute. Tap <strong>Refresh</strong> after a new manifest is loaded.</li>
+<li>Phone numbers are checked when the manifest is loaded. A corrected number says what was changed, for example an Australian number Rezdy gave as +1. A number that still doesn't look valid shows <strong>check number</strong>: confirm it with the customer at check-in.</li>
+<li><strong>💬 Message</strong> opens the guest messages: running late for pickup, late returning, weather warning, and the guest links (Ride Guide, online waiver, Google review). The likely one is marked <strong>Suggested</strong>. Check the wording, tap <strong>Text</strong> or <strong>WhatsApp</strong>, then answer <strong>Was it sent?</strong> when you come back. The card shows the latest message and whether it was sent, not sent, or not confirmed.</li>
+<li>Walk-ins appear with a <strong>Walk-in</strong> tag once they have a contact. <strong>+ Add phone</strong> or <strong>Edit</strong> adds or changes their number; it's checked the same way.</li>
+<li>The <strong>Today / Previous day</strong> switch at the top shows the previous manifest's customers, read-only, for follow-up calls such as a forgotten jacket or a damage query.</li>
+<li>A customer whose bikes are still out from an earlier day shows a red <strong>Overdue</strong> badge.</li>
+<li>The <strong>By time / By location</strong> switch orders the cards: by start time, or grouped by hire location (Visitor Centre, Oxenberry Farm, Beresford and so on, then Home Delivery). Hires carried over from an earlier day (overdue or multi-day) always come first. Each phone remembers its choice.</li>
+</ul>
+<h3 id="sop-contacting-a-customer-during-the-day">SOP: Contacting a customer during the day</h3>
+<ol>
+<li>Open <strong>Today's Contacts</strong> and check the date in the heading is today.</li>
+<li>Find the customer by name or order number.</li>
+<li>Use the channel that suits them. If a call isn't answered, try WhatsApp, which overseas visitors on travel SIMs can often still receive.</li>
+<li>For an overdue group, call first, then SMS with our number and a simple question ("Are you OK? Do you need a hand getting back?").</li>
+<li>Record anything important, such as a breakdown or a changed return time, in the Issue Reporter or with the person running the day.</li>
+</ol>
+<p>Customer phone numbers are private. Save customers to a phone only for the day's work, and delete them once their hire is finished.</p>
+</section><section><h2 id="group-scanner">Group Scanner</h2>
+<p>The Group Scanner records which bikes go out with which booking, and checks them back in. Every bike issued is scanned onto its group and ticked in when it returns, so at any moment we can see who has which bike, and the day leaves a record.</p>
+<h3 id="how-it-works_2">How it works</h3>
+<p><strong>Scan tab</strong></p>
+<ul>
+<li>The switch at the top chooses what scanning does: <strong>🚴 Issuing</strong>, <strong>✓ Checking in</strong> or <strong>🔧 M-check</strong>. The phone keeps the one chosen for the rest of the day, and starts each new day in <strong>🚴 Issuing</strong>.</li>
+<li><strong>When a job is done, the screen moves on to the next one by itself.</strong> It never changes anything by itself: marking a group out or returned always takes a tap. It always says where it has gone, for example "✓ Smith (x2) out · Next: Jones (x3), 10:30", so if that's not who's at the counter, tap a different group.</li>
+<li><strong>🚴 Issuing:</strong><ul>
+<li><strong>Active Group</strong> chips across the top: the groups still waiting to go out, soonest first, each with its start time and bikes scanned against bikes booked (for example "1/2"). Tap one to make it the group you're scanning into on this phone. Groups already out or back are behind <strong>Show all</strong>. Each phone chooses its own active group.</li>
+<li>Under the chips, the active group shows its progress ("1 of 2 bikes scanned", then "✓ 2 of 2"), any equipment the booking needs (for example <strong>Needs 1× Child Seat</strong>), its location, a multi-day hire's day ("Day 2 of 2") and special requirements.</li>
+<li><strong>🚴 Mark Smith (x2) out</strong>, under the bikes scanned, marks the group out. It turns green when every booked bike is scanned; before that it asks first. The next group waiting becomes active, and the camera stays on.</li>
+<li>Arriving from Load Manifest, the scanner opens in <strong>🚴 Issuing</strong> with the first group due already active.</li>
+<li><strong>Start Scanning</strong> opens the camera. Hold the bike's barcode in the box. You can also type the ID in the box below and tap <strong>+</strong>.</li>
+<li>Each scanned bike shows its barcode, brand and model, and scan time. The confirmation reads, for example, "EB-012 · Gazelle Medeo T9 added". Check it matches the bike in front of you.</li>
+</ul>
+</li>
+<li><strong>✓ Checking in:</strong> scan each bike as it comes back. It's ticked in on whichever group has it out, so a mixed return doesn't need sorting first. The list shows each group with bikes still out. When every bike in a group is back, it moves to the top with a <strong>Mark returned</strong> button, so there's no need to go to the Groups tab. Set <strong>This phone is at</strong> once on each phone (VIC, OXB, TRA and so on); every bike checked in on that phone, by scan or by tick box, is moved to that location in the Asset Register. The first time each day, the app asks where you're checking in, and each confirmation shows where the bike is going (→ VIC). If a group was hired from somewhere else, or was a home delivery, it asks once for that group whether its bikes go to this phone's location or back where they were hired from (TRA for deliveries). Tick <strong>M-check each bike as it's checked in</strong> to have the checklist open straight after each check-in.</li>
+<li><strong>🔧 M-check:</strong> lists every bike at the rack that's due an M-check (it hasn't passed one since it last went out). Tap a bike, or scan or type it, to open the checklist. The camera stays on between bikes. See the M-check SOP below.</li>
+<li><strong>While a form is open</strong> (an M-check, taking a bike off, a return), the camera ignores what it sees, so a bike in view can't be checked in behind the form.</li>
+<li><strong>Last scans:</strong> the last three results stay on screen above the camera, newest first: the time, the bike and what happened. Green is fine, amber needs a look, red was refused. They stay until the next scan pushes them down, so a warning isn't lost if you look away.</li>
+<li><strong>Sounds:</strong> one short beep for OK, two beeps for a warning, a low tone for refused, and a buzz on Android phones (iPhones can't vibrate for a web page). <strong>🔊 Sounds on</strong> under Start Scanning turns them off or on for that phone. An iPhone's silent switch also silences them.</li>
+<li><strong>The camera:</strong><ul>
+<li>If a bike's label won't read after about 6 seconds, <strong>Can't read it? Type the bike ID below</strong> appears. Tap it to type the ID.</li>
+<li>After 3 minutes without a scan, the camera stops by itself to save the battery. Tap <strong>Start Scanning</strong> to carry on.</li>
+<li>Leaving the page (a phone call, another app, the lock screen) stops the camera; coming back starts it again, so it doesn't come back frozen.</li>
+<li>If the camera won't start, the box says why and what to do for that phone: camera blocked for the site, in use by another app, or not found.</li>
+</ul>
+</li>
+<li><strong>Warnings when issuing:</strong><ul>
+<li>Red banner, "OUT OF SERVICE": the bike has a P5 issue open. It is refused. Do not hire it.</li>
+<li>Amber, "has open issue logged": a lower-priority issue is open. The bike is added; check the issue before handing it over.</li>
+<li>Red, "still out with Jones (x1)": the bike is still out with another group (not checked in, group not Returned). It is refused. Find out which group really has it: if it's come back, check it in; if it was scanned onto that group by mistake, take it off there. Then scan it again.</li>
+<li>"isn't a registered bike": the barcode isn't in the Asset Register. The app asks before adding it. Check the label and the ID: <strong>Cancel</strong> if it was misread, <strong>Add anyway</strong> if it really is the bike going out (then add it to the register later). A similar amber warning, "recorded as disposed", appears for a bike that has been sold or written off.</li>
+<li>Amber, "not M-checked since its last ride": the bike hasn't passed an M-check since it last went out. It's still added, and the hire records that it went out unchecked.</li>
+<li>"already in group": it's been scanned onto this group already. Nothing changes.</li>
+</ul>
+</li>
+<li><strong>× next to a bike</strong> takes it off the group. The app asks why (see the swap SOP). The bike moves to <em>Taken off this group</em> with its times and reason, and is free to issue again.</li>
+<li><strong>Clear all</strong> takes every bike off the active group, recorded as "group cleared".</li>
+</ul>
+<p><strong>Groups tab</strong></p>
+<ul>
+<li>One card per group: its status, where the hire is and its start time (home deliveries have an amber border), the hire day for a multi-day hire, special requirements, then each bike with a <strong>tick box</strong>, its barcode and model, and the time it was checked in. The count reads, for example, "2 of 3 checked in".</li>
+<li><strong>Out</strong> marks the group as on the road. <strong>Out overnight</strong> (multi-day hires, before the last day) marks bikes staying out overnight; the group carries into the next day's manifest.</li>
+<li><strong>Returned</strong> works once every bike is ticked in. If any aren't, the button reads "Returned (1 not in)" and opens <strong>Return with exception</strong>: a reason for each missing bike (left at location to collect, damaged with an issue logged, missing, or other with a note). The reasons stay on the group's record. <strong>Undo Returned</strong> reopens the group and clears them.</li>
+<li>The hire length menu ("1-day hire", "2-day hire" and so on) sets the length by hand, for a booking whose note was missed.</li>
+<li><strong>Set Active</strong> makes the group active on this phone. <strong>Delete</strong> removes the group (a copy is kept for the day's archive).</li>
+<li><strong>↩ Dropped at Dandelion Wines</strong> (on a group with bikes still out) records that the group left its bikes at the Dandelion collection point. A sheet lists exactly which bikes will be marked dropped and which are already checked in; <strong>Mark 2 bikes dropped at Dandelion Wines</strong> confirms it. Every bike still out is checked in there, the bikes move to DLN in the Asset Register, and the group closes. Move them on with <strong>Move bikes</strong> when they're collected.</li>
+<li><strong>💬 Message</strong> on a group with a phone number messages the guest, the same way as on Today's Contacts. It suggests "running late for pickup" when the start time has passed with no bikes scanned out, otherwise "late returning". The latest message and whether it went show under the group.</li>
+<li><strong>🌦 Weather warning to groups out</strong> lists every group with bikes out, all ticked. Untick any that don't need it, describe the weather once, then send to each in turn, answering <strong>Was it sent?</strong> for each.</li>
+<li>The <strong>🔳 QR</strong> link at the top opens Show QR.</li>
+<li><strong>New Group</strong> adds a walk-in or other group by hand: its name, hire location (pre-set from this phone), <strong>Full day</strong> or <strong>4 hours</strong>, and optionally a contact. The start time is set to now, and a 4-hour hire shows <strong>DUE BACK</strong> with the time on its card. A walk-in's contact can be added later with <strong>+ Add contact</strong>; while its bikes are out without a phone, the card shows <strong>No phone yet</strong>. Any group with no location has a <strong>Set location</strong> menu.</li>
+</ul>
+<p><strong>Today / Previous day</strong> (Groups and Summary tabs): the previous manifest's groups as they were when the next manifest was loaded, read-only. A group with bikes still out from an earlier day comes across to today with a red <strong>OVERDUE · out since</strong> badge, and stays until its bikes are checked in and it's marked Returned.</p>
+<p><strong>By time / By location</strong> (Groups and Summary tabs): the same ordering as on Contacts, with carried-over groups first. The Scan tab's group chips follow it, so the next booking is first along the row.</p>
+<p><strong>Summary tab</strong></p>
+<ul>
+<li>Totals for the day: groups, bikes out, unique bike IDs, bikes checked in, multi-day hires, bikes due an M-check, overdue groups, bikes taken off groups, and any out-of-service bikes scanned.</li>
+<li>If <em>Total bikes out</em> is higher than <em>Unique bike IDs</em>, one bike is in two groups. Find it on the Groups tab.</li>
+<li><strong>Share Report</strong> sends a text summary to WhatsApp, SMS or email. <strong>Download CSV</strong> saves the day as a spreadsheet, with hire day, check-in times, bikes not back and bikes taken off.</li>
+<li><strong>Reset All Data</strong> clears every group on every phone, after archiving a copy. Use it only to start again on a day without a manifest.</li>
+</ul>
+<h3 id="sop-issuing-bikes-to-a-group">SOP: Issuing bikes to a group</h3>
+<ol>
+<li>Open the <strong>Group Scanner</strong> (after loading the manifest, it opens by itself). Check <strong>🚴 Issuing</strong> is highlighted.</li>
+<li>Under <strong>Active Group</strong>, check the customer's group is the one highlighted; if not, tap it.</li>
+<li>Read what's under it: any equipment needed (<strong>Needs 1× Child Seat</strong>) and special requirements.</li>
+<li>Tap <strong>Start Scanning</strong>, and scan each bike as you hand it over. Listen for the beep and read the confirmation each time: right bike, right model, no warning. A red OUT OF SERVICE banner means put that bike aside and choose another. A red "still out with" means the bike is on another group: sort that out first. If it asks whether to add a bike that isn't registered, check the ID before tapping <strong>Add anyway</strong>. An amber warning needs dealing with before the customer rides off (see the list above).</li>
+<li>When it shows <strong>✓ 2 of 2 bikes scanned</strong>, tap <strong>🚴 Mark Smith (x2) out</strong>.</li>
+<li>The next group waiting is now active and the camera is still on. If that's the next customer at the counter, carry on from step 3; if not, tap their group.</li>
+</ol>
+<h3 id="sop-swapping-a-bike-customer-wants-a-different-one">SOP: Swapping a bike (customer wants a different one)</h3>
+<ol>
+<li>With the customer's group active, tap <strong>×</strong> next to the bike they are handing back.</li>
+<li>Choose <strong>Swapping for another bike</strong>.</li>
+<li>Scan the replacement bike straight away. Check the confirmation.</li>
+<li>The original bike stays on the group's record as "swapped" and can go to the next customer.</li>
+</ol>
+<p>If the bike is being swapped because something is wrong with it, choose <strong>Fault found</strong> instead. The app offers to log the fault straight away: the Issue Reporter opens with the bike filled in, and comes back to the scanner once it's logged. Choose Cancel to scan the replacement first, then log the fault before anyone else takes the bike.</p>
+<h3 id="sop-correcting-a-wrong-scan">SOP: Correcting a wrong scan</h3>
+<ol>
+<li>Tap <strong>×</strong> next to the bike that was scanned by mistake.</li>
+<li>Choose <strong>Scanned by mistake</strong>.</li>
+<li>Scan the correct bike.</li>
+</ol>
+<p>If a bike was scanned into the wrong group, take it off with "Scanned by mistake", make the right group active, and scan it again.</p>
+<h3 id="sop-checking-bikes-in-and-returning-a-group">SOP: Checking bikes in and returning a group</h3>
+<ol>
+<li>On the <strong>Scan</strong> tab, choose <strong>✓ Checking in</strong>. The first time each day, confirm where you are when asked (on the trailer, choose TRA). Then tap <strong>Start Scanning</strong>.</li>
+<li>Scan each bike as it comes back. Read the confirmation: it names the group, how many are back, and where the bike is going (→ VIC). If the app asks about a group hired from elsewhere, choose where its bikes are actually going.</li>
+<li>Ask about any problems during the ride. Log anything that needs attention in the Issue Reporter.</li>
+<li>When the group's last bike is in, it shows at the top with <strong>Mark returned</strong>: tap it, and carry on scanning the next return.</li>
+</ol>
+<p>You can also tick bikes in by hand on the Groups tab, for example when the camera won't read a label.</p>
+<h3 id="sop-m-check">SOP: M-check</h3>
+<p>Who: any staff member. When: after a bike comes back, or before it goes out. Every bike needs a passed M-check since its last ride.</p>
+<ol>
+<li>On the <strong>Scan</strong> tab, choose <strong>🔧 M-check</strong>. Bikes due a check are listed.</li>
+<li>Tap a bike, or scan it. The checklist opens in M-check order: front wheel and tyre, steering and handlebars, brakes, frame and fork, pedals cranks and chain, saddle and seatpost, rear wheel tyre and gears, battery, motor and display, lights bell and kickstand.</li>
+<li>Check each item on the bike. Everything starts as <strong>OK</strong>.</li>
+<li>If all is well, tap <strong>All good · sign off</strong>. Your name from the 👤 button is recorded. The camera is still on: scan the next bike.</li>
+<li>If something is wrong, tap <strong>Fault</strong> on that item, write what you found, and add the odometer if you can. The priority defaults to P5 for brakes, steering, frame and battery; lower it if the bike is still safe. Tap <strong>Log faults · sign off</strong>. An issue is logged in the Issue Reporter, and a P5 takes the bike out of service.</li>
+</ol>
+<p>When checking in a whole group, tick <strong>M-check each bike as it's checked in</strong> so each checklist opens as the bike comes back.</p>
+<h3 id="sop-a-bike-that-doesnt-come-back">SOP: A bike that doesn't come back</h3>
+<ol>
+<li>Check in the bikes that are back.</li>
+<li>Tap <strong>Returned (1 not in)</strong> on the group.</li>
+<li>For each missing bike, choose why: <strong>Left at location, to collect</strong>, <strong>Damaged, issue logged</strong>, <strong>Missing</strong>, or <strong>Other</strong> with a note. Add where it is or what happened.</li>
+<li>Tap <strong>Close group with these reasons</strong>.</li>
+<li>Follow up the same day: arrange the collection, log the damage in the Issue Reporter, or tell the owner about a missing bike.</li>
+</ol>
+<h3 id="sop-multi-day-hires">SOP: Multi-day hires</h3>
+<ol>
+<li>On day 1, issue the bikes as normal. Check the group shows "Day 1 of 2" (or 3). If there's no day badge, set the hire length on the Groups tab.</li>
+<li>At the end of each day except the last, tap <strong>Out overnight</strong> on the group. Don't tick the bikes in.</li>
+<li>Next morning, load the manifest as usual. The group carries over with its bikes and shows "Day 2 of 2", even though Rezdy doesn't list it that day.</li>
+<li>On the last day, check the bikes in and tap <strong>Returned</strong>. If the bikes come back early, check them in and tap Returned on any day; the hire ends there and won't carry over.</li>
+</ol>
+<h3 id="sop-messaging-a-late-guest">SOP: Messaging a late guest</h3>
+<ol>
+<li>On <strong>Today's Contacts</strong> or the group's card, tap <strong>💬 Message</strong>.</li>
+<li>Choose the message (the likely one is marked Suggested), and check the wording. Change anything you like.</li>
+<li>Tap <strong>Text</strong> or <strong>WhatsApp</strong> and send it from your phone.</li>
+<li>Back in the app, answer <strong>Was it sent?</strong>: <strong>Sent</strong>, <strong>Not sent</strong> (with a reason if you know it), or leave it as not confirmed. A late group showing "NOT sent" or "not confirmed" needs a call.</li>
+</ol>
+<h3 id="sop-weather-warning">SOP: Weather warning</h3>
+<ol>
+<li>On the Group Scanner's <strong>Groups</strong> tab, tap <strong>🌦 Weather warning to groups out</strong>.</li>
+<li>Untick any group that doesn't need it, for example one already on its way back.</li>
+<li>Describe the weather in a few words, for example "strong winds and rain expected from about 3 pm".</li>
+<li>For each group: tap <strong>Text</strong> or <strong>WhatsApp</strong>, send, then answer <strong>Was it sent?</strong>. The next group comes up automatically.</li>
+</ol>
+<h3 id="sop-walk-in-or-late-booking">SOP: Walk-in or late booking</h3>
+<ol>
+<li>On the <strong>Groups</strong> tab, tap <strong>New Group</strong>.</li>
+<li>Name it the same way as the manifest: surname and bike count, for example "Nguyen (x3)".</li>
+<li>Check the hire location, and choose <strong>Full day</strong> or <strong>4 hours</strong>.</li>
+<li>Add the contact's name and phone if you have them. If not, leave them for later.</li>
+<li>Tap <strong>Create Group</strong>, then scan the bikes as normal.</li>
+<li>Get a phone number before the group rides off if you can. Add it with <strong>+ Add contact</strong> on the group card, or <strong>+ Add phone</strong> on Today's Contacts, even after they've left.</li>
+</ol>
+<h3 id="sop-overdue-group">SOP: Overdue group</h3>
+<ol>
+<li>Loading the manifest carries any group with bikes not checked in across to the new day, with a red <strong>Overdue</strong> badge. The Load Manifest log says how many.</li>
+<li>Call the customer from <strong>Today's Contacts</strong>, where they also show as Overdue.</li>
+<li>Check the bikes in as they come back, then tap <strong>Returned</strong>. If a bike isn't coming back, use <strong>Return with exception</strong>.</li>
+<li>If the bikes came back the day before but weren't checked in, check them in now so the record is right.</li>
+</ol>
+<h3 id="sop-group-dropped-at-dandelion">SOP: Group dropped at Dandelion</h3>
+<ol>
+<li>When a group calls to say they've left the bikes at Dandelion Wines, open the <strong>Groups</strong> tab.</li>
+<li>On their group, tap <strong>↩ Dropped at Dandelion Wines</strong> and confirm.</li>
+<li>When the bikes are collected, use <strong>Asset Register → Move bikes to a location</strong> to scan them from DLN onto the trailer (TRA) or back to the Visitor Centre.</li>
+</ol>
+<h3 id="sop-end-of-day">SOP: End of day</h3>
+<ol>
+<li>On the <strong>Summary</strong> tab, check every one-day group shows Returned, multi-day groups not on their last day show Out overnight, and bikes out equals unique bike IDs.</li>
+<li>Chase any group not yet returned (see Today's Contacts).</li>
+<li>Optional: <strong>Share Report</strong> to the team chat, or <strong>Download CSV</strong> for your records.</li>
+<li>Leave the groups in place. Loading the next day's manifest archives them automatically and carries multi-day hires forward.</li>
+</ol>
+</section><section><h2 id="issue-reporter">Issue Reporter</h2>
+<p>The Issue Reporter is the fleet's maintenance log. Any fault found on a bike is logged here with a priority, and a P5 takes the bike out of service in the Group Scanner until someone records the repair.</p>
+<h3 id="how-it-works_3">How it works</h3>
+<p><strong>Priorities</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Label</th>
+<th>Use it for</th>
+<th>Effect in the scanner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>Minor</td>
+<td>Cosmetic: scuffs, a loose bell</td>
+<td>Amber "open issue" warning</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Low</td>
+<td>Needs attention soon, safe to ride</td>
+<td>Amber warning</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Medium</td>
+<td>Should be fixed before the next busy day</td>
+<td>Amber warning</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>High</td>
+<td>Fix before hiring again if possible</td>
+<td>Amber warning</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Out of service</td>
+<td>Unsafe or unusable: brakes, battery, frame, motor</td>
+<td>Refused, red banner</td>
+</tr>
+</tbody>
+</table></div>
+<p>The examples in the "Use it for" column are a starting point. Adjust them to suit our fleet.</p>
+<p><strong>Report tab</strong>: scan or type the bike ID. The bike's details from the Asset Register appear underneath (brand, model, serial, key, size, age) so you can confirm it's the right bike. Enter the odometer reading in km; the app shows the last reading recorded for that bike. Tap the <strong>fault type</strong> (one or more; <strong>Other</strong> if none fits), choose a priority, describe the problem, add parts or notes, and enter your initials. The date and time are recorded automatically. The fault types are set in <strong>Configuration → Fault types</strong>.</p>
+<p><strong>Repeat faults</strong>: if the bike had the same fault type logged within the repeat window (90 days unless changed in Admin), an amber <strong>🔁 Repeat fault</strong> box says when, and whether it was repaired. Say in the description what's happened since, so the workshop can look for the cause rather than fix the symptom again. Repeat issues are tagged <strong>🔁 repeat</strong> in the log.</p>
+<p><strong>Resolve tab</strong>: scan or type the bike ID. The most urgent open issue appears. Enter what was repaired and your full name, then <strong>Mark as Resolved</strong>. If the bike has more than one open issue, the app says so; resolve them one at a time. If the bike isn't fixed yet, tap "Not fixed yet? Add an update" instead.</p>
+<p><strong>Updates</strong>: tap any issue on the Log tab, open or resolved, to see its history and add an update: what has changed, your initials and, if you have it, the odometer reading. On an open issue an update can also change the priority. Any issue can have its <strong>fault type</strong> set or changed in the update (for issues logged before v3.7, which have none); a fault type change on its own needs no text. Changing to P5 takes the bike out of service in the Group Scanner straight away; changing down from P5 puts it back. Updates show on the Resolve tab, in the shared list (latest update) and in the CSV.</p>
+<p><strong>From M-checks</strong>: a fault found during an M-check is logged here automatically, labelled <strong>found in M-check</strong>, with the faults, notes, odometer and who found it. Its fault types come from the items that failed (for example, a failed front wheel is logged as Tyres and wheels). It's then handled like any other issue.</p>
+<p><strong>Log tab</strong>: every issue, filtered by All, Open, P1, P2, P3, P4, OOS (P5), Resolved or <strong>🔁 Repeats</strong>. Each issue shows its fault types. Each filter shows how many issues it holds; the P1 to P4 and OOS filters show open issues at that priority. Resolved issues show when they were reported and resolved, and how long the fix took, for example "Reported 12 Oct · Resolved 14 Oct (2 days)". Tap an issue for the full detail. Stats, <strong>Share Open Issues</strong> and <strong>Download CSV</strong> (the full history, including bike details, fault types and repeats) are at the bottom.</p>
+<h3 id="sop-reporting-a-fault">SOP: Reporting a fault</h3>
+<p>When: as soon as a fault is found, by a customer, at return, or during a check.</p>
+<ol>
+<li>Open <strong>Issue Reporter</strong>, <strong>Report</strong> tab.</li>
+<li>Scan the bike's barcode. Check the details card matches the bike. If it says "not in the asset register", recheck the ID before going on.</li>
+<li>Read the odometer on the bike's display and enter it in km. If it can't be read (flat battery, broken display), tick <strong>Can't read it</strong>. If the app warns the reading is lower than last time, check it again.</li>
+<li>Tap the fault type. If the <strong>🔁 Repeat fault</strong> box appears, read it: this bike has had the same problem recently.</li>
+<li>Choose the priority. If in doubt about safety, choose <strong>P5</strong>.</li>
+<li>Describe what is wrong in plain words: what, where, and when it happens ("Rear brake rubs at low speed, left lever soft").</li>
+<li>Add notes or parts ordered if relevant.</li>
+<li>Enter your initials and tap <strong>Submit Issue Report</strong>.</li>
+<li>For a P5, tag the bike physically as well (out-of-service tag on the handlebar) and park it away from the hire fleet.</li>
+</ol>
+<h3 id="sop-recording-a-repair">SOP: Recording a repair</h3>
+<ol>
+<li>Open the <strong>Resolve</strong> tab and scan the bike.</li>
+<li>Read the issue shown. Confirm it is the one you fixed.</li>
+<li>Describe the repair: parts replaced, adjustments made, test ride done.</li>
+<li>Enter your full name and tap <strong>Mark as Resolved</strong>.</li>
+<li>Scan the bike again in Resolve. "No open issues" means it's clear to hire. Remove any physical tag.</li>
+</ol>
+<h3 id="sop-updating-an-issue">SOP: Updating an issue</h3>
+<p>When: whenever something changes before the repair is finished: parts ordered or arrived, the fault gets worse, someone has looked at it, or the bike is still faulty after a repair.</p>
+<ol>
+<li>Open the <strong>Log</strong> tab and tap the issue (filter by bike ID to find it quickly), or tap <strong>Not fixed yet? Add an update</strong> on the Resolve tab.</li>
+<li>Write what has changed, in plain words ("Pads arrived, fitting Thursday").</li>
+<li>Enter your initials. Add the odometer reading if you have the bike in front of you.</li>
+<li>If the problem is now more or less serious, change the priority. Choose P5 if the bike is no longer safe to hire.</li>
+<li>Tap <strong>Add update</strong>.</li>
+</ol>
+<h3 id="sop-weekly-fleet-check">SOP: Weekly fleet check</h3>
+<ol>
+<li>On the <strong>Log</strong> tab, filter <strong>Open</strong>.</li>
+<li>Check nothing has sat open too long, especially P4 and P5.</li>
+<li>Use <strong>Share Open Issues</strong> to send the list to whoever is doing repairs.</li>
+</ol>
+</section><section><h2 id="asset-register">Asset Register</h2>
+<p>The Asset Register holds one record per bike, keyed by its barcode ID. The Group Scanner and Issue Reporter read it to show what each barcode is, and it is our list for insurance, depreciation and stocktakes.</p>
+<h3 id="how-it-works_4">How it works</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bike ID</td>
+<td>Yes</td>
+<td>The barcode on the bike. Scan it or type it.</td>
+</tr>
+<tr>
+<td>Serial number</td>
+<td>Yes</td>
+<td>The frame serial. Scan it if the frame has a serial barcode, otherwise type it. No two bikes can share one.</td>
+</tr>
+<tr>
+<td>Location</td>
+<td>No</td>
+<td>Where the bike is now: VIC, OXB, HOM, TRA or another location on the list. Changing it asks for your initials.</td>
+</tr>
+<tr>
+<td>Key number</td>
+<td>No</td>
+<td>The battery or lock key.</td>
+</tr>
+<tr>
+<td>Brand, model</td>
+<td>No</td>
+<td>Suggestions appear from bikes already entered, which keeps spelling consistent.</td>
+</tr>
+<tr>
+<td>Frame or rim size</td>
+<td>No</td>
+<td>Free text, for example M, 52cm, 20in.</td>
+</tr>
+<tr>
+<td>Date of purchase</td>
+<td>No</td>
+<td>The app works out the bike's age from it.</td>
+</tr>
+<tr>
+<td>Purchase price</td>
+<td>No</td>
+<td>In dollars, for example 3499 or $3,499.95.</td>
+</tr>
+<tr>
+<td>Disposal date</td>
+<td>When disposed</td>
+<td>The date the bike was sold or written off. A bike with a disposal date drops out of the active fleet.</td>
+</tr>
+<tr>
+<td>Sale price</td>
+<td>No</td>
+<td>What it sold for; 0 if written off. Needs a disposal date.</td>
+</tr>
+<tr>
+<td>Disposal note</td>
+<td>No</td>
+<td>Who bought it, or why it was written off.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The list shows each active bike's ID, key, brand and model, serial, size, age and purchase price. Tags show open issues, out-of-service bikes and missing serial numbers.</li>
+<li>Each bike shows its location (📍 VIC), or <strong>Out with [group]</strong> while it's on hire. The chips above the list count bikes at each location, out on hire, and with no location; tap one to filter. A bike's record shows its last 10 moves.</li>
+<li>Each bike at the rack shows its M-check: <strong>✓ M-checked 13/10/26 09:12 · JB</strong>, or <strong>🔧 Needs M-check</strong> if it hasn't passed one since its last ride. The <strong>Needs M-check</strong> chip lists them.</li>
+<li>A bike's record shows its <strong>M-check history</strong>: the latest 10, or every check on a date you pick.</li>
+<li>Disposed bikes are hidden. The count line shows how many there are; tap it to show them, greyed out with their disposal date and sale price. A search finds them too.</li>
+<li>The search box finds bikes by ID, serial, key, brand or model.</li>
+<li>If any bikes are missing a serial, the count line says how many. Tap it to list only those bikes.</li>
+<li><strong>Fleet age</strong> shows average age, how many bikes are under 2 years, 2–4 years and 4 years or more, and the total purchase cost of the active fleet.</li>
+<li><strong>Download CSV</strong> exports every bike, active and disposed, with prices, disposal details, age in months and open issue counts.</li>
+<li><strong>Load bikes from a spreadsheet</strong> adds or updates many bikes at once. Every row needs a Bike ID and a Serial Number. A column left out of the file leaves that detail unchanged. A Location column (code or name) moves bikes, logged as "spreadsheet". If any row fails, nothing is changed and the row number is shown.</li>
+<li><strong>Move bikes to a location</strong> opens scan-to-move: choose the destination, enter your initials, then scan or type each bike.</li>
+<li><strong>Locations</strong> lists every location with how many bikes are there, and its kind: <strong>Hire site</strong> (bookings start there: VIC, OXB, BER, DOG, SRV, HUG, HAZ), <strong>Home delivery</strong> (HMD), <strong>Collection point</strong> (DLN, Dandelion Wines, where guests drop bikes) or <strong>Storage only</strong> (HOM, TRA). Hire sites and Home delivery show their <strong>Rezdy product words</strong>: a booking whose product name contains one of them is put at that location. Anyone can add a location, change its kind or words, rename or retire it. A location can only be retired once no bikes are there.</li>
+<li><strong>Download M-check log</strong> saves every M-check: date and time, bike, who signed off, pass or fault, the faults and notes, and whether an issue was logged. The register CSV also shows each bike's last M-check and whether one is due.</li>
+<li><strong>Download move history</strong> saves every change of location: when, which bike, from, to, how (by hand, scanned, checked in or spreadsheet) and who.</li>
+<li><strong>Register changes.</strong> Every change to the register is recorded, from v3.6 on: a bike added (by hand or from a spreadsheet), each field edited with its old and new value, an ID changed, or a bike removed. A bike's record shows its latest 10 changes under <strong>Register changes</strong>, with who made them (from <strong>👤</strong> on that phone). <strong>Download register changes</strong> saves all of them as an Excel file. Location changes are in the move history instead.</li>
+<li><strong>📈 Fleet report</strong> opens the utilisation report. See Fleet report.</li>
+<li><strong>⛔ Unavailable</strong> (a filter above the list) shows the bikes that can't be hired right now: out of service, with an open P5, since the day it went to P5 and for how many days; or kept at a storage location such as HOM.</li>
+<li><strong>📜 Full history, purchase to disposal</strong> on a bike's record opens its history. See Bike history below.</li>
+</ul>
+<h3 id="bike-history">Bike history</h3>
+<p>A bike's history page brings together everything recorded about it, from purchase to disposal:</p>
+<ul>
+<li><strong>Details:</strong> serial, key, size, purchase date and price, its age, and disposal date, sale price and note. A bike whose ID was changed shows its old IDs too, and its history includes them. A bike removed from the register still has its history, from the copy kept when it was removed.</li>
+<li><strong>Utilisation, out of service, issues and M-checks</strong> at a glance. Hire figures come from the fleet records, so they start when records began for that bike.</li>
+<li><strong>Faults by type</strong>, with how many were repeats.</li>
+<li><strong>Month by month:</strong> days available, hired and out of service, and utilisation.</li>
+<li><strong>History, newest first:</strong> bought, register changes, moves, issues with their updates and repairs, M-checks, and disposal. Filter it by Issues, M-checks, Moves or Register.</li>
+<li><strong>⬇ Excel</strong> downloads it all (details, month by month, history, issues, M-checks, moves and every daily record). <strong>🖨 Print or save as PDF</strong> prints the page.</li>
+</ul>
+<h3 id="sop-adding-a-new-bike">SOP: Adding a new bike</h3>
+<ol>
+<li>Fit the barcode label to the bike first.</li>
+<li>Open <strong>Asset Register</strong> and tap <strong>Add bike</strong>.</li>
+<li>Tap the camera next to <strong>Bike ID</strong> and scan the label.</li>
+<li>Enter the <strong>serial number</strong>: scan it, or type it from the frame (often under the bottom bracket).</li>
+<li>Fill in the key number, brand, model, size, date of purchase and purchase price. Pick from the suggestions where they fit.</li>
+<li>Tap <strong>Save bike</strong>. If the app says the ID is already registered, open the existing record instead of creating a new one.</li>
+</ol>
+<h3 id="sop-editing-a-bike">SOP: Editing a bike</h3>
+<ol>
+<li>Search for the bike and tap it.</li>
+<li>Change the fields and tap <strong>Save changes</strong>. Changes apply on every phone straight away.</li>
+<li>If the barcode label is replaced, change the Bike ID here. Its record moves to the new ID; past issues stay under the old ID.</li>
+</ol>
+<h3 id="sop-moving-bikes-between-locations">SOP: Moving bikes between locations</h3>
+<p>When: whenever bikes go on or off the trailer, or move between the Visitor Centre, Oxenberry and home storage.</p>
+<ol>
+<li>On the <strong>Asset Register</strong>, tap <strong>Move bikes to a location</strong>.</li>
+<li>Choose where they're going and enter your initials.</li>
+<li>Tap <strong>Scan bikes</strong> and scan each one as it's loaded or unloaded. Each line shows where the bike came from. You can also type IDs.</li>
+<li>Tap <strong>Done</strong>.</li>
+</ol>
+<p>For one bike, you can instead open its record, change <strong>Location</strong>, enter your initials and save. Bikes for a delivery go to TRA when they're loaded on the trailer, then into the customer's group as usual.</p>
+<h3 id="sop-adding-or-retiring-a-location">SOP: Adding or retiring a location</h3>
+<ol>
+<li>Under <strong>Locations</strong>, enter a short code (2–6 letters or numbers, for example MCL) and a name, choose its kind, and for a hire site add the word or words that appear in its Rezdy product names.</li>
+<li>Tap <strong>+ Add location</strong>. It appears in every location list straight away, including the scanner's "This phone is at".</li>
+<li>To stop using a location, move its bikes elsewhere, then tap <strong>Retire</strong>. Its history is kept, and <strong>Restore</strong> brings it back.</li>
+</ol>
+<h3 id="sop-checking-a-bikes-m-check-on-a-past-day">SOP: Checking a bike's M-check on a past day</h3>
+<ol>
+<li>Open the bike in the <strong>Asset Register</strong>.</li>
+<li>Under <strong>M-check history</strong>, pick the date. Every check that day shows with its time, result and who signed off.</li>
+<li>To see whether the bike was checked before a particular hire, open that day in <strong>Admin → Show archives</strong>. The <strong>M-check Before Hire</strong> column shows the check that stood when the bike went out, or "NOT CHECKED since last ride".</li>
+<li>For a longer period, download the M-check log and filter by bike and date in Excel.</li>
+</ol>
+<h3 id="sop-disposing-of-a-bike-sold-or-written-off">SOP: Disposing of a bike (sold or written off)</h3>
+<ol>
+<li>Open the bike in the <strong>Asset Register</strong>.</li>
+<li>Enter the <strong>disposal date</strong>, the <strong>sale price</strong> (0 if written off) and a short <strong>disposal note</strong>.</li>
+<li>Tap <strong>Save changes</strong> and confirm. The bike drops out of the active fleet. Its record, prices and issue history are kept.</li>
+<li>Remove the barcode label if the bike is leaving the business. If a disposed bike is scanned, the Group Scanner warns staff.</li>
+</ol>
+<h3 id="sop-removing-a-bike-entered-by-mistake">SOP: Removing a bike entered by mistake</h3>
+<ol>
+<li>Open the bike and tap <strong>Remove from register</strong>, then confirm.</li>
+<li>Only use this for a record that should never have existed, such as a duplicate or a typo in the ID. The record is deleted; its issue history stays in the Issue Reporter.</li>
+</ol>
+<h3 id="sop-loading-or-updating-many-bikes-from-a-spreadsheet">SOP: Loading or updating many bikes from a spreadsheet</h3>
+<ol>
+<li>Tap <strong>Get template</strong>, or <strong>Download CSV</strong> to start from the current register.</li>
+<li>Fill in or correct the rows on a computer. Dates can be 15/09/2024 or 2024-09-15.</li>
+<li>Save as CSV and tap <strong>Choose CSV</strong>.</li>
+<li>Confirm the number of bikes. Existing bikes are updated with the spreadsheet values; new ones are added. Columns not in the file are left as they are.</li>
+<li>Read the result line. If it shows an error, fix that row and load the file again.</li>
+</ol>
+<h3 id="sop-adding-missing-serial-numbers">SOP: Adding missing serial numbers</h3>
+<ol>
+<li>Tap "N missing a serial number" on the count line.</li>
+<li>Work through each bike: open it, scan or type the serial, save.</li>
+<li>For many bikes, download the CSV, add serials in the Serial Number column, and load it back.</li>
+</ol>
+</section><section><h2 id="site-checklists">Site Checklists</h2>
+<p>Site Checklists records the opening and closing of each site. Each site (VIC, OXB and any added later) has its own opening and closing list, signed off under your name and kept as a dated record.</p>
+<h3 id="how-it-works_5">How it works</h3>
+<ul>
+<li>Choose the site at the top. It starts on the site this phone is set to.</li>
+<li>The status card shows whether the site has been opened and closed today, when and by whom.</li>
+<li>The <strong>Opening</strong> and <strong>Closing</strong> tabs list the items. Answer every item: <strong>✓ Done</strong>, or <strong>✗ Problem</strong> with a note. Items marked <strong>MUST</strong> have to be done; they can't be marked as a problem. At VIC these are "Batteries on charge for tomorrow" and "Sign and A-frame in. Bikes secured. Site locked and alarm on".</li>
+<li><strong>Not required today</strong> (on the Opening tab) records that the site isn't opening, with an optional reason. It covers the whole day: no opening or closing is expected and the reminders stop. If the site does open after all, sign off the opening checklist as normal.</li>
+<li><strong>Sign off</strong> saves the checklist with the date, time, your initials and every answer. Signing off twice on the same day keeps both records.</li>
+<li><strong>History</strong> shows the site's past checklists, latest first, or every one on a date you pick. Tap one to see its items. <strong>Download CSV</strong> saves every checklist for every site, one row per item.</li>
+<li>The home screen shows a reminder when this phone's site hasn't been opened yet today, hasn't been closed by 3 pm, or wasn't closed yesterday.</li>
+<li>The lists are edited in <strong>Configuration → Site checklists</strong>.</li>
+<li>VIC's opening list includes "Backup status on the home screen is green". It's checked once a day, at VIC only.</li>
+</ul>
+<h3 id="sop-opening-a-site">SOP: Opening a site</h3>
+<ol>
+<li>Open <strong>Site Checklists</strong> and check the site is right.</li>
+<li>On <strong>Opening</strong>, work through each item on site, tapping <strong>Done</strong> or <strong>Problem</strong>. Write what the problem is.</li>
+<li>Tap <strong>Sign off opening</strong>.</li>
+<li>Deal with any problem now, or tell whoever is running the day. Bike faults go in the Issue Reporter.</li>
+</ol>
+<h3 id="sop-closing-a-site">SOP: Closing a site</h3>
+<ol>
+<li>Open <strong>Site Checklists</strong>, choose <strong>Closing</strong>, and check the site is right.</li>
+<li>Work through each item. The two MUST items, batteries on charge and the site locked, have to be done before you can sign off.</li>
+<li>Tap <strong>Sign off closing</strong>.</li>
+</ol>
+<h3 id="sop-a-site-not-opening-today">SOP: A site not opening today</h3>
+<ol>
+<li>Open <strong>Site Checklists</strong> and choose the site.</li>
+<li>On <strong>Opening</strong>, tap <strong>Not required today</strong>.</li>
+<li>Add a reason if there is one, for example "No bookings" or "Weather", and confirm.</li>
+</ol>
+<h3 id="sop-changing-a-checklist">SOP: Changing a checklist</h3>
+<ol>
+<li>Open <strong>Configuration → Site checklists</strong>. Choose the site, and Opening or Closing.</li>
+<li>Edit the list: one item per line, in order. Start a line with an asterisk (*) to make it mandatory.</li>
+<li>Tap <strong>Save checklist</strong>. Staff see the new list straight away. Past records keep the wording they were signed off with.</li>
+</ol>
+<p>A site added under Locations starts with a copy of the VIC lists until you save its own.</p>
+</section><section><h2 id="roster">Roster</h2>
+<p>The Roster shows who's working where, day by day, with any notes for each shift. Open it from the <strong>Roster</strong> tile on the home screen. Rosters are set by the manager in Admin; staff can see them but not change them.</p>
+<h3 id="how-it-works_6">How it works</h3>
+<ul>
+<li><strong>Whole team</strong> shows one week at a time, Monday to Sunday. The arrows move between weeks. Each day lists its shifts by site, with each person's <strong>Known as</strong> name, their times and any note. Today is outlined in green.</li>
+<li><strong>Changed</strong> next to a shift means it has been updated since the roster was emailed. Check it if it's yours.</li>
+<li><strong>close</strong> as a finish time means until the work's done, whenever that is.</li>
+<li><strong>N/A</strong> lists anyone who isn't available that day, with a note if there is one.</li>
+<li><strong>My shifts</strong> shows your own shifts for this week and next, using the name set on this phone (the 👤 button). Each shows the site, the times, any note, and who else is on that day.</li>
+<li><strong>Add to my calendar</strong> saves that shift to the phone's own calendar, with its own reminders. If the shift changes later, add it again and delete the old one.</li>
+<li><strong>On today</strong> on the home screen shows who's working where today, and your own next shift.</li>
+<li>Staff only ever see names and initials. Phone numbers and email addresses stay in Admin.</li>
+</ul>
+<h3 id="sop-checking-your-shifts">SOP: Checking your shifts</h3>
+<ol>
+<li>Open <strong>Roster</strong> and tap <strong>My shifts</strong>. If it asks who you are, tap 👤 at the top and pick your name.</li>
+<li>Tap <strong>Add to my calendar</strong> on any shift you want a reminder for.</li>
+<li>If you can't make a shift, or something looks wrong, tell the manager. Don't wait for the next roster email.</li>
+</ol>
+</section><section><h2 id="lost-property">Lost Property</h2>
+<p>Lost Property records anything guests leave behind: what it is, where and when it was found, where it's kept, who it might belong to, every attempt to return it, and how it ended.</p>
+<h3 id="how-it-works_7">How it works</h3>
+<ul>
+<li><strong>Open</strong> lists items still waiting, newest first, with a photo, where each was found and where it's kept. Items held 30 days or more show <strong>held … days</strong>, so they get a decision. The home screen tile shows how many are open.</li>
+<li><strong>+ Add item</strong> takes a photo (shrunk on the phone to keep it small), what it is, the date and place found, where it's kept, and the owner if known. <strong>Whose is it?</strong> lists today's and the previous day's bookings: picking one fills in the guest's name and phone.</li>
+<li>Tapping an item shows its details and photo. You can change where it's kept, add follow-up notes (each dated and initialled), and <strong>Text</strong> or <strong>WhatsApp</strong> the owner with a message already written. After sending, the app asks whether it went and adds a note either way.</li>
+<li><strong>Close this item</strong> records what happened (returned to owner, posted, donated, disposed of, handed to police, or other with a note) and the date. Closed items stay on record under <strong>Closed</strong>, and <strong>Reopen</strong> brings one back.</li>
+<li><strong>Download CSV</strong> saves every item, open and closed, with its notes.</li>
+</ul>
+<h3 id="sop-logging-lost-property">SOP: Logging lost property</h3>
+<ol>
+<li>Open <strong>Lost Property</strong> and tap <strong>+ Add item</strong>.</li>
+<li>Take a photo, say what it is, and where it was found.</li>
+<li>Choose where it will be kept, and put it there.</li>
+<li>If you know whose it is, pick their booking under <strong>Whose is it?</strong>, or type their name and phone.</li>
+<li>Tap <strong>Save to the register</strong>. Tick "Lost property logged" on the closing checklist.</li>
+</ol>
+<h3 id="sop-returning-lost-property">SOP: Returning lost property</h3>
+<ol>
+<li>Open the item. Text or WhatsApp the owner, or call them, and add a note of what you tried.</li>
+<li>Keep adding notes as things happen, for example "Guest collecting Saturday".</li>
+<li>When it's resolved, choose what happened and the date under <strong>Close this item</strong>, and tap <strong>Close item</strong>.</li>
+<li>If an item reaches 30 days with no owner found, decide whether to donate or dispose of it, and close it.</li>
+</ol>
+</section><section><h2 id="show-qr">Show QR</h2>
+<p>Show QR puts the guest codes full screen on your phone for a guest to scan: the <strong>SA eBikes Ride Guide</strong>, the <strong>Online Waiver</strong> and the <strong>Google Review</strong>.</p>
+<h3 id="how-it-works_8">How it works</h3>
+<ul>
+<li>Open it from the home screen tile, or the <strong>🔳 QR</strong> link on the Group Scanner.</li>
+<li>Tap a code to show it full screen. Use <strong>‹ Back</strong> and <strong>Next ›</strong> (or swipe) to move between codes; tapping the code itself does nothing, so a guest's phone bumping the screen won't move it on. <strong>Done</strong> goes back.</li>
+<li><strong>Open</strong> with the code's name (for example <strong>Open SA eBikes Ride Guide ↗</strong>) opens that link on your phone in a new tab, with Show QR still open behind it: handy to check a link works, or to show the page itself.</li>
+<li>The codes are drawn from the links set in <strong>Configuration → QR codes for guests</strong>, so a link can be changed or added without any update to the app. Once loaded, they still show without signal.</li>
+<li>To send a link to a guest's phone instead, use <strong>Send link</strong> on Today's Contacts.</li>
+</ul>
+<p>If a code is hard to scan outdoors, turn your phone's brightness up: the app can't do that for you.</p>
+</section><section><h2 id="dashboard">Dashboard</h2>
+<p>The Dashboard shows how hiring is going: bookings and bikes for the week, month and financial year to date, how each bike model is loaded, where hires start, and which bikes spend time in the workshop. Open it from the <strong>📊 Dashboard</strong> link on Load Manifest. It's read-only.</p>
+<h3 id="how-it-works_9">How it works</h3>
+<ul>
+<li><strong>Week, month and financial year to date</strong> (the financial year starts 1 July): bookings and bikes hired, compared with last week, last month and the same date last financial year.</li>
+<li><strong>Trend:</strong> the last 8 weeks, or the last 6 months, of bikes hired and bookings.</li>
+<li><strong>Load by model:</strong> for each model (T3, Brando, Surf, Gabby, Trike…), its busiest day this week, as bikes out against bikes available. Bikes available come from that day's fleet record: in the fleet, not out of service and not in storage. Orange means 90% or more: that model is close to running out on its busy days.</li>
+<li><strong>Bikes hired by location</strong> this month.</li>
+<li><strong>Most time out of service</strong> this financial year, from the Issue Reporter's P5 issues.</li>
+<li><strong>Repeat faults</strong> this financial year: bikes that had the same fault type logged again within the repeat window, with the types. Tap a bike for its history.</li>
+<li><strong>Bikes to review:</strong> bikes 4 or more years old with a week or more out of service, and bikes hired far less often than the rest of the fleet.</li>
+</ul>
+<p>The figures come from a summary of each hire day, saved when the next day's manifest is loaded, plus today so far. They count bikes that were <strong>scanned out</strong>, so they're only as complete as the scanning. Bike models come from the Asset Register's <strong>Model</strong> field.</p>
+<p>The <strong>📈 Fleet report</strong> link at the top opens utilisation over any period. See Fleet report.</p>
+<h3 id="sop-getting-history-onto-the-dashboard">SOP: Getting history onto the Dashboard</h3>
+<ol>
+<li>Open <strong>Admin → Fleet history and dashboard data</strong>. Tap <strong>Preview rebuild</strong>, check the month-by-month results, then tap <strong>Save rebuild</strong>.</li>
+<li>Open the Dashboard from Load Manifest.</li>
+</ol>
+</section><section><h2 id="fleet-report">Fleet report</h2>
+<p>The Fleet report shows how hard each bike, model and location works: <strong>utilisation</strong>, the days a bike was hired divided by the days it was available. It answers questions like whether OXB has more bikes than it needs in winter, or whether the Brandos earn their place. Open it from <strong>📈 Fleet report</strong> on the Dashboard, or from the Asset Register. It's read-only, and open to all staff.</p>
+<h3 id="how-it-works_10">How it works</h3>
+<p>Each day, every bike in the fleet gets one record, saved when the next day's manifest is loaded:</p>
+<ul>
+<li><strong>Hired:</strong> out with a group at any time that day, including days 2 and 3 of a multi-day hire. A 4-hour hire counts as a day. The record also keeps the location it went out from, and how many hires.</li>
+<li><strong>Available:</strong> in the fleet and free to hire at 8 am. A bike that was hired always counts as available.</li>
+<li><strong>Out of service:</strong> on a P5 at 8 am. A P5 logged in the afternoon counts from the next day, so a bike hired that morning still counts as hired and available.</li>
+<li><strong>In storage:</strong> at a storage location (such as HOM) at 8 am, and not hired. Not counted as available.</li>
+<li><strong>In the fleet</strong> means bought on or before that day and not yet disposed of.</li>
+</ul>
+<p><strong>Records don't change afterwards.</strong> Editing a bike's model, moving it or closing its issue later doesn't change past days. Every calendar day counts: a day with no manifest, or a manifest with no groups, is a day the bikes were available and none went out. If a manifest was missed on a busy day, that day shows as no hires, so the report lists the days with no manifest to check.</p>
+<p><strong>On screen:</strong></p>
+<ul>
+<li><strong>Period:</strong> Last 7 days, This month, Last month, FY to date (the financial year starts 1 July), Last FY, or Custom dates. Today is included so far.</li>
+<li><strong>Show:</strong> By model (with how many bikes), By bike, or By location. Each row shows utilisation, then days hired / days available. Grey bars are under 20%.</li>
+<li><strong>By location:</strong> a hired bike counts at the location it went out from. A bike not hired counts where it was at 8 am. Home delivery shows bikes hired only, since no bikes are kept there.</li>
+<li><strong>Tap a bike</strong> (By bike) to see each of its days: status, where it was at opening, and where it went out from.</li>
+<li><strong>Month by month</strong> shows utilisation for each model or location when the period covers more than one month.</li>
+<li><strong>About these figures</strong> says how much was rebuilt rather than recorded on the day, where a rebuilt day had to use today's model or an uncertain location, and which days had no manifest.</li>
+</ul>
+<p><strong>Exports:</strong></p>
+<ul>
+<li><strong>⬇ Excel:</strong> one file with a summary and the definitions, By model, By bike, By location, month by month for models and locations, and every daily record.</li>
+<li><strong>🖨 Print or save as PDF:</strong> prints what's on screen, without the buttons. To save a PDF, choose <strong>Save as PDF</strong> (computer) or <strong>Share → Save to Files</strong> (iPhone) in the print screen.</li>
+</ul>
+<h3 id="sop-checking-utilisation-for-a-decision">SOP: Checking utilisation for a decision</h3>
+<ol>
+<li>Open the Fleet report, choose the period (for a season, <strong>Custom</strong>), and <strong>By location</strong> or <strong>By model</strong>.</li>
+<li>Read <strong>About these figures</strong> first. If days with no manifest include days you know were busy, the figures for those days are missing, not zero.</li>
+<li>Tap <strong>⬇ Excel</strong> for the figures to keep, or <strong>🖨 Print or save as PDF</strong> for a copy to share.</li>
+</ol>
+</section><section><h2 id="admin">Admin</h2>
+<p>Admin holds the roster, the team list, backups, archived days and settings. Open it from the <strong>⚙️ Admin</strong> link at the top of Load Manifest; <strong>← Back to Load Manifest</strong> returns there. It is for the owner or manager, not day-to-day staff.</p>
+<p>Admin has two areas, switched with the buttons at the top: <strong>⚙️ Admin</strong> for running things day to day, and <strong>🎨 Configuration</strong> for setting up the business. They share the admin password, and each has links to its groups at the top.</p>
+<ul>
+<li><strong>⚙️ Admin</strong> (/admin): <strong>People</strong> (Team, Roster), <strong>Day to day</strong> (Rezdy products), <strong>Fleet</strong> (Fleet history and dashboard data) and <strong>Data and safety</strong> (Backups, Archived days).</li>
+<li><strong>🎨 Configuration</strong> (/config): <strong>Business</strong>, <strong>Guests and sites</strong> (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), <strong>Maintenance</strong> (Fault types), <strong>Home screen</strong>, and <strong>Configuration file</strong>.</li>
+</ul>
+<h3 id="configuration">Configuration</h3>
+<ul>
+<li><strong>Business</strong> sets the business's name, tagline, logo, colours, heading font and country, shown on every page.<ul>
+<li><strong>Logo:</strong> <strong>Upload a logo</strong> (PNG, JPEG or WebP) shrinks it on the phone to about 50 KB at most. <strong>Use the standard logo</strong> goes back to the SA eBikes bike, and <strong>No logo</strong> shows the name alone. <strong>Show the name beside the logo</strong> can be turned off for a logo that already includes the name.</li>
+<li><strong>Colours:</strong> the <strong>main colour</strong> is for buttons and green text, and needs to be dark enough for white text to read; a warning shows if it isn't. The <strong>highlight colour</strong> is for flashes, ticks, bars and the live light, never under text. SA eBikes uses #415b30 and #5fd64f.</li>
+<li><strong>Heading font:</strong> Baloo Bhai 2 (as on the SA eBikes logo) or the app's own font. It's kept with the app, so it shows without signal.</li>
+<li><strong>Country:</strong> used to read local phone numbers in manifests and contacts.</li>
+<li><strong>Time zone</strong> is shown but not changed here: it's set for each installation in Netlify (the SAEBIKES_TIMEZONE setting), because the server needs it before it reads any settings.</li>
+<li><strong>The preview</strong> shows the name, a button and a bar in the chosen colours before you save. Each phone keeps a copy of these details, so pages never wait for them. The home screen picks up a change when it next opens; other screens within a few hours, or straight away once the home screen has been opened.</li>
+</ul>
+</li>
+<li><strong>Configuration file:</strong> <strong>⬇ Download configuration</strong> saves everything on the Configuration page in one small file: business details and logo, fault types, home screen, QR codes, messages, site checklists and locations. Keep a copy with your backups. <strong>⬆ Load a configuration file</strong> lets you choose which parts to put back. A backup is taken first, so a load can be undone from Admin → Backups. Each part replaces what's there, except locations, which are added or updated but never removed. Hire records, issues and the asset register aren't touched. It's also how a new installation is set up.</li>
+<li><strong>Fault types</strong> are the types staff choose when logging an issue. Rename one in place (its issues keep it), add one with <strong>+ Add a fault type</strong>, move them up or down, and <strong>Retire</strong> one that's no longer wanted: it leaves the list but stays on the issues that used it, and <strong>Bring back</strong> restores it. <strong>Repeat window</strong> is how many days count for a repeat fault (7 to 365; 90 to start). <strong>Save fault types</strong> applies them for everyone.</li>
+<li><strong>Home screen</strong> sets the order of the tools on the home screen and which are shown, for every phone. Use ↑ and ↓ to move a tool, <strong>Hide</strong> or <strong>Show</strong>, then <strong>Save home screen</strong>. Load Manifest is always shown, because Admin is opened from it. A hidden tool still opens from its address (such as /qr), and its links elsewhere in the app still work.</li>
+</ul>
+<p>Once an <strong>admin password</strong> is set (see "SOP: Setting the admin password"), Admin asks for it each time it's opened, and locks again as soon as you leave the page or tap <strong>Lock now</strong>. Switching to your mail or messages app to send the roster or a text doesn't lock it. Until it's set, a note at the top says so, Admin works with the staff PIN as before, and team contact details can't be stored.</p>
+<h3 id="how-it-works_11">How it works</h3>
+<p><strong>Roster</strong> is the first card. It shows one week at a time, starting with next week.</p>
+<ul>
+<li><strong>+ Add shift:</strong> who, where, date, start, finish and a note. Tick <strong>Until close</strong> when the finish is whenever the work's done. Choose <strong>N/A · Not available</strong> as Where to show someone isn't available that day (the times disappear). Notes are seen by every staff member, so keep them to the day's work. A person can't be rostered for two shifts that overlap, or rostered on a day they're marked not available.</li>
+<li><strong>Edit</strong> on a shift opens it with its <strong>history</strong>: who added it, and every change since. <strong>Remove shift</strong> takes it off the roster; it stays in the history.</li>
+<li><strong>Someone else's change wins until you've seen it.</strong> If a shift was changed by someone else since you opened it, Save is refused with what they changed. Open it again to see their version, then make your change.</li>
+<li><strong>Text [name] about this shift</strong> appears when the person has a mobile in Team. It opens a text from this phone with the shift written in.</li>
+<li><strong>Email roster</strong> writes the week as an email for you to check, then <strong>Open in Mail</strong> opens it in your own mail app, with everyone rostered that week as <strong>Bcc</strong>, so nobody sees anyone else's address. It records when the roster was emailed; shifts changed after that show as "changed" to staff. People without an email address are named, so you can text them instead.</li>
+<li><strong>Copy last week</strong> copies the week before into this week. Not-available entries aren't copied, since they're one-offs. If this week already has shifts, it asks before replacing them.</li>
+<li><strong>Download CSV</strong> saves the week as a spreadsheet: one row per shift, with the columns <strong>Date, Day, Site, Known as, Start, Finish, Note</strong>. An empty week gives you the headings to fill in.</li>
+<li><strong>Upload CSV</strong> reads a spreadsheet in that format (saved as CSV) and shows a preview before anything changes.<ul>
+<li><strong>What it shows:</strong> for each week in the file, the shifts it will add, change and remove. An upload <strong>replaces</strong> the weeks in the file: a shift in that week that isn't in the file is removed.</li>
+<li><strong>Before anything is replaced:</strong> when the upload would change or remove shifts already rostered, an amber note says how many, and the button says <strong>Replace 3 shifts</strong> rather than Apply.</li>
+<li><strong>Signs of wrong dates:</strong> an amber note when the file is for a different week from the one on screen, has dates that have passed, is identical to what's already saved, or is identical to an earlier week.</li>
+<li><strong>Rows with a problem</strong> are listed with their line number (a name not on the team, a site that doesn't exist, a Day that doesn't match its date, a finish before the start, the same person twice at once, or someone rostered on a day they're marked not available). Nothing can be applied until the file is fixed.</li>
+<li><strong>What can go in the file:</strong> people as their Known as name or initials; sites as their code or name. Dates like 15/11/2026 or 15/11/26. Times like 9:00, 9am, 17:00, 10, or 08:45:00 as Excel saves them. <strong>Close</strong> as a finish. For someone not available, <strong>N/A</strong> as the Site with the times left blank (a row with no site and times of 0 counts as N/A too).</li>
+</ul>
+</li>
+<li><strong>Undo upload</strong> (or <strong>Undo copy</strong>) appears above the list after an upload or copy. It puts the week back exactly as it was, until anyone edits that week again.</li>
+</ul>
+<p><strong>Team</strong> gives each person a <strong>Known as</strong> name, which is the only name staff ever see, and their initials, used on every record they sign. With the admin password set, each person can also have a <strong>full name, email and mobile</strong>, which stay in Admin: email is used for <strong>Email roster</strong> and the mobile for texting about a change. Changing someone's Known as name changes it everywhere, including past and future shifts; their initials on past records stay as they were.</p>
+<p><strong>Rezdy products</strong> lists every product name seen in a manifest: how many bookings, when it was first and last seen, and the location it goes to with the current matching words. Products that match more than one location, or none, are flagged.</p>
+<ul>
+<li><strong>Try matching:</strong> paste product names, or choose a Rezdy manifest, to see where each would go. Leave it empty to test every product seen.</li>
+<li><strong>Trying new words:</strong> choose a location and edit its matching words. The results show straight away which products would change location, and which would become ambiguous. Nothing is saved until you tap <strong>Save these words</strong>. Saved words apply to manifests loaded from then on; groups already loaded keep their location.</li>
+</ul>
+<p><strong>Backups</strong> follows.</p>
+<ul>
+<li><strong>Nightly backups.</strong> Every night at about 2:30 am (1:30 am in winter), a backup of everything is taken automatically: today's groups and contacts, the issue log, the asset register with locations and move history, M-checks, site checklists and sign-offs, lost property with its photos, the team, the configuration (business details, fault types, home screen, QR codes, messages and site checklists), the Dashboard data and fleet records, the register's change history, and the daily archives. Each part is read back and checked against a checksum before the backup counts. A backup that fails part-way is never offered for restoring.</li>
+<li><strong>Where they're kept.</strong> Backups are kept in the app's own storage on Netlify, apart from the live data, and they are only reachable through the app with the staff PIN.</li>
+<li><strong>How long they're kept:</strong> nightly backups for 30 days, the first backup of each month for 12 months, and <strong>Back up now</strong> and "Before a restore" backups for 90 days. The newest three are always kept, whatever their age.</li>
+<li><strong>The status box</strong> shows the last good backup, any failure and why, how many daily archives are still being copied (the first nightly backups catch up over a few nights), when the off-site copy was last downloaded, and the last restore.</li>
+<li><strong>Back up now</strong> takes and checks a backup straight away. Use it before any update to the app, and before a restore you're unsure about.</li>
+<li><strong>One at a time.</strong> Only one backup or restore runs at a time. If one is already running, the next is refused with "already running: try again in a minute". A nightly backup that finds one running is skipped, not counted as a failure.</li>
+<li><strong>Download off-site copy</strong> saves one file, <code>SA-eBikes-backup-&lt;date&gt;.json</code>, to this device's Downloads folder. It's fetched one part at a time, and each part is checked as it arrives. It holds customer names and phone numbers, so keep it private.</li>
+<li><strong>Restore</strong> lists the backups, newest first. <strong>Restore…</strong> on one shows each part with how many records it holds then and now. Tick the parts to put back, type <strong>RESTORE</strong>, and tap <strong>Restore</strong>.<ul>
+<li><strong>Safety backup first:</strong> before anything is changed, every ticked part is checked, and a backup of the data as it is now is taken ("Before a restore"). A restore can itself be undone by restoring that one.</li>
+<li><strong>Parts not ticked</strong> are left exactly as they are.</li>
+<li><strong>Daily archives</strong> are only ever added back. An archive that's already there is never replaced or removed.</li>
+<li><strong>On phones:</strong> restored data shows on phones at their next refresh, within a minute.</li>
+</ul>
+</li>
+<li><strong>On a preview</strong> (a test copy of the app), the card says so in blue and offers <strong>Load into this preview</strong> for the live site's latest backups. That copies live data into the preview's own, separate data to test with. The live site isn't touched.</li>
+</ul>
+<p><strong>Everything else:</strong></p>
+<ul>
+<li><strong>Show archives</strong> lists the archived days, newest first. A day is archived automatically each time a manifest is loaded or the scanner is reset. Tap <strong>View</strong> to read it on screen, or <strong>CSV</strong> to download it as a spreadsheet.</li>
+<li>Each archive spreadsheet has one row per bike: tour date, group, group status, bike ID, brand and model, scan time, hire location, hire day, check-in time, the M-check that stood when the bike went out, when and why it was taken off, and why it wasn't returned, if it wasn't. Customer phone numbers are not included.</li>
+<li><strong>Download as one CSV</strong> puts every archive between two tour dates into a single spreadsheet. Leave the dates empty for all of them.</li>
+<li><strong>Site checklists</strong> edits each site's opening and closing lists. See Site Checklists.</li>
+<li><strong>Message templates</strong> sets the messages staff send guests (running late for pickup, late returning, weather warning). {first}, {site}, {time} and {weather} fill themselves in. Add, change or remove messages, then <strong>Save messages</strong>.</li>
+<li><strong>QR codes for guests</strong> sets the codes on Show QR and the links in Message: one per line, the name, a |, then the link.</li>
+<li><strong>Fleet history and dashboard data</strong> rebuilds the fleet records (and the Dashboard's daily summaries) for days before records began, from the daily archives, the move history, the issue log and the register's change history. Days recorded on the day are never changed. <strong>Preview rebuild</strong> shows, month by month, the days it would save, bikes hired against available, days with no manifest, and how much had to be estimated (the model from today's register, before the change history began; or a location from before moves were recorded). Nothing is saved until <strong>Save rebuild</strong>. It works through one month at a time, and is safe to run again.</li>
+</ul>
+<h3 id="sop-monthly-off-site-copy">SOP: Monthly off-site copy</h3>
+<p>Who: the owner. When: the first working day of each month, or whenever the home screen says the off-site download is due.</p>
+<p>The nightly backups are all kept with Netlify. This copy is the one that would survive losing the Netlify account itself.</p>
+<ol>
+<li>On a computer, open <strong>Admin</strong>. Check the Backups status box is green.</li>
+<li>Tap <strong>Download off-site copy</strong> and wait for "✓ Saved". It goes to the Downloads folder.</li>
+<li>Leave it in Downloads, where it can be found by its date. The computer should have a login password, because the file holds customer names and phone numbers.</li>
+<li>Once a year, delete copies more than 12 months old.</li>
+</ol>
+<p>To prove a copy is complete, whoever maintains the app can run <code>node tools/verify-backup.mjs &lt;file&gt;</code> on it. It re-checks every part against its checksum and lists the counts, without showing any customer details.</p>
+<h3 id="sop-the-backup-line-is-red">SOP: The backup line is red</h3>
+<p>Who: the owner or manager. When: the same day it's seen.</p>
+<ol>
+<li>Open <strong>Admin</strong>. The Backups status box says when the last good backup was, and what went wrong with the last attempt.</li>
+<li>Tap <strong>Back up now</strong>.</li>
+<li>If it succeeds, the status turns green. Check again the next morning: if the nightly backup failed again, something is wrong with the scheduled backup. Pass the message from the status box to whoever maintains the app.</li>
+<li>If it fails, note the message. The live data is unaffected and the app keeps working. Older backups are still there to restore from. Pass the message on the same day.</li>
+</ol>
+<h3 id="sop-restoring-from-a-backup">SOP: Restoring from a backup</h3>
+<p>Who: the owner. When: data has been lost or damaged, for example a register import that went wrong, or issues closed by mistake.</p>
+<ol>
+<li>Work out when the data was last right. Pick the newest backup from before that time.</li>
+<li>Restore only the parts that are wrong. Leave the rest unticked, so today's work elsewhere is kept.</li>
+<li>If <strong>Today's groups and contacts</strong> is one of them, do it when nobody is scanning, and tell staff to refresh their scanner afterwards.</li>
+<li>Tick the parts, type <strong>RESTORE</strong> and tap <strong>Restore</strong>. Read the result: it lists each part and how many records it now holds.</li>
+<li>Check the restored data in its own tool (for example, the Issue Reporter log).</li>
+<li>If the restore made things worse, restore the <strong>Before a restore</strong> backup it took, with the same parts ticked.</li>
+</ol>
+<h3 id="sop-restore-drill-once-a-year-in-winter">SOP: Restore drill (once a year, in winter)</h3>
+<p>A backup is only proven when it has been restored. This drill does that on a preview, so the live site is never touched.</p>
+<ol>
+<li>On the live site, open <strong>Admin</strong> and tap <strong>Back up now</strong>.</li>
+<li>Open the latest deploy preview address. See "Releasing a new version" in DEPLOY_NOTES.md: a preview is made whenever a change is proposed in GitHub.</li>
+<li>In the preview's <strong>Admin</strong>, tap <strong>Load into this preview</strong> on that backup.</li>
+<li>Compare the preview with the live site:<ul>
+<li>the counts in the Backups card;</li>
+<li>one bike's M-check history;</li>
+<li>an open P5 issue;</li>
+<li>a lost-property photo;</li>
+<li>last Saturday's archive.</li>
+</ul>
+</li>
+<li>In the preview, load a manifest, scan a bike out and back, and do an M-check.</li>
+<li>Note the date and anything that didn't match.</li>
+</ol>
+<h3 id="sop-updating-the-app-releasing-a-new-version">SOP: Updating the app (releasing a new version)</h3>
+<p>Who: the owner, or whoever maintains the app. The click-by-click steps are in DEPLOY_NOTES.md under "Releasing a new version". In short:</p>
+<ol>
+<li>On the live site, <strong>Admin → Back up now</strong>.</li>
+<li>Put the new version on its own branch in GitHub and open a pull request. Netlify builds a <strong>preview</strong> of it with its own, separate data.</li>
+<li>On the preview, <strong>Load into this preview</strong>, then try a normal day: load a manifest, scan, check in, Returned, an M-check, an issue, a lost item, and the Dashboard.</li>
+<li>At a quiet time (not a Saturday morning), merge the pull request. Netlify puts it live within a couple of minutes.</li>
+<li>On the live site, check the home screen shows the new version number and a green backup line.</li>
+</ol>
+<p>If something is wrong after going live, put the previous version back in Netlify (Deploys, pick the previous deploy, <strong>Publish deploy</strong>). Restore data only if data was damaged, using the backup from step 1.</p>
+<h3 id="sop-adding-a-team-member">SOP: Adding a team member</h3>
+<ol>
+<li>Open <strong>Admin</strong>. Under <strong>Team</strong>, enter the person's <strong>Known as</strong> name (what the team calls them) and initials (1–5 letters).</li>
+<li>Tap <strong>Add</strong>.</li>
+<li>Tap <strong>Edit</strong> next to them and add their full name, email and mobile. These stay in Admin.</li>
+<li>On their phone, they tap 👤 at the top of any page and pick their name.</li>
+</ol>
+<p>When someone leaves, tap <strong>Retire</strong> next to their name.</p>
+<h3 id="sop-rostering-a-week">SOP: Rostering a week</h3>
+<p>Who: the manager. When: before the roster email goes out, usually the week before.</p>
+<ol>
+<li>Open <strong>Admin</strong>. The Roster card opens on next week.</li>
+<li>Either tap <strong>Copy last week</strong> and adjust, or add each shift with <strong>+ Add shift</strong>, or upload a spreadsheet (next SOP).</li>
+<li>Check each day, including notes, then tap <strong>Email roster</strong>, check the email, and <strong>Open in Mail</strong> to send it.</li>
+<li>If a shift changes after that, edit it, then tap <strong>Text [name] about this shift</strong> so the person knows straight away. Staff see "changed" on it in the Roster.</li>
+</ol>
+<h3 id="sop-rostering-from-a-spreadsheet">SOP: Rostering from a spreadsheet</h3>
+<ol>
+<li>In Admin's Roster card, go to a week and tap <strong>Download CSV</strong> for a file with the right headings (an empty week gives just the headings).</li>
+<li>Fill it in, one row per shift: Date, Day, Site, Known as, Start, Finish, Note. Write <strong>Close</strong> as the Finish for "until the work's done", and <strong>N/A</strong> as the Site (no times) for someone who isn't available. Save it as CSV.</li>
+<li>Tap <strong>Upload CSV</strong> and choose the file.</li>
+<li>Read the preview. Stop and check if there's an amber note: a different week from the one on screen, dates that have passed, or a file identical to one already saved usually means the dates weren't updated.</li>
+<li>Fix any rows listed with a problem and upload again.</li>
+<li>Tap <strong>Add …</strong> or <strong>Replace …</strong> to apply it. If it wasn't right, tap <strong>Undo upload</strong> straight away.</li>
+</ol>
+<h3 id="sop-setting-the-admin-password">SOP: Setting the admin password</h3>
+<p>Who: the owner, once.</p>
+<ol>
+<li>In Netlify, open the Operations Tools site, then <strong>Site (or Project) configuration → Environment variables</strong>.</li>
+<li>Add <code>SAEBIKES_ADMIN_PASSWORD</code> with a password of at least 8 characters that's different from the staff PIN. Apply it to all deploy contexts.</li>
+<li>Redeploy (Deploys → Trigger deploy).</li>
+<li>Open <strong>Admin</strong>. It asks for the admin password each time Admin is opened.</li>
+<li>Add each team member's full name, email and mobile under <strong>Team</strong>.</li>
+</ol>
+<p>Change it the same way if it's ever shared beyond the people who run the business.</p>
+<h3 id="sop-finding-what-happened-on-a-past-day">SOP: Finding what happened on a past day</h3>
+<ol>
+<li>Open <strong>Admin</strong> and tap <strong>Show archives</strong>.</li>
+<li>Find the tour date and tap <strong>View</strong> to read it on screen, or <strong>CSV</strong> to open it in Excel.</li>
+<li>Each row is one bike, with the group it went out with, when it was scanned, and when and why it was taken off, if it was.</li>
+</ol>
+<h3 id="sop-archive-spreadsheet-for-a-period-season-review-insurance-claim">SOP: Archive spreadsheet for a period (season review, insurance claim)</h3>
+<ol>
+<li>Open <strong>Admin</strong>. Set the <strong>From</strong> and <strong>To</strong> tour dates.</li>
+<li>Tap <strong>Download as one CSV</strong>. The page shows its progress while it reads each day.</li>
+<li>Open the file in Excel. Filter the Bike ID column to see every hire of one bike, or the Group column to find a booking.</li>
+</ol>
+<p>For faults on a particular bike, use the Issue Reporter's <strong>Log</strong> tab or <strong>Download CSV</strong> instead; the issue log is never archived away.</p>
+</section><section><h2 id="daily-routine-and-troubleshooting">Daily routine and troubleshooting</h2>
+<p>A normal hire day uses the tools in this order.</p>
+<ol>
+<li><strong>Open:</strong> sign off the site's opening checklist. Export the Rezdy pickup manifest and load it (Load Manifest). Set aside equipment for flagged groups, read the special requirements, and check the Days column.</li>
+<li><strong>Check the fleet:</strong> on the Issue Reporter's Log tab, filter Open and OOS. Keep P5 bikes out of the hire line.</li>
+<li><strong>M-check:</strong> in M-check mode, sign off every bike on the due list before it goes out. Checking bikes as they come back the day before keeps the morning list short.</li>
+<li><strong>Each booking:</strong> in Issuing mode, make the group active, scan each bike, read every confirmation, tap Out.</li>
+<li><strong>During the day:</strong> swap or correct bikes with ×, always choosing the reason. Log faults as they're found. Use Today's Contacts for late or overdue groups.</li>
+<li><strong>Each return:</strong> in Checking-in mode, with This phone is at set, scan each bike back, log any problems, then tap Returned. Use Return with exception for a bike that isn't back.</li>
+<li><strong>Close:</strong> sign off the site's closing checklist. On the Summary tab, check every group is Returned or, for a multi-day hire, Out overnight, and bikes out equals unique bike IDs.</li>
+<li><strong>Monthly:</strong> download the off-site copy from Admin. The nightly backups happen by themselves; VIC's opening checklist confirms the home screen's backup line is green.</li>
+</ol>
+<h3 id="troubleshooting">Troubleshooting</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The camera won't start</td>
+<td>Read the message in the camera box: it says what to do on that phone. Usually: allow camera access for the site (iPhone: tap aA in the address bar → Website Settings → Camera, or Settings &gt; Safari &gt; Camera), close another app using the camera, then reload the page.</td>
+</tr>
+<tr>
+<td>No beep when scanning</td>
+<td>Check <strong>🔊 Sounds on</strong> under Start Scanning, the phone's volume and, on an iPhone, the silent switch. Sounds start after the first tap on Start Scanning.</td>
+</tr>
+<tr>
+<td>A bike is refused as "still out with" a group</td>
+<td>It's still on another group that hasn't been checked in. Check it in (or take it off that group if it was scanned there by mistake), then scan it again.</td>
+</tr>
+<tr>
+<td>A barcode won't scan</td>
+<td>Wipe the label, improve the light, hold the phone 15–20 cm away. If it still won't read, try the other scanner: the link under the camera switches between new and classic. Type the ID in the manual box as a last resort.</td>
+</tr>
+<tr>
+<td>Status says "PIN needed"</td>
+<td>Tap the status light and enter the current staff PIN.</td>
+</tr>
+<tr>
+<td>A save says "Not confirmed"</td>
+<td>No answer came back, usually because of signal. Tap Save again when you have signal. It can't create a duplicate.</td>
+</tr>
+<tr>
+<td>A save says someone changed it since you opened it</td>
+<td>Someone else saved the same bike, item, contact or setting while you were editing. The page now shows their version: open it again and make your change.</td>
+</tr>
+<tr>
+<td>Status says "unsaved · retrying"</td>
+<td>Keep working; scans send when signal returns. Don't close the tab or clear the browser.</td>
+</tr>
+<tr>
+<td>Groups from yesterday still showing</td>
+<td>Today's manifest hasn't been loaded. Load it.</td>
+</tr>
+<tr>
+<td>Contacts says "not today"</td>
+<td>The loaded manifest is for another date. Load today's, or check the tour date was set correctly.</td>
+</tr>
+<tr>
+<td>Load Manifest says "Unrecognised product"</td>
+<td>No location's words appear in that Rezdy product name. Check in Rezdy where it's hired from, then add a word to that location under Asset Register → Locations → Words, and reload the file. The group still loads without a location; set it on the group card.</td>
+</tr>
+<tr>
+<td>Load Manifest lists a "New product"</td>
+<td>Rezdy has a product name the app hasn't seen before. Check the location it shows. If it's wrong, fix the matching words (Admin → Rezdy products) before loading.</td>
+</tr>
+<tr>
+<td>A group on the scanner says "⚠ NO LOCATION"</td>
+<td>Its Rezdy product matched no location. Choose the location in the group's Set location menu.</td>
+</tr>
+<tr>
+<td>A bike shows "not in asset register"</td>
+<td>Check the ID was read correctly. If it's a new bike, add it in the Asset Register.</td>
+</tr>
+<tr>
+<td>A bike is in two groups</td>
+<td>Find which group really has it. Take it off the other with "Scanned by mistake".</td>
+</tr>
+<tr>
+<td>Returned says "1 not in"</td>
+<td>A bike isn't ticked in. Scan or tick it, or use Return with exception if it isn't back.</td>
+</tr>
+<tr>
+<td>"isn't out with any group" when checking in</td>
+<td>The bike wasn't scanned out today, or it's already checked in. Check the ID.</td>
+</tr>
+<tr>
+<td>A multi-day hire didn't carry over</td>
+<td>It was marked Returned when the next manifest was loaded. Add it with New Group, set the hire length and scan its bikes again.</td>
+</tr>
+<tr>
+<td>Initials are wrong or missing</td>
+<td>Tap 👤 at the top of the page and pick your name. If you're not on the list, add yourself under Admin → Team.</td>
+</tr>
+<tr>
+<td>A typed ID says it "could be" two bikes</td>
+<td>Type more of the ID, for example EB-12 rather than 12.</td>
+</tr>
+<tr>
+<td>"check number" on a contact</td>
+<td>The number doesn't fit any country's format. Ask the customer at check-in. For a walk-in, correct it with Edit on Today's Contacts.</td>
+</tr>
+<tr>
+<td>A message shows "not confirmed"</td>
+<td>Nobody answered Was it sent? after opening it. Check your phone's messages, and send again or call if it didn't go.</td>
+</tr>
+<tr>
+<td>There's no Message button on a group</td>
+<td>The booking has no phone number. For a walk-in, add one with + Add contact.</td>
+</tr>
+<tr>
+<td>Can't sign off a checklist</td>
+<td>An item hasn't been answered, or a MUST item isn't ticked as done. Every item needs Done or Problem; MUST items need Done.</td>
+</tr>
+<tr>
+<td>Bikes were checked in at the wrong location</td>
+<td>Open the Asset Register and tap the wrong location's chip. Tap Move bikes to a location, choose the right one, and scan or type each bike. The history keeps both entries.</td>
+</tr>
+<tr>
+<td>A bike shows the wrong location</td>
+<td>It was moved without being scanned or edited. Open it in the Asset Register, set the right location with your initials, and save.</td>
+</tr>
+<tr>
+<td>"not M-checked since its last ride" when issuing</td>
+<td>Do the M-check now if you can: switch to M-check and sign the bike off. The bike is issued either way, and the hire records whether it was checked.</td>
+</tr>
+<tr>
+<td>A group was marked Returned by mistake</td>
+<td>Tap Undo Returned on the Groups tab.</td>
+</tr>
+<tr>
+<td>A bike was taken off by mistake</td>
+<td>Scan it back onto the group. The trail will show both entries.</td>
+</tr>
+<tr>
+<td>"Out of service" but the bike has been fixed</td>
+<td>The repair hasn't been recorded. Resolve the issue in the Issue Reporter.</td>
+</tr>
+<tr>
+<td>The home screen's backup line is red</td>
+<td>The last backup failed, or none has been taken for 36 hours. Tell the manager today. The app keeps working as normal. See "SOP: The backup line is red".</td>
+</tr>
+<tr>
+<td>A blue PREVIEW banner on the home screen</td>
+<td>This phone is on a test copy of the app. Go back to the usual Operations Tools address. Nothing done on the preview reaches the live data.</td>
+</tr>
+<tr>
+<td>Admin asks for an admin password</td>
+<td>Admin is for the owner and manager. If you're meant to have it, ask the owner. Staff tools don't need it.</td>
+</tr>
+<tr>
+<td>A roster upload says rows need fixing</td>
+<td>Each row is listed with its line number and what's wrong. Fix the spreadsheet, save it as CSV again, and upload it again. Nothing has been changed.</td>
+</tr>
+<tr>
+<td>Data is missing or wrong after a mistake</td>
+<td>Don't try to re-enter it all. Tell the owner, who can restore just that part from last night's backup. See "SOP: Restoring from a backup".</td>
+</tr>
+<tr>
+<td>Something else isn't working</td>
+<td>Note the time, the page and what you tapped, and tell the owner. Don't use Reset All Data to fix it.</td>
+</tr>
+</tbody>
+</table></div></section>
+</main>
+<script>
+// Highlight the section chip for the part of the manual on screen.
+const chips = [...document.querySelectorAll('nav.toc a')];
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  chips.forEach(c => c.classList.toggle('here', c.hash === '#' + e.target.querySelector('h2').id));
+  const on = chips.find(c => c.classList.contains('here'));
+  if (on) { const nav = on.parentElement; nav.scrollLeft = on.offsetLeft - (nav.clientWidth - on.offsetWidth) / 2; }
+}), { rootMargin: '-130px 0px -60% 0px' });
+document.querySelectorAll('main section').forEach(s => io.observe(s));
+</script>
+</body>
+</html>

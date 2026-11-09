@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Asset Register</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;              /* warm off-white */
+  --bg-elev:#ffffff;         /* pure white for cards */
+  --bg-soft:#f2efe8;         /* cream */
+  --border:#e4ded2;          /* warm beige border */
+  --border-strong:#d4cdbd;
+  --text:#1f2428;            /* near-black, softer than #000 */
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  /* softer leafy green */
+  /* darker for readable text on light bg */
+  --warn:#d48a2f;            /* warm amber, darker for contrast on light */
+  --warn-soft:rgba(212,138,47,.1);
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;          /* coral red, darker for contrast */
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+#reader-report, #reader-resolve{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader-report video, #reader-resolve video{border-radius:12px}
+#reader-report img, #reader-resolve img{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);min-height:140px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-success{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.manual-entry{display:flex;gap:8px;margin-top:10px}
+.manual-input{flex:1;padding:13px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.field-input,.field-textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted)}
+.field-mono{font-family:'DM Mono',monospace}
+
+.priority-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px}
+.priority-btn{padding:10px 4px;border-radius:10px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;text-align:center;font-family:'Syne',sans-serif;transition:all .15s}
+.priority-btn .num{font-size:18px;font-weight:800;line-height:1}
+.priority-btn .lbl{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.priority-btn.active[data-p="1"]{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.priority-btn.active[data-p="2"]{border-color:#9bb845;color:#5a7a22;background:rgba(155,184,69,.12)}
+.priority-btn.active[data-p="3"]{border-color:#d48a2f;color:#8a5a1a;background:rgba(212,138,47,.12)}
+.priority-btn.active[data-p="4"]{border-color:#c96a5c;color:#9a3530;background:rgba(201,106,92,.14)}
+.priority-btn.active[data-p="5"]{border-color:#b23a35;color:#8a2a26;background:rgba(178,58,53,.14)}
+.priority-help{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5}
+.priority-help strong{color:var(--danger-text)}
+
+.matched-card{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.3);border-radius:14px;padding:14px;margin-bottom:16px}
+.matched-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.matched-id{font-family:'DM Mono',monospace;font-size:15px;color:var(--warn-text);font-weight:600;letter-spacing:1px}
+.matched-issue{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--text)}
+.matched-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.matched-notes{margin-top:6px;font-size:12px;color:var(--text);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+
+.ts-note{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+
+.issue-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.issue-item:active{border-color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.issue-item.p5{border-left:4px solid #b23a35}
+.issue-item.p4{border-left:4px solid #c96a5c}
+.issue-item.p3{border-left:4px solid #d48a2f}
+.issue-item.p2{border-left:4px solid #9bb845}
+.issue-item.p1{border-left:4px solid var(--accent)}
+.issue-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.issue-bike{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent-text);font-weight:600;letter-spacing:1px}
+.issue-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.status{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.8px;white-space:nowrap}
+.status.open{background:var(--danger-soft);color:var(--danger-text);border:1px solid rgba(201,74,69,.25)}
+.status.resolved{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.prio{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.prio.p5{background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.prio.p4{background:rgba(201,106,92,.1);color:#9a3530;border:1px solid rgba(201,106,92,.25)}
+.prio.p3{background:rgba(212,138,47,.1);color:#8a5a1a;border:1px solid rgba(212,138,47,.25)}
+.prio.p2{background:rgba(155,184,69,.1);color:#5a7a22;border:1px solid rgba(155,184,69,.25)}
+.prio.p1{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.issue-desc{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.issue-foot{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.notes-indicator{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:6px}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:6px 13px;border-radius:100px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.detail-section{margin-bottom:18px}
+.detail-section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-body{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:10px}
+.detail-meta-row{display:flex;gap:10px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.detail-meta-label{color:var(--text-muted);min-width:95px}
+.detail-meta-val{color:var(--text)}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.mc-ok{font-family:'DM Mono',monospace;color:var(--accent-text)}
+.mc-due-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--warn-text)}
+.mc-hist-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 4px}
+.mc-hist-head input{font:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.h-row.fail{color:var(--danger-text)}
+.loc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.loc-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.loc-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.loc-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text)}
+.loc-tag.out{color:var(--warn-text)}
+.hist{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.6}
+.hist .h-row{border-bottom:1px solid var(--border);padding:3px 0}
+.move-list{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px}
+.move-list div{padding:5px 0;border-bottom:1px solid var(--border)}
+.move-list .ok{color:var(--accent-text)}.move-list .warn{color:var(--warn-text)}.move-list .dim{color:var(--text-muted)}
+.loc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.loc-row .kind{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);margin-left:4px}
+.loc-row .words{display:block;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:2px}
+.loc-row select{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:5px 6px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim)}
+.loc-row .code{font-family:'DM Mono',monospace;font-weight:700;margin-right:6px}
+.loc-row.retired{opacity:.5}
+.loc-row button{font-size:11px;padding:5px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--text-dim)}
+.toolbar .manual-input{margin:0}
+.add-btn{padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap}
+.add-btn:active{background:var(--accent-dark)}
+.count-line{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px}
+.asset{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.asset:active{border-color:var(--accent)}
+.asset-id{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--accent-text);letter-spacing:1px}
+.asset-key{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);text-align:right;align-self:center}
+.asset-what{font-size:14px;font-weight:700;color:var(--text)}
+.asset-meta{grid-column:1 / -1;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.asset-flags{grid-column:1 / -1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.flag-open{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px solid rgba(212,138,47,.3)}
+.flag-disposed{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border-strong)}
+.asset.disposed{opacity:.6}
+.form-group-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.flag-noserial{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px dashed rgba(212,138,47,.5)}
+.req{color:var(--danger-text)}
+.count-line .warn{color:var(--warn-text);cursor:pointer;text-decoration:underline}
+.flag-oos{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.id-row{display:flex;gap:8px}
+.id-row .field-input{flex:1}
+.scan-mini{padding:0 14px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-soft);font-size:18px;cursor:pointer}
+#reader-asset{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;display:none}
+#reader-asset img{display:none!important}
+.age-note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row .btn{flex:1}
+.import-result{font-family:'DM Mono',monospace;font-size:12px;margin-top:10px;line-height:1.5}
+.import-result.ok{color:var(--accent-text)}.import-result.err{color:var(--danger-text)}
+.file-btn{position:relative;overflow:hidden;display:block;text-align:center}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#asset-register" style="margin-left:6px">? Help</a>
+<div class="app">
+  <div class="flash" id="flash"></div>
+
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Asset Register</div>
+    </div>
+    <div class="sync-indicator" style="cursor:pointer">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">connecting…</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <input class="manual-input" id="search" placeholder="Search ID, serial, key, brand, model…" oninput="renderList()" autocomplete="off">
+      <button class="add-btn" onclick="openForm()">+ Add bike</button>
+    </div>
+    <button class="btn btn-secondary" style="margin-bottom:12px" onclick="openMove()">📍 Move bikes to a location</button>
+    <div class="loc-chips" id="locChips"></div>
+    <div class="count-line" id="countLine"></div>
+    <div id="assetList"></div>
+
+    <div class="divider"></div>
+    <div class="section-label">Fleet age</div>
+    <div id="statsContent"></div>
+
+    <div class="divider"></div>
+    <div class="section-label">Locations</div>
+    <div id="locList"></div>
+    <div class="field-row" style="margin-top:10px">
+      <div class="field"><input class="field-input field-mono" id="newLocCode" maxlength="6" placeholder="Code, e.g. MCL" style="text-transform:uppercase"></div>
+      <div class="field"><input class="field-input" id="newLocName" maxlength="40" placeholder="Name, e.g. McLaren Flat"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><select class="field-input" id="newLocKind"><option value="hire">Hire site</option><option value="delivery">Home delivery</option><option value="collection">Collection point</option><option value="storage" selected>Storage only</option></select></div>
+      <div class="field"><input class="field-input" id="newLocWords" maxlength="200" placeholder="Words in the Rezdy product, e.g. kay brothers"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="addLocation()">+ Add location</button>
+
+    <div class="export-section">
+      <div class="section-label">Spreadsheet</div>
+      <div class="export-card">
+        <div class="export-card-title">🔧 Download M-check log</div>
+        <div class="export-card-desc">Every M-check: date and time, bike, who signed off, pass or fail, faults and notes, and the issue logged for any fault.</div>
+        <button class="btn btn-secondary" onclick="exportChecks()">Download CSV</button>
+      </div>
+      <div class="export-card">
+        <div class="export-card-title">📍 Download move history</div>
+        <div class="export-card-desc">Every change of location: when, which bike, from, to, how and who.</div>
+        <button class="btn btn-secondary" onclick="exportMoves()">Download CSV</button>
+      </div>
+      <div class="export-card">
+        <div class="export-card-title">📈 Fleet report</div>
+        <div class="export-card-desc">Utilisation by bike, model and location over any period: days hired ÷ days available. Excel and PDF too.</div>
+        <a class="btn btn-secondary" style="display:block;text-align:center;text-decoration:none" href="/report">Open the fleet report</a>
+      </div>
+      <div class="export-card">
+        <div class="export-card-title">🗑 Removed bikes</div>
+        <div class="export-card-desc">Bikes taken out of the register with Remove. One removed by mistake can be put back as it was.</div>
+        <button class="btn btn-secondary" onclick="showRemoved()">Show removed bikes</button>
+        <div id="removedList" style="margin-top:8px"></div>
+      </div>
+      <div class="export-card">
+        <div class="export-card-title">🗂 Download register changes</div>
+        <div class="export-card-desc">Every change to the register since v3.6: bikes added, edited, renamed or removed, each field from and to, when and who.</div>
+        <button class="btn btn-secondary" onclick="exportChanges()">Download Excel</button>
+      </div>
+      <div class="export-card">
+        <div class="export-card-title">📄 Download register</div>
+        <div class="export-card-desc">All bikes with age in months, for insurance, depreciation or a stocktake.</div>
+        <button class="btn btn-secondary" onclick="exportCSV()">Download CSV</button>
+      </div>
+      <div class="export-card">
+        <div class="export-card-title">📥 Load bikes from a spreadsheet</div>
+        <div class="export-card-desc">Quickest way to enter the whole fleet. Columns: Bike ID, Serial Number, Location, Key Number, Brand, Model, Frame or Rim Size, Purchase Date, Purchase Price, Disposal Date, Sale Price, Disposal Note. Location can be a code (VIC) or a name. Dates as DD/MM/YYYY or YYYY-MM-DD. Bike ID and Serial Number are required on every row. Bikes already registered are updated; new ones are added.</div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="downloadTemplate()">Get template</button>
+          <label class="btn btn-primary file-btn">Choose CSV<input type="file" accept=".csv" onchange="importCSV(this.files[0]); this.value=''"></label>
+        </div>
+        <div class="import-result" id="importResult"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add / edit sheet -->
+<div class="modal-backdrop" id="formModal" onclick="if(event.target===this)closeForm()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="formTitle">Add bike</h3>
+    <div class="modal-sub" id="formSub">Bike ID and serial number are required</div>
+    <div id="reader-asset"></div>
+
+    <div class="field">
+      <label class="field-label" for="fId">Bike ID (barcode) <span class="req">*</span></label>
+      <div class="id-row">
+        <input class="field-input field-mono" id="fId" maxlength="30" style="text-transform:uppercase" placeholder="e.g. EB-012" autocomplete="off">
+        <button class="scan-mini" id="scanBtn-id" onclick="toggleScan('id')" aria-label="Scan bike ID barcode">📷</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fSerial">Serial number <span class="req">*</span></label>
+      <div class="id-row">
+        <input class="field-input field-mono" id="fSerial" maxlength="40" style="text-transform:uppercase" placeholder="e.g. WTU123456A" autocomplete="off">
+        <button class="scan-mini" id="scanBtn-serial" onclick="toggleScan('serial')" aria-label="Scan serial number barcode">📷</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="fLoc">Location</label>
+        <select class="field-input" id="fLoc" onchange="locChanged()"></select>
+      </div>
+      <div class="field" id="fByField" style="display:none">
+        <label class="field-label" for="fBy">Your initials</label>
+        <input class="field-input field-mono" id="fBy" maxlength="5" style="text-transform:uppercase" placeholder="e.g. SO">
+      </div>
+    </div>
+    <a class="btn btn-secondary" id="histLink" style="display:none;text-align:center;text-decoration:none;margin-bottom:10px" href="#">📜 Full history, purchase to disposal</a>
+    <div class="hist" id="fHist"></div>
+    <div class="hist" id="fChanges"></div>
+    <div class="hist" id="fChecks"></div>
+    <div class="form-grid">
+      <div class="field">
+        <label class="field-label" for="fKey">Key number</label>
+        <input class="field-input field-mono" id="fKey" maxlength="30" placeholder="e.g. 4417" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="field-label" for="fSize">Frame / rim size</label>
+        <input class="field-input" id="fSize" maxlength="30" placeholder="e.g. M or 20in" list="sizeList" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fBrand">Brand</label>
+      <input class="field-input" id="fBrand" maxlength="60" list="brandList" autocomplete="off">
+    </div>
+    <div class="field">
+      <label class="field-label" for="fModel">Model</label>
+      <input class="field-input" id="fModel" maxlength="80" list="modelList" autocomplete="off">
+    </div>
+    <div class="field">
+      <label class="field-label" for="fDate">Date of purchase</label>
+      <input class="field-input field-mono" id="fDate" type="date" oninput="showAge()">
+      <div class="age-note" id="ageNote"></div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fPrice">Purchase price ($)</label>
+      <input class="field-input field-mono" id="fPrice" inputmode="decimal" placeholder="e.g. 3499" maxlength="12" autocomplete="off" style="max-width:200px">
+    </div>
+    <div class="form-group-label">Disposal · when the bike is sold or written off</div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="fDispDate">Disposal date</label>
+        <input class="field-input field-mono" id="fDispDate" type="date">
+      </div>
+      <div class="field">
+        <label class="field-label" for="fSale">Sale price ($)</label>
+        <input class="field-input field-mono" id="fSale" inputmode="decimal" placeholder="0 if written off" maxlength="12" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fDispNote">Disposal note</label>
+      <input class="field-input" id="fDispNote" maxlength="120" placeholder="e.g. Sold to staff member, written off after crash" autocomplete="off">
+    </div>
+    <datalist id="brandList"></datalist><datalist id="modelList"></datalist><datalist id="sizeList"></datalist>
+
+    <button class="btn btn-primary" id="saveBtn" onclick="saveAsset()">Save bike</button>
+    <div class="btn-row" id="editButtons" style="display:none">
+      <button class="btn btn-secondary" onclick="closeForm()">Cancel</button>
+      <button class="btn btn-danger" onclick="deleteAsset()">Remove from register</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scan-to-move sheet -->
+<div class="modal-backdrop" id="moveModal" onclick="if(event.target===this)closeMove()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>Move bikes</h3>
+    <div class="modal-sub">Choose where they're going, then scan or type each bike</div>
+    <div class="field-row">
+      <div class="field"><label class="field-label" for="mLoc">Moving to</label><select class="field-input" id="mLoc"></select></div>
+      <div class="field"><label class="field-label" for="mBy">Your initials</label><input class="field-input field-mono" id="mBy" maxlength="5" style="text-transform:uppercase" placeholder="e.g. SO"></div>
+    </div>
+    <div id="reader-move"></div>
+    <button class="btn btn-primary" id="moveScanBtn" onclick="toggleMoveScan()">📷 Scan bikes</button>
+    <div class="id-row" style="margin-top:10px">
+      <input class="field-input field-mono" id="mCode" maxlength="30" style="text-transform:uppercase" placeholder="or type a bike ID" onkeydown="if(event.key==='Enter')moveTyped()" autocomplete="off">
+      <button class="scan-mini" onclick="moveTyped()" aria-label="Move this bike">＋</button>
+    </div>
+    <div class="move-list" id="moveList"></div>
+    <button class="btn btn-secondary" style="margin-top:12px" onclick="closeMove()">Done</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/assets/vendor/html5-qrcode.min.js"></script>
+<script src="/assets/scan.js"></script>
+<script src="/assets/xlsx-lite.js"></script>
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+// Asset Register v3.2
+// Reads the "issues" view, which carries both the register and the issue
+// log, so each bike can show whether it has open issues.
+// ─────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = Ops.esc;
+let assets = [], issues = [], lastKey = '';
+let locations = [], outWith = {}, locFilter = '', mcheckMap = {}, unavailable = [];
+let editingId = null, busy = false;
+
+function setSync(status, label) { $('syncDot').className = 'sync-dot ' + status; $('syncLabel').textContent = label; }
+
+function accept(v) {
+  if (!v) return;
+  if (v.assets) assets = v.assets;
+  if (v.issues) issues = v.issues;
+  const key = (v.rev ?? '') + '/' + (v.assetsRev ?? '');
+  if (key !== lastKey) { lastKey = key; renderList(); }
+}
+
+// The register comes with the issues (for open-issue tags); locations and bikes out on hire come from the fleet view.
+function acceptFleet(v) {
+  if (!v) return;
+  if (v.assets) assets = v.assets;
+  if (v.locations) locations = v.locations;
+  if (v.out) outWith = v.out;
+  if (v.mcheck) mcheckMap = v.mcheck;
+  if (v.unavailable) unavailable = v.unavailable;
+  lastKey = ''; renderList();
+}
+async function pull(interactive) {
+  try {
+    const [iv, fv] = await Promise.all([Ops.view('issues', { interactive: !!interactive }), Ops.view('fleet', { interactive: !!interactive })]);
+    if (fv.locations) locations = fv.locations;
+    const mcKey = JSON.stringify(fv.mcheck || {});
+    if (mcKey !== JSON.stringify(mcheckMap)) { mcheckMap = fv.mcheck || {}; lastKey = ''; }
+    const unKey = JSON.stringify(fv.unavailable || []);
+    if (unKey !== JSON.stringify(unavailable)) { unavailable = fv.unavailable || []; lastKey = ''; }
+    const outKey = JSON.stringify(fv.out || {});
+    if (outKey !== JSON.stringify(outWith)) { outWith = fv.out || {}; lastKey = ''; }
+    accept(iv); setSync('synced', 'live ✓');
+  }
+  catch (e) { setSync('error', e.isAuth ? 'PIN needed · tap here' : 'offline'); throw e; }
+}
+const poll = Ops.poller(() => pull(false), { interval: 60000, idleInterval: 5 * 60000, idleAfter: 5 * 60000 });
+document.querySelector('.sync-indicator').addEventListener('click', () => {
+  if ($('syncLabel').textContent.startsWith('PIN')) Ops.forgetPin();
+  pull(true).catch(() => {});
+});
+
+const serialKey = s => String(s || '').toUpperCase().replace(/\s+/g, '');
+let showNoSerial = false;
+function toggleNoSerial() { showNoSerial = !showNoSerial; renderList(); }
+let showDisposed = false;
+function toggleDisposed() { showDisposed = !showDisposed; renderList(); }
+const isDisposed = a => !!a.disposalDate;
+const fmtMoney = n => '$' + Number(n).toLocaleString('en-AU', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const fmtD = iso => iso ? iso.split('-').reverse().join('/') : '';
+
+function openIssuesFor(id) { return issues.filter(i => i.bikeId === id && i.status === 'open'); }
+
+function renderList() {
+  const q = $('search').value.trim().toLowerCase();
+  // Disposed bikes are hidden unless asked for; a search finds them anyway.
+  const active = assets.filter(a => !isDisposed(a)), disposedN = assets.length - active.length;
+  const noSerial = active.filter(a => !a.serial).length;
+  if (!noSerial) showNoSerial = false;
+  let list = q ? assets.filter(a => [a.id, a.serial, a.keyNumber, a.brand, a.model, a.size, a.disposalNote, a.location].join(' ').toLowerCase().includes(q))
+    : showDisposed ? assets : active;
+  renderLocChips(active);
+  if (locFilter === 'OUT') list = list.filter(a => outWith[a.id]);
+  else if (locFilter === 'MCHECK') list = list.filter(a => mcNeeded(a));
+  else if (locFilter === 'UNAV') list = list.filter(a => unavailableWhy(a));
+  else if (locFilter === 'NONE') list = list.filter(a => !a.location && !isDisposed(a));
+  else if (locFilter) list = list.filter(a => a.location === locFilter);
+  if (showNoSerial) list = list.filter(a => !a.serial && !isDisposed(a));
+  $('countLine').innerHTML = assets.length
+    ? (q || showNoSerial ? list.length + ' of ' : '') + active.length + ' bike' + (active.length === 1 ? '' : 's') + ' in the fleet' +
+      (noSerial ? ' · <span class="warn" onclick="toggleNoSerial()">' + (showNoSerial ? 'show all' : noSerial + ' missing a serial number') + '</span>' : '') +
+      (disposedN && !q ? ' · <span class="warn" style="color:var(--text-dim)" onclick="toggleDisposed()">' + (showDisposed ? 'hide disposed' : disposedN + ' disposed') + '</span>' : '')
+    : '';
+  $('assetList').innerHTML = !assets.length
+    ? '<div class="empty-state"><div class="icon">🚲</div><p>No bikes registered yet.<br>Tap <strong>+ Add bike</strong>, or load the whole fleet from a spreadsheet below.</p></div>'
+    : !list.length ? '<div class="empty-state"><p>No bikes match that search.</p></div>'
+    : list.map(a => {
+        const open = openIssuesFor(a.id), oos = open.some(i => (i.priority || 3) === 5);
+        const what = [a.brand, a.model].filter(Boolean).join(' ') || '<span style="color:var(--text-muted)">Brand and model not recorded</span>';
+        const gone = isDisposed(a);
+        const un = unavailableWhy(a);
+        const flags = (gone ? '<span class="flag-disposed">Disposed ' + fmtD(a.disposalDate) + (a.salePrice != null ? ' · sold ' + fmtMoney(a.salePrice) : '') + '</span>' : '') + (oos ? '<span class="flag-oos">🚫 OUT OF SERVICE' + (un && un.since ? ' · ' + esc(un.text.replace('Out of service ', '')) : '') + '</span>'
+          : open.length ? '<span class="flag-open">' + open.length + ' open issue' + (open.length > 1 ? 's' : '') + '</span>' : '') +
+          (un && !un.since ? '<span class="flag-open" style="opacity:.8">⛔ ' + esc(un.text) + '</span>' : '') +
+          (a.serial || gone ? '' : '<span class="flag-noserial">Serial number missing</span>');
+        return '<div class="asset' + (gone ? ' disposed' : '') + '" data-id="' + esc(a.id) + '" onclick="openForm(this.dataset.id)">' +
+          '<div class="asset-id">' + esc(a.id) + '</div>' +
+          '<div class="asset-key">' + (a.keyNumber ? '🔑 ' + esc(a.keyNumber) : '') + '</div>' +
+          '<div class="asset-what">' + (a.brand || a.model ? esc(what) : what) + '</div><div></div>' +
+          '<div class="asset-meta">' + [locHTML(a), mcHTML(a), a.serial ? 'S/N ' + esc(a.serial) : '', a.size ? 'Size ' + esc(a.size) : '', a.purchaseDate ? esc(gone ? 'bought ' + fmtD(a.purchaseDate) : Ops.ageLabel(a.purchaseDate)) : 'Purchase date not recorded', a.purchasePrice != null ? fmtMoney(a.purchasePrice) : ''].filter(Boolean).join(' · ') + '</div>' +
+          (flags ? '<div class="asset-flags">' + flags + '</div>' : '') +
+        '</div>';
+      }).join('');
+  renderStats();
+  fillSuggestions();
+}
+
+// ── locations ─────────────────────────────────────────────────
+const locName = code => (locations.find(l => l.code === code) || {}).name || code;
+function locHTML(a) {
+  if (isDisposed(a)) return '';
+  if (outWith[a.id]) return '<span class="loc-tag out">🚴 Out with ' + esc(outWith[a.id]) + '</span>' + (a.location ? ' (from ' + esc(a.location) + ')' : '');
+  return a.location ? '<span class="loc-tag">📍 ' + esc(a.location) + '</span>' : '<span style="color:var(--warn-text)">No location</span>';
+}
+function renderLocChips(active) {
+  const n = code => active.filter(a => a.location === code && !outWith[a.id]).length;
+  const out = active.filter(a => outWith[a.id]).length, none = active.filter(a => !a.location).length;
+  const chip = (key, label) => '<span class="loc-chip' + (locFilter === key ? ' on' : '') + '" onclick="setLocFilter(\'' + key + '\')">' + label + '</span>';
+  $('locChips').innerHTML = !active.length ? '' : chip('', 'All ' + active.length) +
+    locations.filter(l => !l.retired || n(l.code)).map(l => chip(l.code, esc(l.code) + ' ' + n(l.code))).join('') +
+    (out ? chip('OUT', 'Out on hire ' + out) : '') + (none ? chip('NONE', 'No location ' + none) : '') +
+    (active.some(mcNeeded) ? chip('MCHECK', '🔧 Needs M-check ' + active.filter(mcNeeded).length) : '') +
+    (active.some(unavailableWhy) ? chip('UNAV', '⛔ Unavailable ' + active.filter(unavailableWhy).length) : '');
+  renderLocList(active);
+}
+// ── unavailable for hire (v3.7) ──────────────────────────────
+// Out of service (an open P5, since it went to P5), or kept at a storage location and not out on hire.
+function unavailableWhy(a) {
+  if (isDisposed(a)) return null;
+  const u = unavailable.find(x => x.bike === a.id);
+  if (u) { const d = Math.floor((Date.now() - u.since) / 864e5); return { since: u.since, text: 'Out of service since ' + new Date(u.since).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) + ' (' + (d < 1 ? 'today' : d + ' day' + (d === 1 ? '' : 's')) + ')' }; }
+  const l = locations.find(x => x.code === a.location);
+  if (l && l.kind === 'storage' && !outWith[a.id]) return { text: 'In storage at ' + l.code };
+  return null;
+}
+// ── M-checks ─────────────────────────────────────────────────
+// Needs one if it has never passed, or hasn't passed since it last went out. Bikes on hire aren't counted yet.
+const mcNeeded = a => !isDisposed(a) && !outWith[a.id] && (!mcheckMap[a.id] || mcheckMap[a.id].due);
+function mcHTML(a) {
+  if (isDisposed(a) || outWith[a.id]) return '';
+  const m = mcheckMap[a.id];
+  if (m && !m.due && m.last) return '<span class="mc-ok">✓ M-checked ' + fmtWhen(m.last.at) + ' · ' + esc(m.last.by) + '</span>';
+  return '<span class="mc-due-tag">🔧 Needs M-check</span>';
+}
+let checkCache = { id: null, list: [] };
+async function loadChecks(id) {
+  $('fChecks').textContent = '';
+  try {
+    const { checks } = await Ops.get({ view: 'mchecks', bike: id });
+    if (editingId !== id) return;
+    checkCache = { id, list: checks };
+    $('fChecks').innerHTML = !checks.length ? '<div class="field-label" style="margin:12px 0 4px">M-check history</div><div class="h-row">No M-checks recorded yet.</div>' :
+      '<div class="mc-hist-head"><span class="field-label" style="margin:0">M-check history</span><input type="date" id="mcDate" aria-label="Show checks on a date" onchange="renderChecks()"></div><div id="mcRows"></div>';
+    if (checks.length) renderChecks();
+  } catch {}
+}
+// All checks on the chosen day, or the latest 10.
+function renderChecks() {
+  const d = $('mcDate') ? $('mcDate').value : '';
+  const dayOf = t => { const x = new Date(t); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+  const list = d ? checkCache.list.filter(c => dayOf(c.at) === d) : checkCache.list.slice(0, 10);
+  $('mcRows').innerHTML = !list.length ? '<div class="h-row">No M-check on ' + d.split('-').reverse().join('/') + '.</div>' : list.map(c =>
+    '<div class="h-row' + (c.result === 'fail' ? ' fail' : '') + '"' + (c.voided ? ' style="opacity:.6"' : '') + '>' + fmtWhen(c.at) + ' · ' + (c.result === 'pass' ? (c.voided ? '<s>✓ pass</s> voided' : '✓ pass') : '✗ fault: ' + esc(c.failed.map(k => MCheck.label(k)).join(', '))) +
+    ' · ' + esc(c.by) + (c.odometer != null ? ' · ' + c.odometer + ' km' : '') + (c.note ? ' · ' + esc(c.note) : '') +
+    (c.voided ? Correct.line(c.voided, 'sign-off voided') : c.result === 'pass' ? ' <a href="#" onclick="voidCheck(\'' + c.id + '\');return false" style="color:var(--danger-text);font-size:11px">Void</a>' : '') + '</div>').join('') +
+    (!d && checkCache.list.length > 10 ? '<div class="h-row">…and ' + (checkCache.list.length - 10) + ' earlier. Pick a date above, or download the M-check log.</div>' : '');
+}
+// v3.9: an M-check signed off wrongly is voided (kept in the history, marked); the bike is due again.
+function voidCheck(checkId) {
+  const c = checkCache.list.find(x => x.id === checkId); if (!c) return;
+  Correct.ask({ title: 'Void ' + c.bike + '\'s M-check?', sub: 'For a sign-off made wrongly (the wrong bike, or a check that wasn\'t done). The bike becomes due for an M-check again.', action: 'Void the sign-off',
+    onOK: async (by, reason) => { try { await Ops.act('voidMcheck', { checkId, by, reason }); showToast('Voided: ' + c.bike + ' is due an M-check', 'success'); loadChecks(c.bike); pull(); } catch (e) { showToast(e.message, 'error'); } } });
+}
+// v3.9: bikes removed from the register, which can be put back if removed by mistake.
+async function showRemoved() {
+  try {
+    const { entries } = await Ops.view('assetHistory');
+    const restored = new Set(entries.filter(e => e.how === 'restored').map(e => e.bike + '|' + e.at));
+    const list = entries.filter(e => e.how === 'removed' && !e.error && !assets.some(a => a.id === e.bike)).slice(0, 30);
+    $('removedList').innerHTML = !list.length ? '<div class="h-row">No bikes removed since v3.6.</div>' : list.map(e =>
+      '<div class="h-row" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><b>' + esc(e.bike) + '</b> ' + esc([e.snapshot && e.snapshot.brand, e.snapshot && e.snapshot.model].filter(Boolean).join(' ')) + ' · removed ' + fmtWhen(e.at) + (e.by ? ' · ' + esc(e.by) : '') + '</span>' +
+      '<button class="btn btn-secondary" style="width:auto;margin:0;padding:7px 12px;font-size:12px" onclick="restoreBike(\'' + esc(e.bike) + '\')">↶ Restore</button></div>').join('');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+function restoreBike(id) {
+  Correct.ask({ title: 'Put ' + id + ' back in the register?', sub: 'For a bike removed by mistake. It comes back with its details as they were, and past days count it as in the fleet all along.', action: 'Restore the bike',
+    onOK: async (by, reason) => { try { acceptFleet((await Ops.act('restoreAsset', { id, by, reason })).view); showToast('↶ ' + id + ' restored', 'success'); showRemoved(); } catch (e) { showToast(e.message, 'error'); } } });
+}
+async function exportChecks() {
+  try {
+    const { checks } = await Ops.view('mchecks');
+    if (!checks.length) { showToast('No M-checks recorded yet', 'warning'); return; }
+    const cv = Ops.csvCell;
+    const rows = [['Date and Time', 'Bike ID', 'Brand', 'Model', 'Result', 'Signed Off By', 'Faults', 'Notes', 'Odometer (km)', 'Issue Logged', 'Voided'].map(cv).join(',')];
+    [...checks].reverse().forEach(c => { const a = assets.find(x => x.id === c.bike) || {};
+      rows.push([fmtWhen(c.at), c.bike, a.brand || '', a.model || '', c.result === 'pass' ? 'Pass' : 'Fault', c.by, c.failed.map(k => MCheck.label(k)).join('; '), c.note, c.odometer != null ? c.odometer : '', c.issueId ? 'Yes' : '', c.voided ? fmtWhen(c.voided.at) + ' ' + (c.voided.by || '') + ': ' + (c.voided.reason || (c.voided.undo ? 'undone' : '')) : ''].map(cv).join(',')); });
+    Ops.downloadText(rows.join('\r\n'), Brand.file() + '-M-check-Log-' + Ops.todayISO() + '.csv', 'text/csv;charset=utf-8');
+    showToast('CSV downloaded ✓', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+function setLocFilter(k) { locFilter = locFilter === k ? '' : k; renderList(); }
+function locOptions(current, allowBlank) {
+  return (allowBlank ? '<option value="">No location</option>' : '') + locations.filter(l => !l.retired || l.code === current)
+    .map(l => '<option value="' + esc(l.code) + '"' + (l.code === current ? ' selected' : '') + '>' + esc(l.code) + ' · ' + esc(l.name) + '</option>').join('');
+}
+function renderLocList(active) {
+  $('locList').innerHTML = locations.map(l => {
+    const here = active.filter(a => a.location === l.code && !outWith[a.id]).length;
+    const away = active.filter(a => a.location === l.code && outWith[a.id]).length;
+    const canHire = l.kind === 'hire' || l.kind === 'delivery';
+    return '<div class="loc-row' + (l.retired ? ' retired' : '') + '"><span><span class="code">' + esc(l.code) + '</span>' + esc(l.name) +
+      '<span class="kind">' + esc(KIND_LABEL[l.kind] || l.kind || 'storage') + '</span>' +
+      ' <span class="count-line" style="display:inline">· ' + here + ' bike' + (here === 1 ? '' : 's') + (away ? ', ' + away + ' out on hire from here' : '') + (l.retired ? ' · retired' : '') + '</span>' +
+      (canHire ? '<span class="words">Rezdy product words: ' + ((l.match || []).length ? esc(l.match.join(', ')) : '<i>none: bookings won\'t match</i>') + '</span>' : '') + '</span>' +
+      '<span><select aria-label="Kind" onchange="setLocKind(\'' + esc(l.code) + '\', this.value)">' + Object.entries(KIND_LABEL).map(([k, v]) => '<option value="' + k + '"' + (k === l.kind ? ' selected' : '') + '>' + v + '</option>').join('') + '</select> ' +
+      (canHire ? '<button onclick="editLocWords(\'' + esc(l.code) + '\')">Words</button> ' : '') +
+      '<button onclick="renameLocation(\'' + esc(l.code) + '\')">Rename</button> ' +
+      '<button onclick="retireLocation(\'' + esc(l.code) + '\',' + (l.retired ? 'false' : 'true') + ')">' + (l.retired ? 'Restore' : 'Retire') + '</button></span></div>';
+  }).join('');
+}
+async function locAction(action, payload, okMsg) {
+  // Edits to a location send the version shown, so a change made meanwhile isn't overwritten.
+  if (action === 'updateLocation' || action === 'renameLocation') payload = { ...payload, baseV: (locations.find(l => l.code === payload.code) || {}).v || 0 };
+  try { const res = await Ops.act(action, payload); acceptFleet(res.view); showToast(okMsg, 'success'); return true; }
+  catch (e) { showToast(e.message, 'error'); return false; }
+}
+const KIND_LABEL = { hire: 'Hire site', delivery: 'Home delivery', collection: 'Collection point', storage: 'Storage only' };
+async function addLocation() {
+  const code = $('newLocCode').value.trim().toUpperCase(), name = $('newLocName').value.trim();
+  if (!code || !name) { showToast('Enter a code and a name', 'warning'); return; }
+  if (await locAction('addLocation', { code, name, kind: $('newLocKind').value, match: $('newLocWords').value }, '✓ ' + code + ' added')) {
+    $('newLocCode').value = ''; $('newLocName').value = ''; $('newLocWords').value = '';
+  }
+}
+function setLocKind(code, kind) { locAction('updateLocation', { code, kind }, '✓ ' + code + ' is now ' + KIND_LABEL[kind].toLowerCase()); }
+// The words that identify this location in a Rezdy product name, separated by commas.
+function editLocWords(code) {
+  const l = locations.find(x => x.code === code); if (!l) return;
+  const v = prompt('Words that identify ' + l.name + ' in a Rezdy product name, separated by commas.\nA booking whose product contains any of them is put at ' + code + '.', (l.match || []).join(', '));
+  if (v !== null) locAction('updateLocation', { code, match: v }, '✓ Saved');
+}
+function renameLocation(code) {
+  const name = prompt('New name for ' + code + ':', locName(code));
+  if (name && name.trim()) locAction('renameLocation', { code, name: name.trim() }, '✓ Renamed');
+}
+function retireLocation(code, retire) {
+  if (retire && !confirm('Retire ' + code + '? It disappears from the pick lists. Its history is kept, and you can restore it later.')) return;
+  locAction('retireLocation', { code, retired: retire }, retire ? code + ' retired' : '✓ ' + code + ' restored');
+}
+
+// Location on the bike's record: changing it asks for initials, and the bike's recent moves show underneath.
+let formLoc = '';
+function locChanged() {
+  $('fByField').style.display = editingId && $('fLoc').value !== formLoc ? '' : 'none';
+  if (!$('fBy').value && window.Team) $('fBy').value = Team.initials();
+}
+const HOW = { hand: 'by hand', scan: 'scanned', 'check-in': 'checked in', import: 'spreadsheet', 'drop-off': 'dropped off' };
+async function loadHistory(id) {
+  $('fHist').textContent = '';
+  try {
+    const { moves } = await Ops.get({ view: 'moves', bike: id });
+    if (editingId !== id) return;
+    $('fHist').innerHTML = !moves.length ? '' : '<div class="field-label" style="margin:0 0 4px">Location history</div>' + moves.slice(0, 10).map(m =>
+      '<div class="h-row">' + fmtWhen(m.at) + ' · ' + esc(m.from || '—') + ' → ' + esc(m.to) + ' · ' + esc(HOW[m.how] || m.how) +
+      (m.by ? ' · ' + esc(m.by) : '') + (m.note ? ' · ' + esc(m.note) : '') + '</div>').join('') +
+      (moves.length > 10 ? '<div class="h-row">…and ' + (moves.length - 10) + ' earlier. Download the move history for all of them.</div>' : '');
+  } catch {}
+}
+// The register's change history for this bike (v3.6): what changed, from what, when and by whom.
+const FIELD = { serial: 'serial', keyNumber: 'key', brand: 'brand', model: 'model', size: 'size', purchaseDate: 'purchase date', purchasePrice: 'purchase price',
+  disposalDate: 'disposal date', salePrice: 'sale price', disposalNote: 'disposal note', id: 'ID' };
+const changeText = e => e.how === 'added' ? 'added' + (e.via === 'import' ? ' from a spreadsheet' : '') : e.how === 'removed' ? 'removed from the register' + (e.error ? ' (in error)' : '') :
+  e.how === 'restored' ? 'restored to the register (removed in error)' + (e.reason ? ': ' + e.reason : '') :
+  e.how === 'renamed' ? 'ID changed from ' + e.changes.id[0] + ' to ' + e.changes.id[1] :
+  Object.entries(e.changes || {}).map(([f, [a, b]]) => (FIELD[f] || f) + ' ' + (a === '' ? 'set to ' + b : b === '' ? a + ' cleared' : a + ' → ' + b)).join('; ') + (e.via === 'import' ? ' (spreadsheet)' : '');
+async function loadChanges(id) {
+  try {
+    const { entries } = await Ops.get({ view: 'assetHistory', bike: id });
+    if (editingId !== id || !entries.length) return;
+    $('fChanges').innerHTML = '<div class="field-label" style="margin:8px 0 4px">Register changes</div>' + entries.slice(0, 10).map(e =>
+      '<div class="h-row">' + fmtWhen(e.at) + ' · ' + esc(changeText(e)) + (e.by ? ' · ' + esc(e.by) : '') + '</div>').join('') +
+      (entries.length > 10 ? '<div class="h-row">…and ' + (entries.length - 10) + ' earlier. Download the register changes for all of them.</div>' : '');
+  } catch {}
+}
+async function exportChanges() {
+  try {
+    const { entries, startedAt } = await Ops.view('assetHistory');
+    if (!entries.length) { showToast('No register changes recorded yet', 'warning'); return; }
+    const rows = [['Date and time', 'Bike', 'Change', 'Field', 'From', 'To', 'By']];
+    for (const e of [...entries].reverse()) {
+      const ch = Object.entries(e.changes || {});
+      if (e.how === 'edited' || (e.how === 'added' && ch.length)) for (const [f, [a, b]] of ch) rows.push([fmtWhen(e.at), e.bike, e.how + (e.via === 'import' ? ' (spreadsheet)' : ''), FIELD[f] || f, a, b, e.by || '']);
+      else rows.push([fmtWhen(e.at), e.bike, changeText(e), '', '', '', e.by || '']);
+    }
+    XlsxLite.download(Brand.file() + '-Register-Changes-' + Ops.todayISO() + '.xlsx', [{ name: 'Register changes', widths: [16, 10, 26, 16, 20, 20, 6], rows },
+      { name: 'Notes', widths: [80], rows: [['Every change to the asset register since ' + (startedAt ? new Date(startedAt).toLocaleDateString('en-AU') : 'v3.6') + '. Location changes are in the move history.']] }]);
+    showToast('Excel downloaded ✓', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+const fmtWhen = t => { const d = new Date(t); return d.toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }); };
+
+// Scan-to-move.
+let moveQr = null, moveScanning = false, moveLast = '', moveLastAt = 0;
+function openMove() {
+  $('mLoc').innerHTML = locOptions($('mLoc').value || 'VIC', false);
+  $('moveList').innerHTML = '';
+  if (!$('mBy').value && window.Team) $('mBy').value = Team.initials();
+  $('moveModal').classList.add('open');
+}
+async function closeMove() { await stopMoveScan(); $('moveModal').classList.remove('open'); }
+// Typed IDs don't need leading zeros: "12" finds EB-012 when it's the only match.
+function moveTyped() {
+  const v = $('mCode').value.trim(); if (!v) return;
+  const m = window.BikeIds ? BikeIds.match(v, assets.map(a => a.id)) : { id: v };
+  if (m.ambiguous) { showToast(v + ' could be ' + m.ambiguous.slice(0, 4).join(', ') + '. Type more of the ID.', 'warning'); return; }
+  moveOne(m.id); $('mCode').value = '';
+}
+async function moveOne(code) {
+  code = String(code).trim().toUpperCase();
+  const to = $('mLoc').value, by = $('mBy').value.trim().toUpperCase();
+  if (!to) { showToast('Choose where the bikes are going', 'warning'); return; }
+  if (!by) { showToast('Enter your initials', 'warning'); $('mBy').focus(); return; }
+  const line = document.createElement('div'); line.className = 'dim'; line.textContent = code + ' …';
+  $('moveList').prepend(line);
+  try {
+    const res = await Ops.act('moveAssets', { location: to, by, codes: [code] });
+    acceptFleet(res.view);
+    const r = res.results[0];
+    if (r.result === 'moved') { line.className = 'ok'; line.textContent = '✓ ' + code + '  ' + (r.from || '—') + ' → ' + to; doFlash('var(--accent)'); }
+    else if (r.result === 'already-there') { line.className = 'dim'; line.textContent = code + ' already at ' + to; }
+    else { line.className = 'warn'; line.textContent = '⚠ ' + code + ' isn\'t in the register'; doFlash('var(--warn)'); }
+  } catch (e) { line.className = 'warn'; line.textContent = '✗ ' + code + ' not moved: ' + (e.message); }
+}
+async function toggleMoveScan() { moveScanning ? stopMoveScan() : startMoveScan(); }
+async function startMoveScan() {
+  if (typeof Html5Qrcode === 'undefined') { showToast('Scanner loading — try again', 'error'); return; }
+  if (!$('mBy').value.trim()) { showToast('Enter your initials first', 'warning'); $('mBy').focus(); return; }
+  try {
+    moveScanning = true; $('moveScanBtn').textContent = 'Stop scanning';
+    moveQr = OpsScan.make('reader-move');
+    await moveQr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.333 },
+      code => { const now = Date.now(); if (code !== moveLast || now - moveLastAt > 2000) { moveLast = code; moveLastAt = now; moveOne(code); } }, () => {});
+  } catch (e) { stopMoveScan(); alert(OpsScan.cameraError(e)); }
+}
+async function stopMoveScan() {
+  moveScanning = false; $('moveScanBtn').textContent = '📷 Scan bikes';
+  if (moveQr) { try { if (moveQr.isScanning) await moveQr.stop(); moveQr.clear(); } catch {} moveQr = null; }
+  $('reader-move').innerHTML = '';
+}
+
+async function exportMoves() {
+  try {
+    const { moves } = await Ops.view('moves');
+    if (!moves.length) { showToast('No moves recorded yet', 'warning'); return; }
+    const cv = Ops.csvCell;
+    const rows = [['Date and Time', 'Bike ID', 'From', 'To', 'How', 'By', 'Note'].map(cv).join(',')];
+    [...moves].reverse().forEach(m => rows.push([fmtWhen(m.at), m.bike, m.from, m.to, HOW[m.how] || m.how, m.by, m.note].map(cv).join(',')));
+    Ops.downloadText(rows.join('\r\n'), Brand.file() + '-Move-History-' + Ops.todayISO() + '.csv', 'text/csv;charset=utf-8');
+    showToast('CSV downloaded ✓', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function renderStats() {
+  const fleet = assets.filter(a => !isDisposed(a));
+  const dated = fleet.filter(a => a.purchaseDate).map(a => Ops.ageMonths(a.purchaseDate));
+  const priced = fleet.filter(a => a.purchasePrice != null);
+  const cost = priced.reduce((s, a) => s + a.purchasePrice, 0);
+  const avg = dated.length ? Math.round(dated.reduce((s, x) => s + x, 0) / dated.length) : null;
+  const band = (lo, hi) => dated.filter(m => m >= lo && m < hi).length;
+  $('statsContent').innerHTML = !assets.length ? '<div class="count-line">Nothing to show yet.</div>' : `
+    <div class="stat-row"><span class="stat-label">Average age</span><span class="stat-value">${avg == null ? '—' : avg + ' months'}</span></div>
+    <div class="stat-row"><span class="stat-label">Under 2 years</span><span class="stat-value">${band(0, 24)}</span></div>
+    <div class="stat-row"><span class="stat-label">2–4 years</span><span class="stat-value">${band(24, 48)}</span></div>
+    <div class="stat-row"><span class="stat-label">4 years or more</span><span class="stat-value">${band(48, 1e9)}</span></div>
+    ${fleet.length - dated.length ? `<div class="stat-row"><span class="stat-label">No purchase date</span><span class="stat-value">${fleet.length - dated.length}</span></div>` : ''}
+    <div class="stat-row"><span class="stat-label">Purchase cost of the fleet</span><span class="stat-value">${priced.length ? fmtMoney(Math.round(cost)) : '—'}</span></div>
+    ${fleet.length - priced.length && priced.length ? `<div class="stat-row"><span class="stat-label">No purchase price</span><span class="stat-value">${fleet.length - priced.length}</span></div>` : ''}`;
+}
+
+function fillSuggestions() {
+  const opts = vals => [...new Set(vals.filter(Boolean))].sort().map(v => '<option value="' + esc(v) + '">').join('');
+  $('brandList').innerHTML = opts(assets.map(a => a.brand));
+  $('modelList').innerHTML = opts(assets.map(a => a.model));
+  $('sizeList').innerHTML = opts(assets.map(a => a.size));
+}
+
+// ── add / edit ────────────────────────────────────────────────
+function openForm(id) {
+  const a = id ? assets.find(x => x.id === id) : null;
+  editingId = a ? a.id : null;
+  $('formTitle').textContent = a ? 'Edit ' + a.id : 'Add bike';
+  $('formSub').textContent = a ? (a.serial ? 'Changes apply to everyone straight away' : 'Serial number missing — add it to save changes') : 'Bike ID and serial number are required';
+  $('fId').value = a ? a.id : '';
+  $('fSerial').value = a ? a.serial || '' : '';
+  $('fKey').value = a ? a.keyNumber || '' : '';
+  $('fBrand').value = a ? a.brand || '' : '';
+  $('fModel').value = a ? a.model || '' : '';
+  $('fSize').value = a ? a.size || '' : '';
+  $('fDate').value = a ? a.purchaseDate || '' : '';
+  $('fDate').max = Ops.todayISO();
+  $('fPrice').value = a && a.purchasePrice != null ? a.purchasePrice : '';
+  $('fDispDate').value = a ? a.disposalDate || '' : '';
+  $('fDispDate').max = Ops.todayISO();
+  $('fSale').value = a && a.salePrice != null ? a.salePrice : '';
+  $('fDispNote').value = a ? a.disposalNote || '' : '';
+  formLoc = a ? a.location || '' : '';
+  $('fLoc').innerHTML = locOptions(a ? formLoc : (locFilter && locFilter.length <= 6 && locFilter !== 'OUT' && locFilter !== 'NONE' ? locFilter : 'VIC'), !!a && !formLoc);
+  $('fBy').value = ''; $('fByField').style.display = 'none';
+  $('fHist').textContent = '';
+  $('fChanges').textContent = '';
+  $('fChecks').textContent = '';
+  if (a) { loadHistory(a.id); loadChanges(a.id); loadChecks(a.id); }
+  $('histLink').style.display = a ? 'block' : 'none';
+  if (a) $('histLink').href = '/bike?id=' + encodeURIComponent(a.id);
+  $('editButtons').style.display = a ? '' : 'none';
+  $('saveBtn').textContent = a ? 'Save changes' : 'Save bike';
+  showAge();
+  $('formModal').classList.add('open');
+  if (!a) setTimeout(() => $('fId').focus(), 300);
+  else if (!a.serial) setTimeout(() => $('fSerial').focus(), 300);
+}
+function closeForm() { stopScan(); $('formModal').classList.remove('open'); editingId = null; }
+function showAge() { const d = $('fDate').value; $('ageNote').textContent = d ? 'Age today: ' + Ops.ageLabel(d) : ''; }
+
+async function saveAsset() {
+  if (busy) return;
+  const asset = {
+    id: $('fId').value.trim().toUpperCase(), serial: $('fSerial').value.trim().toUpperCase(), keyNumber: $('fKey').value.trim(), brand: $('fBrand').value.trim(),
+    model: $('fModel').value.trim(), size: $('fSize').value.trim(), purchaseDate: $('fDate').value,
+    purchasePrice: $('fPrice').value.trim(), disposalDate: $('fDispDate').value, salePrice: $('fSale').value.trim(), disposalNote: $('fDispNote').value.trim(),
+    location: $('fLoc').value,
+  };
+  const by = $('fBy').value.trim().toUpperCase();
+  if (editingId && asset.location !== formLoc && !by) { showToast('Enter your initials to move the bike', 'warning'); $('fBy').focus(); return; }
+  if (!asset.id) { showToast('Enter or scan the bike ID', 'warning'); $('fId').focus(); return; }
+  if (!asset.serial) { showToast('Enter or scan the serial number', 'warning'); $('fSerial').focus(); return; }
+  const clash = assets.find(x => x.id !== editingId && serialKey(x.serial) === serialKey(asset.serial));
+  if (clash) { showToast('Serial already recorded against ' + clash.id, 'error'); $('fSerial').focus(); return; }
+  if ((asset.salePrice || asset.disposalNote) && !asset.disposalDate) { showToast('Add the disposal date', 'warning'); $('fDispDate').focus(); return; }
+  const wasDisposed = editingId && (assets.find(x => x.id === editingId) || {}).disposalDate;
+  if (asset.disposalDate && !wasDisposed && !confirm('Mark ' + asset.id + ' as disposed on ' + asset.disposalDate.split('-').reverse().join('/') + '?\n\nIt will drop out of the active fleet, and the Group Scanner will warn if it is scanned.')) return;
+  busy = true; $('saveBtn').disabled = true; $('saveBtn').textContent = 'Saving…';
+  try {
+    const who = by || (window.Team ? Team.initials() : '');
+    const res = await Ops.act('saveAsset', editingId ? { asset, originalId: editingId, by: who, baseV: (assets.find(x => x.id === editingId) || {}).v || 0 } : { asset, isNew: true, by: who });
+    acceptFleet(res.view);
+    doFlash('var(--accent)');
+    showToast('✓ ' + asset.id + (res.result === 'added' ? ' added' : ' updated'), 'success');
+    closeForm();
+  } catch (e) {
+    showToast(e.code === 'changed' ? e.message + '. The register now shows the latest version: open it again to make your change.' : e.message, 'error');
+    if (e.code === 'changed') { closeForm(); try { acceptFleet(await Ops.view('fleet')); } catch {} }
+    if (e.code === 'exists' && !editingId) {
+      const id = asset.id;
+      setTimeout(() => { if (confirm(id + ' is already registered. Open it to edit?')) openForm(id); }, 300);
+    }
+  } finally {
+    busy = false; $('saveBtn').disabled = false; $('saveBtn').textContent = editingId ? 'Save changes' : 'Save bike';
+  }
+}
+
+async function deleteAsset() {
+  if (!editingId || busy) return;
+  const open = openIssuesFor(editingId).length;
+  if (!confirm('Remove ' + editingId + ' from the register?' + (open ? '\n\nIt still has ' + open + ' open issue(s); those stay in the Issue Reporter.' : '') + '\n\nOnly use this for a bike entered by mistake. For a bike that has been sold or written off, enter a disposal date instead, so its record and prices are kept.')) return;
+  busy = true;
+  try {
+    const id = editingId;
+    const res = await Ops.act('deleteAsset', { id, by: window.Team ? Team.initials() : '' });
+    acceptFleet(res.view);
+    showToast(id + ' removed', 'warning');
+    closeForm();
+  } catch (e) { showToast(e.message, 'error'); }
+  finally { busy = false; }
+}
+
+// ── barcode scanning inside the form ──────────────────────────
+// The same camera fills either the bike ID or the serial number, depending on which 📷 was tapped.
+let qr = null, scanning = null;
+async function toggleScan(target) {
+  const was = scanning;
+  if (scanning) await stopScan();
+  if (was !== target) startScan(target);
+}
+async function startScan(target) {
+  if (typeof Html5Qrcode === 'undefined') { showToast('Scanner loading — try again', 'error'); return; }
+  try {
+    $('reader-asset').style.display = 'block'; scanning = target; $('scanBtn-' + target).textContent = '✕';
+    qr = OpsScan.make('reader-asset');
+    await qr.start({ facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.333, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] },
+      code => {
+        const id = String(code).trim().toUpperCase();
+        stopScan(); doFlash('var(--accent)');
+        if (target === 'serial') {
+          const clash = assets.find(x => x.id !== editingId && serialKey(x.serial) === serialKey(id));
+          $('fSerial').value = id;
+          if (clash) showToast('⚠ Serial already recorded against ' + clash.id, 'warning');
+          else { showToast('✓ Serial ' + id, 'success'); if (!$('fKey').value) $('fKey').focus(); }
+          return;
+        }
+        if (!editingId && assets.some(a => a.id === id)) {
+          showToast(id + ' is already registered — opening it', 'warning');
+          openForm(id);
+        } else { $('fId').value = id; (!$('fSerial').value ? $('fSerial') : $('fKey')).focus(); showToast('✓ ' + id, 'success'); }
+      }, () => {});
+  } catch (e) {
+    stopScan();
+    alert(OpsScan.cameraError(e));
+  }
+}
+async function stopScan() {
+  scanning = null; $('scanBtn-id').textContent = '📷'; $('scanBtn-serial').textContent = '📷';
+  if (qr) { try { if (qr.isScanning) await qr.stop(); qr.clear(); } catch {} qr = null; }
+  $('reader-asset').style.display = 'none'; $('reader-asset').innerHTML = '';
+}
+
+// ── spreadsheet in / out ──────────────────────────────────────
+const COLS = ['Bike ID', 'Serial Number', 'Location', 'Key Number', 'Brand', 'Model', 'Frame or Rim Size', 'Purchase Date', 'Purchase Price', 'Disposal Date', 'Sale Price', 'Disposal Note'];
+function exportCSV() {
+  if (!assets.length) { showToast('No bikes registered yet', 'warning'); return; }
+  const cv = Ops.csvCell;
+  const rows = [[...COLS, 'Status', 'Age (months)', 'Open Issues', 'Last M-check', 'M-checked By', 'M-check Due'].map(cv).join(',')];
+  const num = v => v == null ? '' : v;
+  assets.forEach(a => rows.push([a.id, a.serial, outWith[a.id] ? (a.location || '') + ' (out with ' + outWith[a.id] + ')' : a.location || '', a.keyNumber, a.brand, a.model, a.size, a.purchaseDate, num(a.purchasePrice), a.disposalDate, num(a.salePrice), a.disposalNote,
+    isDisposed(a) ? 'Disposed' : 'Active', a.purchaseDate && !isDisposed(a) ? Ops.ageMonths(a.purchaseDate) : '', openIssuesFor(a.id).length,
+    mcheckMap[a.id] && mcheckMap[a.id].last ? fmtWhen(mcheckMap[a.id].last.at) + (mcheckMap[a.id].last.result === 'fail' ? ' (fault)' : '') : '',
+    mcheckMap[a.id] && mcheckMap[a.id].last ? mcheckMap[a.id].last.by : '', isDisposed(a) ? '' : (!mcheckMap[a.id] || mcheckMap[a.id].due) ? 'Yes' : 'No'].map(cv).join(',')));
+  Ops.downloadText(rows.join('\r\n'), Brand.file() + '-Asset-Register-' + Ops.todayISO() + '.csv', 'text/csv;charset=utf-8');
+  showToast('CSV downloaded ✓', 'success');
+}
+function downloadTemplate() {
+  const cv = Ops.csvCell;
+  Ops.downloadText([COLS.map(cv).join(','), ['EB-001', 'WTU123456', 'VIC', '12', 'Brand', 'Model', 'M', '15/09/2024', '3499', '', '', ''].map(cv).join(',')].join('\r\n'),
+    Brand.file() + '-Asset-Register-template.csv', 'text/csv;charset=utf-8');
+}
+
+function parseCSVRows(text) {
+  const rows = []; let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; } else if (ch === '"') q = false; else field += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(field); field = ''; }
+    else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else if (ch !== '\r') field += ch;
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim()));
+}
+// Accepts 2024-09-15, 15/09/2024 or 15/9/24 (Australian day-first, as Excel saves it here).
+function normDate(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
+  m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+  if (m) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return y + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0'); }
+  return v; // let the server report it as invalid, with the row number
+}
+async function importCSV(file) {
+  if (!file) return;
+  const out = $('importResult'); out.className = 'import-result'; out.textContent = 'Reading…';
+  try {
+    const rows = parseCSVRows(await file.text());
+    if (rows.length < 2) throw new Error('The file has no rows under the headings');
+    const h = rows[0].map(x => x.trim().toLowerCase());
+    // Columns are matched most-specific first, and each heading is used once, so "Frame Serial"
+    // isn't read as the size and "Purchase Price" isn't read as the purchase date.
+    const used = new Set();
+    const find = pred => { const i = h.findIndex((x, n) => !used.has(n) && pred(x)); if (i >= 0) used.add(i); return i; };
+    const has = (x, ...w) => w.some(n => x.includes(n));
+    const iSerial = find(x => has(x, 'serial') || x === 's/n' || x === 'sn');
+    const iPrice = find(x => has(x, 'purchase', 'cost') && has(x, 'price', 'cost', '$'));
+    const iDispDate = find(x => has(x, 'dispos') && has(x, 'date'));
+    const iDispNote = find(x => has(x, 'dispos') && has(x, 'note', 'method', 'reason'));
+    const iSale = find(x => has(x, 'sale', 'sold'));
+    const iLoc = find(x => has(x, 'location') && !has(x, 'dispos'));
+    let iDate = find(x => has(x, 'purchase') && has(x, 'date'));
+    if (iDate < 0) iDate = find(x => x === 'date' || x === 'purchased');
+    const iId = find(x => x === 'bike id' || x === 'id' || has(x, 'bike id', 'barcode'));
+    const iKey = find(x => has(x, 'key')), iBrand = find(x => has(x, 'brand', 'make')), iModel = find(x => has(x, 'model')),
+          iSize = find(x => has(x, 'size', 'frame', 'rim'));
+    if (iId < 0) throw new Error('Could not find a "Bike ID" column');
+    if (iSerial < 0) throw new Error('Could not find a "Serial Number" column');
+    // A column that isn't in the file is left out entirely, so existing values for it are kept.
+    const get = (r, i) => i >= 0 ? (r[i] || '').trim() : undefined;
+    const list = rows.slice(1).filter(r => get(r, iId)).map(r => {
+      const d = get(r, iDate), dd = get(r, iDispDate);
+      return { id: get(r, iId), serial: get(r, iSerial), keyNumber: get(r, iKey), brand: get(r, iBrand), model: get(r, iModel), size: get(r, iSize),
+        purchaseDate: d === undefined ? undefined : normDate(d), purchasePrice: get(r, iPrice),
+        disposalDate: dd === undefined ? undefined : normDate(dd), salePrice: get(r, iSale), disposalNote: get(r, iDispNote),
+        location: iLoc >= 0 ? (get(r, iLoc) || '').replace(/\s*\(out with .*\)$/, '') : undefined };
+    });
+    if (!list.length) throw new Error('No rows have a Bike ID');
+    const missing = list.map((a, n) => a.serial ? 0 : n + 2).filter(Boolean);
+    if (missing.length) throw new Error('Serial number missing on row' + (missing.length > 1 ? 's ' : ' ') + missing.slice(0, 8).join(', ') + (missing.length > 8 ? '…' : ''));
+    if (!confirm('Load ' + list.length + ' bike(s) from ' + file.name + '?\n\nBikes already in the register will be updated with the spreadsheet values. Columns not in the file are left as they are.')) { out.textContent = ''; return; }
+    const res = await Ops.act('importAssets', { assets: list, by: window.Team ? Team.initials() : '' });
+    acceptFleet(res.view);
+    out.className = 'import-result ok';
+    out.textContent = '✓ ' + res.added + ' added, ' + res.updated + ' updated';
+  } catch (e) {
+    out.className = 'import-result err';
+    out.textContent = '✗ ' + e.message + ' — nothing was changed';
+  }
+}
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimer);
+  const el = $('toast'); el.textContent = msg; el.className = 'toast show ' + type;
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+function doFlash(color) { const el = $('flash'); el.style.background = color; el.style.opacity = '0.22'; setTimeout(() => el.style.opacity = '0', 130); }
+
+renderList();
+pull(true).catch(() => {}).finally(() => poll.start());
+</script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SA eBikes · Operations Tools v3.10 · Site Checklists</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#fbfaf7;              /* warm off-white */
+  --bg-elev:#ffffff;         /* pure white for cards */
+  --bg-soft:#f2efe8;         /* cream */
+  --border:#e4ded2;          /* warm beige border */
+  --border-strong:#d4cdbd;
+  --text:#1f2428;            /* near-black, softer than #000 */
+  --text-dim:#5a6269;
+  --text-muted:#8b8f93;
+  /* softer leafy green */
+  /* darker for readable text on light bg */
+  --warn:#d48a2f;            /* warm amber, darker for contrast on light */
+  --warn-soft:rgba(212,138,47,.1);
+  --warn-text:#8a5a1a;
+  --danger:#c94a45;          /* coral red, darker for contrast */
+  --danger-soft:rgba(201,74,69,.08);
+  --danger-text:#9a3530;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100dvh}
+.app{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100dvh;max-width:480px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(251,250,247,0.96);backdrop-filter:blur(14px)}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--text)}.logo span{color:var(--accent-dark)}
+.logo-sub{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .3s}
+.sync-dot.synced{background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.sync-dot.syncing{background:var(--warn);animation:blink .8s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;font-family:'Syne',sans-serif;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:18px 16px 60px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px}
+#reader-report, #reader-resolve{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;min-height:200px}
+#reader-report video, #reader-resolve video{border-radius:12px}
+#reader-report img, #reader-resolve img{display:none!important}
+.camera-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);min-height:140px;text-align:center;line-height:1.6;font-size:13px;padding:20px;border-radius:14px;border:2px solid var(--border);margin-bottom:14px;background:var(--bg-soft)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:active{background:var(--accent-dark);transform:scale(.98)}
+.btn-stop{background:var(--bg-soft);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-secondary{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.btn-danger{background:transparent;color:var(--danger-text);border:1.5px solid var(--danger)}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-success{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.manual-entry{display:flex;gap:8px;margin-top:10px}
+.manual-input{flex:1;padding:13px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color .15s}
+.manual-input:focus{border-color:var(--accent)}.manual-input::placeholder{color:var(--text-muted)}
+
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.field-input,.field-textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;outline:none;transition:border-color .15s}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted)}
+.field-mono{font-family:'DM Mono',monospace}
+
+.priority-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px}
+.priority-btn{padding:10px 4px;border-radius:10px;background:var(--bg-elev);border:1.5px solid var(--border);color:var(--text-dim);cursor:pointer;text-align:center;font-family:'Syne',sans-serif;transition:all .15s}
+.priority-btn .num{font-size:18px;font-weight:800;line-height:1}
+.priority-btn .lbl{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.priority-btn.active[data-p="1"]{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.priority-btn.active[data-p="2"]{border-color:#9bb845;color:#5a7a22;background:rgba(155,184,69,.12)}
+.priority-btn.active[data-p="3"]{border-color:#d48a2f;color:#8a5a1a;background:rgba(212,138,47,.12)}
+.priority-btn.active[data-p="4"]{border-color:#c96a5c;color:#9a3530;background:rgba(201,106,92,.14)}
+.priority-btn.active[data-p="5"]{border-color:#b23a35;color:#8a2a26;background:rgba(178,58,53,.14)}
+.priority-help{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5}
+.priority-help strong{color:var(--danger-text)}
+
+.matched-card{background:var(--warn-soft);border:1.5px solid rgba(212,138,47,.3);border-radius:14px;padding:14px;margin-bottom:16px}
+.matched-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.matched-id{font-family:'DM Mono',monospace;font-size:15px;color:var(--warn-text);font-weight:600;letter-spacing:1px}
+.matched-issue{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--text)}
+.matched-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+.matched-notes{margin-top:6px;font-size:12px;color:var(--text);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:8px;border:1px solid rgba(212,138,47,.2)}
+
+.ts-note{background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+
+.count-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:8px}
+
+.issue-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s;animation:slideIn .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.issue-item:active{border-color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.issue-item.p5{border-left:4px solid #b23a35}
+.issue-item.p4{border-left:4px solid #c96a5c}
+.issue-item.p3{border-left:4px solid #d48a2f}
+.issue-item.p2{border-left:4px solid #9bb845}
+.issue-item.p1{border-left:4px solid var(--accent)}
+.issue-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.issue-bike{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent-text);font-weight:600;letter-spacing:1px}
+.issue-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.status{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.8px;white-space:nowrap}
+.status.open{background:var(--danger-soft);color:var(--danger-text);border:1px solid rgba(201,74,69,.25)}
+.status.resolved{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.prio{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.prio.p5{background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.prio.p4{background:rgba(201,106,92,.1);color:#9a3530;border:1px solid rgba(201,106,92,.25)}
+.prio.p3{background:rgba(212,138,47,.1);color:#8a5a1a;border:1px solid rgba(212,138,47,.25)}
+.prio.p2{background:rgba(155,184,69,.1);color:#5a7a22;border:1px solid rgba(155,184,69,.25)}
+.prio.p1{background:var(--accent-soft);color:var(--accent-text);border:1px solid var(--accent-line)}
+.issue-desc{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.issue-foot{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.notes-indicator{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:6px}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:38px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:13px;line-height:1.7}
+
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:6px 13px;border-radius:100px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-chip.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.stat-label{font-size:14px;color:var(--text-dim)}.stat-value{font-family:'DM Mono',monospace;font-size:15px;color:var(--text)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.export-section{margin-top:24px}
+.export-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.export-card-title{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.export-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;font-family:'DM Mono',monospace}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,25,30,.55);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-elev);border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 20px}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.detail-section{margin-bottom:18px}
+.detail-section-label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-body{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:10px}
+.detail-meta-row{display:flex;gap:10px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.detail-meta-label{color:var(--text-muted);min-width:95px}
+.detail-meta-val{color:var(--text)}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 20px;border-radius:100px;font-size:13px;border:1px solid var(--border);z-index:5000;white-space:nowrap;font-family:'DM Mono',monospace;background:var(--bg-elev);transition:all .2s;pointer-events:none;opacity:0;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--accent);color:var(--accent-text)}
+.toast.warning{border-color:var(--warn);color:var(--warn-text)}
+.toast.error{border-color:var(--danger);color:var(--danger-text)}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .05s}
+
+/* Hardened navigation */
+.back-home{font-family:'Syne',sans-serif;display:inline-flex;align-items:center;gap:6px;margin:0 0 16px 0;padding:9px 12px;border-radius:999px;background:var(--bg-elev,#fff);border:1.5px solid var(--border,#ddd);color:var(--text,#222);text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.back-home:active{transform:scale(.98)}
+.staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
+
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.mc-ok{font-family:'DM Mono',monospace;color:var(--accent-text)}
+.mc-due-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--warn-text)}
+.mc-hist-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 4px}
+.mc-hist-head input{font:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)}
+.h-row.fail{color:var(--danger-text)}
+.loc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.loc-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.loc-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.loc-tag{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent-text)}
+.loc-tag.out{color:var(--warn-text)}
+.hist{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.6}
+.hist .h-row{border-bottom:1px solid var(--border);padding:3px 0}
+.move-list{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px}
+.move-list div{padding:5px 0;border-bottom:1px solid var(--border)}
+.move-list .ok{color:var(--accent-text)}.move-list .warn{color:var(--warn-text)}.move-list .dim{color:var(--text-muted)}
+.loc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.loc-row .code{font-family:'DM Mono',monospace;font-weight:700;margin-right:6px}
+.loc-row.retired{opacity:.5}
+.loc-row button{font-size:11px;padding:5px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--text-dim)}
+.toolbar .manual-input{margin:0}
+.add-btn{padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap}
+.add-btn:active{background:var(--accent-dark)}
+.count-line{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px}
+.asset{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.asset:active{border-color:var(--accent)}
+.asset-id{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--accent-text);letter-spacing:1px}
+.asset-key{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim);text-align:right;align-self:center}
+.asset-what{font-size:14px;font-weight:700;color:var(--text)}
+.asset-meta{grid-column:1 / -1;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.asset-flags{grid-column:1 / -1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.flag-open{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px solid rgba(212,138,47,.3)}
+.flag-disposed{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border-strong)}
+.asset.disposed{opacity:.6}
+.form-group-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.flag-noserial{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--warn-soft);color:var(--warn-text);border:1px dashed rgba(212,138,47,.5)}
+.req{color:var(--danger-text)}
+.count-line .warn{color:var(--warn-text);cursor:pointer;text-decoration:underline}
+.flag-oos{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(178,58,53,.1);color:#8a2a26;border:1px solid rgba(178,58,53,.3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.id-row{display:flex;gap:8px}
+.id-row .field-input{flex:1}
+.scan-mini{padding:0 14px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-soft);font-size:18px;cursor:pointer}
+#reader-asset{border-radius:14px;overflow:hidden;border:2px solid var(--border);margin-bottom:14px;background:#222;display:none}
+#reader-asset img{display:none!important}
+.age-note{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:6px}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row .btn{flex:1}
+.import-result{font-family:'DM Mono',monospace;font-size:12px;margin-top:10px;line-height:1.5}
+.import-result.ok{color:var(--accent-text)}.import-result.err{color:var(--danger-text)}
+.file-btn{position:relative;overflow:hidden;display:block;text-align:center}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* ── site checklists ── */
+.site-row{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.site-row select{flex:1;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;padding:10px 12px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-elev);color:var(--text)}
+.status-card{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:13px}
+.status-card .row{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.status-card .ok{color:var(--accent-text);font-weight:700}
+.status-card .no{color:var(--warn-text);font-weight:700}
+.ck-item{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:8px}
+.ck-item.done{border-color:var(--accent-glow)}
+.ck-item.problem{border-color:rgba(201,74,69,.55);background:var(--danger-soft)}
+.ck-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.ck-label{font-size:14px;line-height:1.4}
+.ck-label .must{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--danger-text);margin-left:4px;white-space:nowrap}
+.ck-tog{display:flex;gap:4px;flex:none}
+.ck-tog button{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:7px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-muted);cursor:pointer}
+.ck-tog button.ok.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.ck-tog button.bad.on{border-color:var(--danger);background:rgba(201,74,69,.1);color:var(--danger-text)}
+.ck-tog button:disabled{opacity:.35}
+.ck-note{width:100%;margin-top:8px;font-family:'Syne',sans-serif;font-size:13px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev)}
+.ck-progress{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin:4px 0 10px}
+.hist-rec{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13px;cursor:pointer}
+.hist-rec .head{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.hist-rec .meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+.hist-rec .items{display:none;margin-top:8px;font-size:12px;line-height:1.6}
+.hist-rec.open .items{display:block}
+.hist-rec .bad{color:var(--danger-text)}
+.date-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.date-row input{font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev)}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/help#site-checklists" style="margin-left:6px">? Help</a>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo">SA <span>eBikes</span></div>
+      <div class="logo-sub">Site Checklists</div>
+    </div>
+    <div class="sync-indicator" style="cursor:pointer" onclick="pull(true)">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">connecting…</span>
+    </div>
+  </header>
+  <div class="tabs">
+    <button class="tab active" id="tab-open" onclick="setTab('open')">☀️ Opening</button>
+    <button class="tab" id="tab-close" onclick="setTab('close')">🌙 Closing</button>
+    <button class="tab" id="tab-history" onclick="setTab('history')">📋 History</button>
+  </div>
+  <main>
+    <div class="site-row"><span class="section-label" style="margin:0">Site</span><select id="site" onchange="setSite(this.value)"></select></div>
+    <div class="status-card" id="status"></div>
+    <div id="view-list"></div>
+    <div id="view-history" style="display:none">
+      <div class="date-row"><input type="date" id="histDate" onchange="renderHistory()"><button class="btn btn-secondary" style="width:auto;padding:8px 12px;font-size:12px" onclick="$('histDate').value='';renderHistory()">All</button></div>
+      <div id="histList"></div>
+      <button class="btn btn-secondary" style="margin-top:12px" onclick="exportCSV()">Download CSV (all sites)</button>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
+<script>
+// SA eBikes Operations Tools v3.10: opening and closing checklists, one pair per site.
+const $ = id => document.getElementById(id);
+const esc = Ops.esc;
+const todayLocal = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+let V = null, tab = 'open', site = localStorage.getItem('saeb-phone-location') || 'VIC', busy = false;
+const answers = { open: {}, close: {} }; // this session's ticks, per site+kind: { key: { done, note } }
+let recordId = { open: null, close: null };
+
+function setSync(status, label) { $('syncDot').className = 'sync-dot ' + status; $('syncLabel').textContent = label; }
+let toastTimer;
+function showToast(msg, type) { const t = $('toast'); t.textContent = msg; t.className = 'toast show ' + (type || ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 3200); }
+
+async function pull(interactive) {
+  try {
+    V = await Ops.get({ view: 'sitechecks', date: todayLocal() });
+    if (!V.sites[site]) site = Object.keys(V.sites)[0] || 'VIC';
+    setSync('synced', 'live ✓');
+    render();
+  } catch (e) { setSync('error', e.status === 0 ? 'offline' : 'error'); if (interactive) showToast(e.message, 'error'); }
+}
+function setTab(t) { tab = t; ['open', 'close', 'history'].forEach(x => $('tab-' + x).classList.toggle('active', x === t)); render(); }
+function setSite(v) { site = v; render(); }
+const ansFor = kind => (answers[kind][site] = answers[kind][site] || {});
+const fmtTime = t => new Date(t).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+
+function render() {
+  if (!V) return;
+  $('site').innerHTML = V.locations.map(l => '<option value="' + esc(l.code) + '"' + (l.code === site ? ' selected' : '') + '>' + esc(l.code) + ' · ' + esc(l.name) + '</option>').join('');
+  const st = V.sites[site] || {};
+  const line = (label, r) => '<div class="row"><span>' + label + '</span>' + (r ? '<span class="ok">✓ ' + fmtTime(r.at) + ' · ' + esc(r.by) + (r.problems ? ' · ' + r.problems + ' problem' + (r.problems > 1 ? 's' : '') : '') + '</span>' : '<span class="no">Not yet today</span>') + '</div>';
+  $('status').innerHTML = st.skip && !st.open
+    ? '<div class="row"><span>Today</span><span class="ok">⏸ Not required · ' + fmtTime(st.skip.at) + ' · ' + esc(st.skip.by) + (st.skip.note ? ' · ' + esc(st.skip.note) : '') + '</span></div>'
+    : line('Opened', st.open) + line('Closed', st.close);
+  $('view-list').style.display = tab === 'history' ? 'none' : '';
+  $('view-history').style.display = tab === 'history' ? '' : 'none';
+  if (tab === 'history') { renderHistory(); return; }
+  const list = (st.lists || {})[tab] || [];
+  const ans = ansFor(tab);
+  const answered = list.filter(i => ans[i.key] && ans[i.key].done !== undefined).length;
+  const already = st[tab];
+  // "Not required today": offered on the Opening tab until the site is opened or marked.
+  const skipHTML = tab !== 'open' || st.open || st.skip ? '' :
+    '<div class="ck-item" id="skipBox"><div class="ck-top"><div class="ck-label">Not opening ' + esc(site) + ' today?</div>' +
+    '<div class="ck-tog"><button class="ok" onclick="$(\'skipForm\').style.display=\'\'">⏸ Not required today</button></div></div>' +
+    '<div id="skipForm" style="display:none"><input class="ck-note" id="skipReason" maxlength="300" placeholder="Reason (optional), e.g. no bookings, weather">' +
+    '<button class="btn btn-secondary" style="margin-top:8px" onclick="markNotRequired()">Confirm: ' + esc(site) + ' not required today</button></div></div>';
+  $('view-list').innerHTML = skipHTML +
+    (already ? '<div class="ck-progress">Already signed off today at ' + fmtTime(already.at) + ' by ' + esc(already.by) + '. Signing off again adds a second record.</div>' : '') +
+    '<div class="ck-progress">' + answered + ' of ' + list.length + ' answered · items marked <span style="color:var(--danger-text);font-weight:700">MUST</span> have to be done</div>' +
+    list.map(i => {
+      const a = ans[i.key] || {};
+      const cls = a.done === true ? ' done' : a.done === false ? ' problem' : '';
+      return '<div class="ck-item' + cls + '"><div class="ck-top"><div class="ck-label">' + esc(i.label) + (i.mandatory ? '<span class="must">MUST</span>' : '') + '</div>' +
+        '<div class="ck-tog"><button class="ok' + (a.done === true ? ' on' : '') + '" onclick="answer(\'' + i.key + '\',true)">✓ Done</button>' +
+        '<button class="bad' + (a.done === false ? ' on' : '') + '"' + (i.mandatory ? ' disabled title="This one must be done"' : '') + ' onclick="answer(\'' + i.key + '\',false)">✗ Problem</button></div></div>' +
+        (a.done === false ? '<input class="ck-note" maxlength="300" placeholder="What\'s the problem?" value="' + esc(a.note || '') + '" oninput="noteFor(\'' + i.key + '\',this.value)">' : '') + '</div>';
+    }).join('') +
+    '<textarea class="ck-note" id="ckNote" rows="2" maxlength="1000" placeholder="Anything else to note (optional)"></textarea>' +
+    '<input class="ck-note" id="ckBy" maxlength="5" placeholder="Your initials" style="text-transform:uppercase;max-width:150px;' + (window.Team && Team.initials() ? 'display:none' : '') + '">' +
+    '<button class="btn btn-primary" id="signBtn" style="margin-top:12px" onclick="signOff()">' + (tab === 'open' ? '☀️ Sign off opening' : '🌙 Sign off closing') + '</button>';
+}
+function answer(key, done) { const a = ansFor(tab); a[key] = { ...(a[key] || {}), done }; render(); }
+function noteFor(key, v) { const a = ansFor(tab); a[key] = { ...(a[key] || {}), note: v }; }
+
+async function signOff() {
+  if (busy) return;
+  const st = V.sites[site], list = st.lists[tab], ans = ansFor(tab);
+  const missing = list.filter(i => !ans[i.key] || ans[i.key].done === undefined);
+  if (missing.length) { showToast('Answer every item first: ' + missing.length + ' to go', 'warning'); return; }
+  const mustNot = list.find(i => i.mandatory && !ans[i.key].done);
+  if (mustNot) { showToast('"' + mustNot.label + '" must be done', 'error'); return; }
+  const by = (window.Team && Team.initials()) || $('ckBy').value.trim().toUpperCase();
+  if (!by) { $('ckBy').style.display = ''; $('ckBy').focus(); showToast('Enter your initials to sign off', 'warning'); return; }
+  const problems = list.filter(i => !ans[i.key].done).length;
+  recordId[tab] = recordId[tab] || Ops.uid();
+  busy = true; $('signBtn').disabled = true; $('signBtn').textContent = 'Saving…';
+  try {
+    await Ops.act('siteCheck', { record: { id: recordId[tab], site, kind: tab, date: todayLocal(), note: $('ckNote').value.trim(),
+      items: list.map(i => ({ key: i.key, done: ans[i.key].done, note: ans[i.key].note || '' })) }, by });
+    showToast('✓ ' + site + (tab === 'open' ? ' opened' : ' closed') + (problems ? ' · ' + problems + ' problem' + (problems > 1 ? 's' : '') + ' noted' : ''), problems ? 'warning' : 'success');
+    answers[tab][site] = {}; recordId[tab] = null;
+    await pull();
+  } catch (e) { showToast(e.message, 'error'); }
+  finally { busy = false; const b = $('signBtn'); if (b) b.disabled = false; }
+}
+
+const skipId = {};
+// One record covers the day: no opening or closing is expected, and the reminders stop.
+async function markNotRequired() {
+  if (busy) return;
+  const by = (window.Team && Team.initials()) || ($('ckBy') && $('ckBy').value.trim().toUpperCase());
+  if (!by) { $('ckBy').style.display = ''; $('ckBy').focus(); showToast('Enter your initials first', 'warning'); return; }
+  busy = true;
+  try {
+    // One id per site and day, so tapping it again can't record it twice.
+    skipId[site] = skipId[site] || Ops.uid();
+    await Ops.act('siteCheck', { record: { id: skipId[site], site, kind: 'skip', date: todayLocal(), note: $('skipReason').value.trim() }, by });
+    skipId[site] = null;
+    showToast('⏸ ' + site + ' marked not required today', 'success');
+    await pull();
+  } catch (e) { showToast(e.message, 'error'); }
+  finally { busy = false; }
+}
+
+// ── history ──
+let LOG = [];
+async function renderHistory() {
+  $('histList').innerHTML = '<div class="ck-progress">Loading…</div>';
+  try { LOG = (await Ops.get({ view: 'sitechecklog', site })).records; } catch (e) { $('histList').innerHTML = '<div class="ck-progress">' + esc(e.message) + '</div>'; return; }
+  const d = $('histDate').value;
+  const list = d ? LOG.filter(r => r.date === d) : LOG.slice(0, 30);
+  $('histList').innerHTML = !list.length ? '<div class="empty-state"><div class="icon">📋</div><p>' + (d ? 'Nothing signed off at ' + esc(site) + ' on ' + d.split('-').reverse().join('/') + '.' : 'No checklists signed off at ' + esc(site) + ' yet.') + '</p></div>' :
+    list.map(r => '<div class="hist-rec" onclick="this.classList.toggle(\'open\')"><div class="head"><span>' + (r.kind === 'open' ? '☀️ Opening' : r.kind === 'skip' ? '⏸ Not required' : '🌙 Closing') + ' · ' + r.date.split('-').reverse().join('/') + '</span><span>' + esc(r.by) + '</span></div>' +
+      '<div class="meta">' + fmtTime(r.at) + (r.kind === 'skip' ? (r.note ? ' · ' + esc(r.note) : '') : r.problems ? ' · <span class="bad">' + r.problems + ' problem' + (r.problems > 1 ? 's' : '') + '</span>' : ' · all done') + '</div>' +
+      '<div class="items">' + r.items.map(i => (i.done ? '✓ ' : '<span class="bad">✗ ') + esc(i.label) + (i.note ? ': ' + esc(i.note) : '') + (i.done ? '' : '</span>')).join('<br>') + (r.note ? '<br><i>' + esc(r.note) + '</i>' : '') + '</div></div>').join('') +
+    (!d && LOG.length > 30 ? '<div class="ck-progress">Showing the latest 30. Pick a date, or download the CSV for all of them.</div>' : '');
+}
+async function exportCSV() {
+  try {
+    const { records } = await Ops.get({ view: 'sitechecklog', site: '' });
+    if (!records.length) { showToast('Nothing signed off yet', 'warning'); return; }
+    const cv = Ops.csvCell;
+    const rows = [['Date', 'Time', 'Site', 'Checklist', 'Signed Off By', 'Item', 'Mandatory', 'Result', 'Note', 'Checklist Note'].map(cv).join(',')];
+    [...records].reverse().forEach(r => r.kind === 'skip'
+      ? rows.push([r.date.split('-').reverse().join('/'), fmtTime(r.at), r.site, 'Not required', r.by, '', '', '', '', r.note].map(cv).join(','))
+      : r.items.forEach(i => rows.push([r.date.split('-').reverse().join('/'), fmtTime(r.at), r.site, r.kind === 'open' ? 'Opening' : 'Closing', r.by, i.label, i.mandatory ? 'Yes' : '', i.done ? 'Done' : 'Problem', i.note, r.note].map(cv).join(','))));
+    Ops.downloadText(rows.join('\r\n'), Brand.file() + '-Site-Checklists-' + todayLocal() + '.csv', 'text/csv;charset=utf-8');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// Open on the checklist that's due: closing after 2 pm if today's opening is done.
+pull().then(() => { const st = V && V.sites[site]; if (st && st.open && !st.close && new Date().getHours() >= 14) setTab('close'); });
+</script>
+</body>
+</html>
