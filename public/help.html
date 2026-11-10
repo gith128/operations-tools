@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.10 · Help &amp; SOPs</title>
+<title>SA eBikes · Operations Tools v3.11 · Help &amp; SOPs</title>
 <!-- Built from docs/manual.md by tools/build_help.py. Edit the manual, not this file. -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -45,7 +45,7 @@ tr:last-child td{border-bottom:none}
 <header><div class="head-row">
   <div class="head-top">
     <div><div class="logo">SA <span>eBikes</span></div>
-    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.10</div></div>
+    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.11</div></div>
     <a class="back-home" href="/">← Tools</a>
   </div>
   <nav class="toc"><a href="#getting-started">Getting started</a><a href="#load-manifest">Load Manifest</a><a href="#todays-contacts">Today&#x27;s Contacts</a><a href="#group-scanner">Group Scanner</a><a href="#issue-reporter">Issue Reporter</a><a href="#asset-register">Asset Register</a><a href="#site-checklists">Site Checklists</a><a href="#roster">Roster</a><a href="#lost-property">Lost Property</a><a href="#show-qr">Show QR</a><a href="#dashboard">Dashboard</a><a href="#fleet-report">Fleet report</a><a href="#admin">Admin</a><a href="#daily-routine-and-troubleshooting">Daily routine and troubleshooting</a></nav>
@@ -794,8 +794,16 @@ tr:last-child td{border-bottom:none}
 <p>Admin holds the roster, the team list, backups, archived days and settings. Open it from the <strong>⚙️ Admin</strong> link at the top of Load Manifest; <strong>← Back to Load Manifest</strong> returns there. It is for the owner or manager, not day-to-day staff.</p>
 <p>Admin has two areas, switched with the buttons at the top: <strong>⚙️ Admin</strong> for running things day to day, and <strong>🎨 Configuration</strong> for setting up the business. They share the admin password, and each has links to its groups at the top.</p>
 <ul>
-<li><strong>⚙️ Admin</strong> (/admin): <strong>People</strong> (Team, Roster), <strong>Day to day</strong> (Rezdy products), <strong>Fleet</strong> (Fleet history and dashboard data) and <strong>Data and safety</strong> (Backups, Archived days).</li>
+<li><strong>⚙️ Admin</strong> (/admin): <strong>People</strong> (Messages to staff, Team, Roster), <strong>Day to day</strong> (Rezdy products), <strong>Fleet</strong> (Fleet history and dashboard data) and <strong>Data and safety</strong> (Backups, Archived days).</li>
 <li><strong>🎨 Configuration</strong> (/config): <strong>Business</strong>, <strong>Guests and sites</strong> (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), <strong>Maintenance</strong> (Fault types), <strong>Home screen</strong>, and <strong>Configuration file</strong>.</li>
+</ul>
+<h3 id="messages-to-staff">Messages to staff</h3>
+<ul>
+<li><strong>Sending one:</strong> in <strong>Admin → Messages to staff</strong>, write a heading and, if needed, a message. Choose <strong>Normal</strong> (amber) or <strong>Urgent</strong> (red), and tap <strong>Send to all phones</strong>.</li>
+<li><strong>On the phones:</strong> the message shows at the top of the home screen, above the tools, until each person taps <strong>Got it</strong>. Who "each person" is comes from <strong>👤</strong> on the phone; the first tap on Got it asks, if no one is set. With two or more messages waiting, the urgent one shows first, then the rest in turn.</li>
+<li><strong>Urgent messages</strong> also stay at the top of the Group Scanner until you withdraw them, whether or not people have tapped Got it. Use urgent for something that must not be missed while issuing bikes, such as a bike not to hire.</li>
+<li><strong>Who has seen it</strong> is shown only here in Admin, under each message: who tapped Got it and when, and who hasn't yet. Staff don't see this.</li>
+<li><strong>Withdraw</strong> takes a message off every phone, including the Group Scanner. Messages drop off by themselves after 30 days. Admin keeps the last 90 days.</li>
 </ul>
 <h3 id="configuration">Configuration</h3>
 <ul>

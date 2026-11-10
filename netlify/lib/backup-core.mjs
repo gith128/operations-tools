@@ -1,4 +1,4 @@
-// SA eBikes Operations Tools v3.10 — backups, restore and keeping previews apart from live data.
+// SA eBikes Operations Tools v3.11 — backups, restore and keeping previews apart from live data.
 //
 // Snapshots live in their own store, apart from the live data. Each snapshot is one file per
 // section under snap/<id>/, plus a manifest written LAST. The manifest holds each section's
@@ -21,6 +21,7 @@ export const LIVE_FILES = {
   'assets': d => (d.assets || []).length,
   'moves': d => (d.moves || []).length,
   'team': d => (d.members || []).length,
+  'broadcasts': d => (d.items || []).length,
   'mchecks': d => (d.checks || []).length,
   'mcheck-status': d => Object.keys(d.bikes || {}).length,
   'site-checklists': d => Object.keys(d.sites || {}).length,
@@ -44,7 +45,7 @@ export const SECTIONS = [
   { id: 'mchecks', label: 'M-checks', files: ['mchecks', 'mcheck-status'] },
   { id: 'sites', label: 'Site checklist sign-offs', files: ['site-checks'] },
   { id: 'lost', label: 'Lost property, with photos', files: ['lost-property'], photos: true },
-  { id: 'team', label: 'Team', files: ['team'] },
+  { id: 'team', label: 'Team and messages to staff', files: ['team', 'broadcasts'] },
   { id: 'roster', label: 'Roster', files: ['roster'] },
   // v3.10: everything on Admin's Configuration page, restorable on its own.
   { id: 'config', label: 'Configuration: business, fault types, home screen, QR codes, messages and site checklists', files: ['app-settings', 'qr-links', 'message-templates', 'site-checklists'] },

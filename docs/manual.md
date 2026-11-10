@@ -687,8 +687,16 @@ Admin holds the roster, the team list, backups, archived days and settings. Open
 
 Admin has two areas, switched with the buttons at the top: **⚙️ Admin** for running things day to day, and **🎨 Configuration** for setting up the business. They share the admin password, and each has links to its groups at the top.
 
-- **⚙️ Admin** (/admin): **People** (Team, Roster), **Day to day** (Rezdy products), **Fleet** (Fleet history and dashboard data) and **Data and safety** (Backups, Archived days).
+- **⚙️ Admin** (/admin): **People** (Messages to staff, Team, Roster), **Day to day** (Rezdy products), **Fleet** (Fleet history and dashboard data) and **Data and safety** (Backups, Archived days).
 - **🎨 Configuration** (/config): **Business**, **Guests and sites** (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), **Maintenance** (Fault types), **Home screen**, and **Configuration file**.
+
+### Messages to staff
+
+- **Sending one:** in **Admin → Messages to staff**, write a heading and, if needed, a message. Choose **Normal** (amber) or **Urgent** (red), and tap **Send to all phones**.
+- **On the phones:** the message shows at the top of the home screen, above the tools, until each person taps **Got it**. Who "each person" is comes from **👤** on the phone; the first tap on Got it asks, if no one is set. With two or more messages waiting, the urgent one shows first, then the rest in turn.
+- **Urgent messages** also stay at the top of the Group Scanner until you withdraw them, whether or not people have tapped Got it. Use urgent for something that must not be missed while issuing bikes, such as a bike not to hire.
+- **Who has seen it** is shown only here in Admin, under each message: who tapped Got it and when, and who hasn't yet. Staff don't see this.
+- **Withdraw** takes a message off every phone, including the Group Scanner. Messages drop off by themselves after 30 days. Admin keeps the last 90 days.
 
 ### Configuration
 

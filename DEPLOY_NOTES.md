@@ -1,3 +1,52 @@
+# SA eBikes Operations Tools v3.11
+
+## New in v3.11: messages to staff, and the home screen front page
+
+**Before deploying:** **Admin → Backups → Back up now**.
+
+**Rolling back is safe.** Publish the v3.10 deploy in Netlify. Messages are kept in a new file, `broadcasts`, which v3.10 ignores; they simply stop showing until v3.11 is back.
+
+**To deploy:** unzip into an empty folder, then drag the **5 folders and 4 files** inside `sa-ebikes-ops-v3.11` onto GitHub's upload page (not "choose your files", which loses the folders). Or use GitHub Desktop.
+
+### Messages to staff
+
+- **Sending (Admin → Messages to staff, Admin only):** a heading (up to 80 characters), an optional message (600), and a kind, **Normal** (amber) or **Urgent** (red). Sending asks to confirm.
+- **The home screen front page:** below the logo, name and tagline, the newest message not yet seen by whoever is using the phone (from 👤) shows above the tools.
+    - **Order:** an urgent one first, and "1 of 2" when more are waiting.
+    - **Got it** records that person and the time, and the next message shows. If no one is set on the phone, the first tap asks who.
+    - **Offline:** the phone remembers the tap too, so the card goes even without signal, and the server catches up.
+    - **No message waiting:** the front page is the logo and the tools, as before.
+- **Urgent messages** also show as a red banner at the top of the Group Scanner, whoever has tapped Got it, until withdrawn. They come with the scanner's regular refresh, with no extra request.
+- **Who has seen each message** is only in Admin: who tapped Got it and when, and which current team members haven't yet. Staff never see counts or names; their phones only receive their own "seen" state.
+- **Withdraw** takes a message off every phone. Messages also drop off after 30 days. Admin lists the last 90 days, and up to 200 are kept.
+- **In the backups,** messages are part of the "Team and messages to staff" restore part.
+- **Server:** actions `postBroadcast` and `withdrawBroadcast` (Admin), and `ackBroadcast` (staff). The views are `settings` (with `me` it returns this person's messages), `scanner` (with `urgent`) and `broadcastsAdmin` (Admin).
+- **The home screen** now loads `ops-plus.js` for **👤** (who's using this phone), shown at the top right.
+
+### Fixes carried in from v3.10.1
+
+- **Backup counts no longer say "undefined"** for the roster, Rezdy products, settings, fleet records, register changes and messages. They now read "12 shifts", "3 Rezdy products", "10 fault types" and so on.
+- **The backup taken before loading a configuration file** is listed as **Before loading a configuration**.
+
+### Tests and checks
+
+- **Tests:** 109 (106 before, plus 3 in `tests/broadcast.test.mjs`). They cover:
+    - a message shown until each person taps Got it, with no other people's state reaching the phone;
+    - Admin's seen and not-yet lists, leaving out retired staff;
+    - urgent messages on the scanner until withdrawn, whatever Got it says;
+    - withdrawal clearing both places;
+    - sending and withdrawing being Admin only, and bad kinds and empty headings refused;
+    - messages included in backups.
+- **Browser** (Chrome, phone size): checked
+    - sending a normal and an urgent message from Admin;
+    - the home screen showing the urgent one first ("1 of 2"), then the normal one, then nothing;
+    - the urgent banner on the Group Scanner, gone after Withdraw;
+    - Admin's "Seen by" and "Not yet" lists.
+
+**Manual:** a new "Messages to staff" section in Admin. Help and the Claude Doc are updated.
+
+**Files:** `netlify/lib/ops-core.mjs`, `netlify/lib/backup-core.mjs`, `public/index.html`, `public/scanner.html`, `public/admin.html`, `public/help.html`, the version label on every page, `docs/manual.md`, `tests/broadcast.test.mjs` (new), `package.json`, `package-lock.json`, `netlify.toml`, this file.
+
 # SA eBikes Operations Tools v3.10
 
 ## New in v3.10: Business settings, and Admin in two areas

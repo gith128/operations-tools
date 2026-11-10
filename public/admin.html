@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.10 · Admin</title>
+<title>SA eBikes · Operations Tools v3.11 · Admin</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -74,6 +74,8 @@ body[data-area="ops"] .area-switch a[data-to="ops"],body[data-area="config"] .ar
 .biz-preview .pbar{height:8px;border-radius:5px;margin-top:10px}
 .biz-preview .warn{font-size:12px;color:var(--danger-text,#b03a2e);margin-top:8px}
 .cfg-sec{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 0}
+.note{font-size:12px;color:var(--text-muted);line-height:1.5;margin:4px 0}
+.bc-meta{font-size:12px;color:var(--text-muted);font-family:'DM Mono',monospace;line-height:1.5}
 .adm-nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0}
 .adm-nav a{font-size:12px;font-weight:700;padding:6px 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);text-decoration:none}
 h2.grp{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin:22px 0 10px;scroll-margin-top:52px}
@@ -132,7 +134,7 @@ ul.snaps li{padding:10px 0;border-bottom:1px solid var(--border)}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.11</a>
 <a class="back-home" href="/manifest" style="margin-left:6px">← Back to Load Manifest</a>
 <a class="back-home" href="/help#admin" style="margin-left:6px">? Help</a>
 <div class="wrap">
@@ -145,6 +147,19 @@ ul.snaps li{padding:10px 0;border-bottom:1px solid var(--border)}
   <div class="adm-nav" data-area="config"><a href="#bizgrp">Business</a><a href="#guests">Guests and sites</a><a href="#maint">Maintenance</a><a href="#screens">Home screen</a><a href="#cfgfile">Configuration file</a></div>
 
   <h2 class="grp" id="people" data-area="ops">People</h2>
+
+  <div class="card" id="messages-staff" data-area="ops">
+    <h2>Messages to staff</h2>
+    <p>A message shows at the top of every phone's home screen until each person taps <b>Got it</b>. An <b>urgent</b> one is red, and also stays at the top of the Group Scanner until you withdraw it. Staff don't see who else has read it; you do, below. Messages drop off after 30 days, or when withdrawn.</p>
+    <div class="biz-grid" style="grid-template-columns:1fr">
+      <label>Heading<input id="bcTitle" maxlength="80" placeholder="Long weekend: all hands from 8:30"></label>
+      <label>Message (optional)<textarea id="bcBody" maxlength="600" rows="3" style="font:inherit;font-size:14px;padding:9px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text)"></textarea></label>
+      <label>Kind<select id="bcLevel"><option value="normal">Normal (amber)</option><option value="urgent">Urgent (red, also on the Group Scanner)</option></select></label>
+    </div>
+    <button class="btn btn-primary" onclick="bcSend()">Send to all phones</button>
+    <div class="out" id="bcOut"></div>
+    <div id="bcList" style="margin-top:12px"></div>
+  </div>
 
   <div class="card" id="team" data-area="ops">
     <h2>Team</h2>
@@ -354,12 +369,14 @@ function show(id, msg, ok) { const el = document.getElementById(id); el.textCont
 let BK = null, BK_ALL = false, BK_OPEN = null;
 const FILE_UNIT = { day: 'groups', issues: 'issues', assets: 'bikes', moves: 'moves', mchecks: 'M-checks', 'mcheck-status': 'bikes',
   'site-checklists': 'site lists', 'site-checks': 'sign-offs', 'qr-links': 'QR codes', 'message-templates': 'messages', team: 'people',
-  'daily-stats': 'days', 'lost-property': 'items' };
-const SNAP_REASON = { nightly: 'Nightly', manual: 'Back up now', 'pre-restore': 'Before a restore' };
+  'daily-stats': 'days', 'lost-property': 'items', roster: 'shifts', 'rezdy-products': 'Rezdy products', 'app-settings': 'fault types',
+  'fleet-days': 'days of fleet records', 'asset-history': 'register changes', broadcasts: 'messages to staff' };
+const SNAP_REASON = { nightly: 'Nightly', manual: 'Back up now', 'pre-restore': 'Before a restore', 'pre-config-load': 'Before loading a configuration' };
 const whenAdl = t => new Date(t).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 const mb = n => n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB';
 const ONE = { groups: 'group', issues: 'issue', bikes: 'bike', moves: 'move', 'M-checks': 'M-check', 'site lists': 'site list', 'sign-offs': 'sign-off',
-  'QR codes': 'QR code', messages: 'message', people: 'person', days: 'day', items: 'item', 'lost items': 'lost item', photos: 'photo', 'daily archives': 'daily archive', parts: 'part' };
+  'QR codes': 'QR code', messages: 'message', people: 'person', days: 'day', shifts: 'shift', 'Rezdy products': 'Rezdy product', 'fault types': 'fault type',
+  'days of fleet records': 'day of fleet records', 'register changes': 'register change', 'messages to staff': 'message to staff', items: 'item', 'lost items': 'lost item', photos: 'photo', 'daily archives': 'daily archive', parts: 'part' };
 const n = (count, unit) => count + ' ' + (count === 1 ? ONE[unit] || unit : unit);
 const ini = () => (window.Team ? Team.initials() : '') || '';
 
@@ -970,6 +987,37 @@ async function cfgLoad() {
     setTimeout(() => location.reload(), 1500);
   } catch (e) { show('cfgOut', '✗ ' + e.message, false); }
 }
+// ── messages to staff (v3.11) ──────────────────────────────────────────────
+const bcWhen = t => new Date(t).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+async function bcLoad() {
+  try {
+    const { items } = await Ops.view('broadcastsAdmin');
+    document.getElementById('bcList').innerHTML = !items.length ? '<p class="bc-meta">No messages in the last 90 days.</p>' : items.map(b =>
+      '<div style="border-top:1px solid var(--border);padding:10px 0' + (b.active ? '' : ';opacity:.6') + '">' +
+      '<div style="display:flex;justify-content:space-between;gap:8px"><b>' + (b.level === 'urgent' ? '⚠ ' : '📣 ') + Ops.esc(b.title) + '</b>' +
+      (b.active ? '<button class="btn" style="margin:0;padding:5px 10px;font-size:12px" onclick="bcWithdraw(\'' + b.id + '\')">Withdraw</button>' : '<span class="bc-meta">' + (b.withdrawnAt ? 'withdrawn ' + bcWhen(b.withdrawnAt) : 'expired') + '</span>') + '</div>' +
+      (b.body ? '<div style="font-size:13px;white-space:pre-line;margin:3px 0">' + Ops.esc(b.body) + '</div>' : '') +
+      '<div class="bc-meta">' + (b.level === 'urgent' ? 'Urgent · ' : '') + 'sent ' + bcWhen(b.at) + (b.by ? ' by ' + Ops.esc(b.by) : '') + '</div>' +
+      '<div class="bc-meta">Seen by ' + b.seen.length + ': ' + (b.seen.map(x => Ops.esc(x.name) + ' ' + new Date(x.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })).join(', ') || 'no one yet') +
+      (b.active && b.notSeen.length ? ' · Not yet: ' + b.notSeen.map(Ops.esc).join(', ') : '') + '</div></div>').join('');
+  } catch (e) { document.getElementById('bcList').textContent = e.message; }
+}
+async function bcSend() {
+  const title = document.getElementById('bcTitle').value.trim(), body = document.getElementById('bcBody').value.trim(), level = document.getElementById('bcLevel').value;
+  if (!title) { show('bcOut', 'Give the message a heading.', false); return; }
+  if (!confirm((level === 'urgent' ? 'Send this URGENT message' : 'Send this message') + ' to every phone?\n\n' + title)) return;
+  try {
+    await Ops.act('postBroadcast', { message: { id: 'bc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, body, level }, from: window.Team && Team.name() ? Team.name() : '' });
+    document.getElementById('bcTitle').value = ''; document.getElementById('bcBody').value = '';
+    show('bcOut', '✓ Sent. Phones show it the next time the home screen opens' + (level === 'urgent' ? ', and the Group Scanner within a minute.' : '.'), true);
+    bcLoad();
+  } catch (e) { show('bcOut', '✗ ' + e.message, false); }
+}
+async function bcWithdraw(id) {
+  if (!confirm('Withdraw this message from every phone?')) return;
+  try { await Ops.act('withdrawBroadcast', { id }); bcLoad(); } catch (e) { show('bcOut', '✗ ' + e.message, false); }
+}
+bcLoad();
 loadTeam();
 loadRoster();
 // ── fault types and the home screen (v3.7) ──────────────────────────────

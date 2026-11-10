@@ -1,4 +1,4 @@
-// SA eBikes Operations Tools v3.10 — server-side core.
+// SA eBikes Operations Tools v3.11 — server-side core.
 //
 // All data lives in one Netlify Blobs store, one file per area ("day" for today's groups and
 // contacts, "issues", "assets", "mchecks" and so on), plus "archive/<date>/<timestamp>" copies
@@ -22,7 +22,7 @@ import { KEY_SETTINGS, emptySettings, cleanFaultTypes, cleanHome, repeatFaults, 
 export { KEY_SETTINGS };
 
 // The version these tools report (checked against package.json by tools/check.mjs).
-export const APP_VERSION = '3.10';
+export const APP_VERSION = '3.11';
 
 export const KEY_DAY = 'day';
 // Every Rezdy product name seen in a manifest, with the location it matched (v3.4).
@@ -32,6 +32,7 @@ export const KEY_ISSUES = 'issues';
 export const KEY_ASSETS = 'assets';
 export const KEY_MOVES = 'moves';
 export const KEY_TEAM = 'team';
+export const KEY_BROADCASTS = 'broadcasts'; // v3.11: messages to staff, with who has seen each
 export const KEY_CHECKS = 'mchecks';       // every M-check ever done (read for history and exports)
 export const KEY_CHECK_STATUS = 'mcheck-status'; // per bike: last check, last pass, last hire (small, read often)
 export const KEY_SITE_LISTS = 'site-checklists';   // the opening and closing checklists for each site
@@ -227,6 +228,19 @@ export const emptyMoves = () => ({ rev: 0, updatedAt: 0, moves: [] });
 const MAX_MOVES = 20000;
 // The team list: names staff pick from on their phone. Retired members stay so old records still read.
 export const emptyTeam = () => ({ rev: 0, updatedAt: 0, members: [] });
+export const emptyBroadcasts = () => ({ rev: 0, updatedAt: 0, items: [] });
+// ── v3.11: messages to staff ────────────────────────────────────────────────
+// Sent from Admin, normal (amber) or urgent (red). A message shows on the home screen until each
+// person taps Got it; an urgent one also shows on the Group Scanner until it's withdrawn. Only
+// Admin sees who has seen each. Messages drop off after 30 days, or when withdrawn.
+const BROADCAST_DAYS = 30, MAX_BROADCASTS = 200;
+const activeBroadcast = (b, now = Date.now()) => !b.withdrawnAt && now - b.at < BROADCAST_DAYS * 864e5;
+// What a phone sees: the active messages, and whether this person has tapped Got it. No counts.
+function broadcastsFor(doc, me) {
+  return doc.items.filter(b => activeBroadcast(b)).sort((a, b) => b.at - a.at)
+    .map(b => ({ id: b.id, at: b.at, by: b.by, title: b.title, body: b.body, level: b.level, seen: !!(me && b.acks[me]) }));
+}
+const urgentFor = doc => doc.items.filter(b => activeBroadcast(b) && b.level === 'urgent').sort((a, b) => b.at - a.at).map(b => ({ id: b.id, at: b.at, title: b.title, body: b.body }));
 // M-checks are a safety record, so the log isn't capped.
 export const emptyChecks = () => ({ rev: 0, updatedAt: 0, checks: [] });
 export const emptyCheckStatus = () => ({ rev: 0, updatedAt: 0, bikes: {} });
@@ -465,8 +479,8 @@ export async function handleView(store, params, ctx = {}) {
   if (ADMIN_VIEWS.has(view)) needAdmin(ctx, { strict: view === 'teamAdmin' });
   if (view === 'backupStatus' || view === 'backups' || view === 'backupPart') return backupView(store, view, params, ctx);
   if (view === 'scanner') {
-    const [day, issues, assets, status] = await Promise.all([read(store, KEY_DAY, emptyDay), read(store, KEY_ISSUES, emptyIssues), read(store, KEY_ASSETS, emptyAssets), read(store, KEY_CHECK_STATUS, emptyCheckStatus)]);
-    return scannerView(day.data, issues.data, assets.data, status.data);
+    const [day, issues, assets, status, bc] = await Promise.all([read(store, KEY_DAY, emptyDay), read(store, KEY_ISSUES, emptyIssues), read(store, KEY_ASSETS, emptyAssets), read(store, KEY_CHECK_STATUS, emptyCheckStatus), read(store, KEY_BROADCASTS, emptyBroadcasts)]);
+    return { ...scannerView(day.data, issues.data, assets.data, status.data), urgent: urgentFor(bc.data) };
   }
   // M-check history: one bike (newest first), or every check for the export.
   if (view === 'mchecks') {
@@ -490,7 +504,17 @@ export async function handleView(store, params, ctx = {}) {
   // v3.7: fault types, the repeat window and the home screen, for every page that needs them.
   if (view === 'settings') {
     const st = (await read(store, KEY_SETTINGS, emptySettings)).data;
-    return { rev: st.rev, faultTypes: st.faultTypes, repeatDays: st.repeatDays, home: cleanHome(st.home.order, st.home.hidden), brand: brandView(st), business: businessOf(st), timeZone: TZ };
+    const bc = (await read(store, KEY_BROADCASTS, emptyBroadcasts)).data;
+    return { rev: st.rev, faultTypes: st.faultTypes, repeatDays: st.repeatDays, home: cleanHome(st.home.order, st.home.hidden), brand: brandView(st), business: businessOf(st), timeZone: TZ,
+      broadcasts: broadcastsFor(bc, String(params.get('me') || '')) };
+  }
+  // v3.11 (Admin): every message from the last 90 days, with who has seen it and who hasn't.
+  if (view === 'broadcastsAdmin') {
+    const [bc, team] = await Promise.all([read(store, KEY_BROADCASTS, emptyBroadcasts), read(store, KEY_TEAM, emptyTeam)]);
+    const people = team.data.members.filter(m => !m.retired).map(m => ({ id: m.id, name: m.knownAs || m.name || m.initials || m.id }));
+    return { items: bc.data.items.filter(b => Date.now() - b.at < 90 * 864e5).sort((a, b) => b.at - a.at).map(b => ({ ...b, active: activeBroadcast(b),
+      seen: Object.entries(b.acks).map(([id, a]) => ({ id, name: a.name, at: a.at })).sort((x, y) => x.at - y.at),
+      notSeen: people.filter(m => !b.acks[m.id]).map(m => m.name) })) };
   }
   // v3.10: the business's name, logo, colours and font, for every page (cached on the phone).
   if (view === 'brand') return { brand: brandView((await read(store, KEY_SETTINGS, emptySettings)).data) };
@@ -1853,6 +1877,32 @@ export async function handleAction(store, body, ctx = {}) {
     const st = out.data;
     return { ok: true, result: 'saved', settings: { rev: st.rev, faultTypes: st.faultTypes, repeatDays: st.repeatDays, home: cleanHome(st.home.order, st.home.hidden), brand: brandView(st), business: businessOf(st), timeZone: TZ } };
   }
+  // v3.11: messages to staff.
+  if (action === 'postBroadcast' || action === 'withdrawBroadcast' || action === 'ackBroadcast') {
+    let result = 'ok';
+    const out = await mutate(store, KEY_BROADCASTS, emptyBroadcasts, doc => {
+      if (action === 'postBroadcast') {
+        const m = body.message || {};
+        const bid = id(m.id, 'Message id');
+        if (doc.items.some(b => b.id === bid)) { result = 'already-saved'; return; }
+        const title = str(m.title, 80, 'Heading', { required: true }), text = str(m.body, 600, 'Message');
+        if (!['normal', 'urgent'].includes(m.level)) throw new HttpError(400, 'Choose normal or urgent', 'invalid');
+        doc.items.push({ id: bid, at: Date.now(), by: str(body.from, 40, 'From') || byOf(body), title, body: text, level: m.level, acks: {} });
+        if (doc.items.length > MAX_BROADCASTS) doc.items = doc.items.slice(-MAX_BROADCASTS);
+        result = 'sent';
+      } else {
+        const b = doc.items.find(x => x.id === body.id);
+        if (!b) throw new HttpError(404, 'That message no longer exists', 'not-found');
+        if (action === 'withdrawBroadcast') { if (!b.withdrawnAt) { b.withdrawnAt = Date.now(); b.withdrawnBy = byOf(body); } result = 'withdrawn'; }
+        else {
+          const who = str(body.me, 40, 'Person', { required: true });
+          if (!b.acks[who]) b.acks[who] = { at: Date.now(), name: str(body.name, 40, 'Name') || who };
+          result = 'seen';
+        }
+      }
+    });
+    return { ok: true, result, broadcasts: broadcastsFor(out.data, String(body.me || '')) };
+  }
   // v3.10 (Admin): load a configuration file. A backup is taken first; each chosen section replaces
   // the current one, except locations, which are added or updated by code (none are taken away).
   if (action === 'configImport') {
@@ -1974,9 +2024,9 @@ async function backupAction(store, action, body, ctx) {
 // Once SAEBIKES_ADMIN_PASSWORD is set in Netlify, everything on the Admin page and every roster
 // change needs it (ops.mjs checks it and passes ctx.admin). Until it's set, Admin works with the
 // staff PIN as before, but contact details can't be stored or read at all ("strict").
-const ADMIN_ACTIONS = new Set(['addMember', 'updateMember', 'retireMember', 'backupNow', 'markOffsite', 'rebuildDaily', 'rebuildFleet', 'restoreSnapshot', 'saveFaultTypes', 'saveHomeTiles', 'saveBusiness', 'configImport',
+const ADMIN_ACTIONS = new Set(['addMember', 'updateMember', 'retireMember', 'backupNow', 'markOffsite', 'rebuildDaily', 'rebuildFleet', 'restoreSnapshot', 'saveFaultTypes', 'saveHomeTiles', 'saveBusiness', 'configImport', 'postBroadcast', 'withdrawBroadcast',
   'saveChecklist', 'saveMessages', 'saveQrLinks', ...Object.keys(rosterActions)]);
-const ADMIN_VIEWS = new Set(['backups', 'backupPart', 'teamAdmin', 'rosterAdmin', 'fleetRebuildInfo', 'configExport']);
+const ADMIN_VIEWS = new Set(['backups', 'backupPart', 'teamAdmin', 'rosterAdmin', 'fleetRebuildInfo', 'configExport', 'broadcastsAdmin']);
 function needAdmin(ctx, { strict = false } = {}) {
   const a = (ctx && ctx.admin) || { configured: false };
   if (!a.configured) {

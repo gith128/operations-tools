@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.10 · Group Scanner</title>
+<title>SA eBikes · Operations Tools v3.11 · Group Scanner</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -206,6 +206,8 @@ label.bike-row{cursor:pointer}
 .toast.success{border-color:var(--accent);color:var(--accent-text)}
 .toast.warning{border-color:var(--warn);color:var(--warn-text)}
 .toast.error{border-color:var(--danger);color:var(--danger-text)}
+.urgent-bar{margin:10px 16px 0;padding:11px 14px;border-radius:12px;background:var(--danger-soft,#fbe9e7);border:1.5px solid rgba(192,57,43,.45);color:var(--danger-text,#8e2a1f);font-size:13px;line-height:1.45}
+.urgent-bar b{display:block;font-size:14px;margin-bottom:2px}
 .last-scans{margin:0 0 12px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-elev)}
 .ls-row{display:grid;grid-template-columns:58px 74px minmax(0,1fr);gap:8px;align-items:baseline;padding:7px 11px;font-size:12px;border-top:1px solid var(--border)}
 .ls-row:first-child{border-top:none}
@@ -234,7 +236,7 @@ label.bike-row{cursor:pointer}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.10</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.11</a>
 <a class="back-home" href="/help#group-scanner" style="margin-left:6px">? Help</a>
 <a class="back-home" href="/qr" style="margin-left:6px">🔳 QR</a>
 <div class="app">
@@ -252,6 +254,7 @@ label.bike-row{cursor:pointer}
     </div>
   </header>
 
+  <div id="urgentBar"></div>
   <nav class="tabs">
     <button class="tab active" id="tab-scan" onclick="switchTab('scan')">📷 Scan</button>
     <button class="tab" id="tab-groups" onclick="switchTab('groups')">📋 Groups</button>
@@ -536,7 +539,12 @@ function acceptView(v) {
   }
   oosBikes = new Set(v.oos || []);
   openIssueBikes = new Set(v.openIssueBikes || []);
+  if (v.urgent) drawUrgent(v.urgent);
   applyStartFresh();
+}
+// v3.11: an urgent message to staff stays at the top of the Group Scanner until it's withdrawn in Admin.
+function drawUrgent(list) {
+  $('urgentBar').innerHTML = list.map(u => '<div class="urgent-bar" role="alert"><b>⚠ ' + esc(u.title) + '</b>' + (u.body ? '<span>' + esc(u.body) + '</span>' : '') + '</div>').join('');
 }
 
 // Brand and model for a scanned bike: the current register first, then what was recorded at scan time.

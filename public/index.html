@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.10 · Operations Tools</title>
+<title>SA eBikes · Operations Tools v3.11 · Operations Tools</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -112,6 +112,12 @@ body{
 .ontoday .mine{border-top:1px solid var(--border);margin-top:9px;padding-top:9px;font-size:13px}
 .preview-banner{display:none;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(90,110,200,.1);border:1.5px solid rgba(90,110,200,.5);color:#2f3c80;font-size:13px;font-weight:700}
 
+.bc{margin:12px 0 16px;border-radius:16px;border:1.5px solid rgba(212,138,47,.45);background:#fdf3e4;padding:14px 16px;color:#5c3d0e}
+.bc .h{font:700 11px 'DM Mono',monospace;color:#a0661a;margin-bottom:6px}
+.bc .t{font:700 16px 'Syne',sans-serif;color:#3e2a08;margin-bottom:4px}
+.bc .b{font-size:14px;line-height:1.5;white-space:pre-line}
+.bc button{margin-top:12px;width:100%;padding:12px;border-radius:12px;border:none;background:#d48a2f;color:#fff;font:800 15px 'Syne',sans-serif;cursor:pointer}
+.bc.urgent{border-color:rgba(192,57,43,.5);background:#fbe9e7;color:#5a1a12}.bc.urgent .h{color:#b03a2e}.bc.urgent .t{color:#4a120c}.bc.urgent button{background:#c0392b}
 </style>
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/theme.js"></script>
@@ -121,9 +127,10 @@ body{
 
   <div class="brand">
     <h1 data-brand="home">SA <span class="accent">eBikes</span></h1>
-    <div class="sub">Operations Tools v3.10 · Internal use only</div>
+    <div class="sub">Operations Tools v3.11 · Internal use only</div>
   </div>
   <div class="tagline" data-brand="tagline">Just like riding a bike... just more fun</div>
+  <div id="bcSlot"></div>
 
   <div class="preview-banner" id="previewBanner"></div>
   <a class="site-alert" id="siteAlert" href="/checklists"></a>
@@ -197,6 +204,7 @@ body{
 
 </div>
 <script src="/assets/ops-client.js"></script>
+<script src="/assets/ops-plus.js"></script>
 <script>
 // Home screen order and hidden tiles, set in Admin for every phone (v3.7). The last setting seen is
 // kept on the phone, so the tiles don't jump about while the latest is fetched.
@@ -208,7 +216,38 @@ function applyTiles(home) {
   for (const [id, el] of Object.entries(tiles)) el.style.display = (home.hidden || []).includes(id) ? 'none' : '';
 }
 try { applyTiles(JSON.parse(localStorage.getItem('saeb-home') || 'null')); } catch {}
-Ops.view('settings').then(v => { applyTiles(v.home); if (v.brand && window.Brand) Brand.set(v.brand); try { localStorage.setItem('saeb-home', JSON.stringify(v.home)); } catch {} }).catch(() => {});
+// v3.11: messages to staff. The newest not yet seen by whoever is using this phone shows above the
+// tools until they tap Got it. Urgent ones are red. (Who else has seen it is only shown in Admin.)
+let bcList = [];
+const bcMe = () => (window.Team && Team.me() ? Team.me().id : '');
+const bcLocal = () => { try { return JSON.parse(localStorage.getItem('saeb-bc-seen') || '{}'); } catch { return {}; } };
+function drawBroadcast() {
+  const done = bcLocal(), me = bcMe();
+  const left = bcList.filter(b => !b.seen && !done[me + '|' + b.id]);
+  const el = document.getElementById('bcSlot');
+  if (!left.length) { el.innerHTML = ''; return; }
+  const b = left.find(x => x.level === 'urgent') || left[0];
+  const when = new Date(b.at).toLocaleString('en-AU', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  el.innerHTML = '<div class="bc' + (b.level === 'urgent' ? ' urgent' : '') + '"><div class="h">' + (b.level === 'urgent' ? '⚠ Urgent · from ' : '📣 From ') + Ops.esc(b.by || 'Admin') + ' · ' + when +
+    (left.length > 1 ? ' · 1 of ' + left.length : '') + '</div><div class="t">' + Ops.esc(b.title) + '</div>' + (b.body ? '<div class="b">' + Ops.esc(b.body) + '</div>' : '') +
+    '<button type="button" onclick="bcGotIt(\'' + b.id + '\')">Got it</button></div>';
+}
+async function bcGotIt(id) {
+  if (!bcMe()) { if (window.Team) Team.open(); return; } // who's using this phone, first
+  const me = Team.me(), done = bcLocal(); done[me.id + '|' + id] = Date.now();
+  try { localStorage.setItem('saeb-bc-seen', JSON.stringify(done)); } catch {}
+  drawBroadcast();
+  try { const r = await Ops.act('ackBroadcast', { id, me: me.id, name: me.name || me.initials }); bcList = r.broadcasts; drawBroadcast(); } catch {}
+}
+function loadSettings() {
+  Ops.get({ view: 'settings', me: bcMe() }).then(v => {
+    applyTiles(v.home); if (v.brand && window.Brand) Brand.set(v.brand);
+    try { localStorage.setItem('saeb-home', JSON.stringify(v.home)); } catch {}
+    bcList = v.broadcasts || []; drawBroadcast();
+  }).catch(() => {});
+}
+loadSettings();
+if (window.Team) Team.onChange(loadSettings);
 // How many lost property items are still open, on the tile.
 Ops.view('lost').then(v => { const n = (v.items || []).filter(i => i.status === 'open').length; if (n) document.getElementById('lostCount').textContent = n; }).catch(() => {});
 // Backup status: green (last good backup), red (none for 36 hours, or the last one failed), and a
