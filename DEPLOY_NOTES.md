@@ -1,3 +1,63 @@
+# SA eBikes Operations Tools v3.12
+
+## New in v3.12: Tours
+
+**Before deploying:** **Admin → Backups → Back up now**.
+
+**Rolling back is safe.** Publish the v3.11 deploy in Netlify. Tours are added to the existing files (`app-settings`, the roster and the day), and v3.11 ignores those fields. A loaded departure would then show as an ordinary group, and guides would simply not show.
+
+**To deploy:** unzip into an empty folder, then drag the **5 folders and 4 files** inside `sa-ebikes-ops-v3.12` onto GitHub's upload page (not "choose your files"), or use GitHub Desktop.
+
+### What it does
+
+- **Configuration → Tours** (`app-settings.tours`), set up with the two tours from the 11 November manifest. Each tour has a name, words from its Rezdy product name, where it starts and finishes (OXB), a length in minutes (150), and session times (24-hour).
+    - **The starting tours:** Morning Tour ("Guided Morning E-Bike Tour", 09:30) and Wine & Stories Tour ("Wine & Stories", 13:00).
+    - **Changes:** a renamed tour keeps its id; a tour left out of a save is kept, retired.
+    - **Included in** the configuration file and the Configuration backup part.
+- **Load Manifest:** one file still holds hires and tours.
+    - **Departures:** tour bookings (by product) are grouped by tour and session (from the Session column) into one departure. Its riders are the total across bookings, and each booking keeps its name, pax, agent and special requirements.
+    - **Step 2** lists each departure with its bookings and guide. It flags **No guide rostered**, and a session not in Configuration → Tours; flags hold back the automatic jump to the scanner.
+    - **Contacts:** each booking's contact is tagged with its departure.
+    - **Product checks:** tour products aren't put through the hire-location check.
+- **Guides from the roster.** A roster shift can carry `guiding: { tourId, session }`. The server only accepts it on a shift at the tour's start that covers the whole tour (a finish of "close" counts), and only one guide per session.
+    - **Admin's shift editor** offers only the sessions that fit the shift.
+    - **Where it shows:** on the Admin roster list, the staff Roster page and the calendar entry ("Guiding Morning Tour 9:30am, back about 12:00pm").
+    - **Departures look up their guide** when the scanner refreshes, so roster changes during the day follow through.
+- **Group Scanner departure card:** guide (or **No guide rostered**), back time and **overdue** 30 minutes after it, and "Arrived N of M · waiting: …".
+    - **Arrival per booking:** **Arrived** and **No-show** buttons (`setArrival`, queued like any change).
+    - **Bike count:** the bikes target is riders minus no-shows.
+    - **🏁 Tour back** checks in every bike still out at the tour's start and closes the departure. It reuses the drop-off action, allowed at the tour's own start; Undo is offered for 10 seconds, then **↶ Undo drop-off**. The card shows "🏁 TOUR BACK".
+    - **Dandelion drop-off** isn't offered on tours.
+- **Today's Contacts** groups each departure's bookings under a heading with riders and bookings, and **📣 Message all** (the usual templates, through the existing broadcast sheet).
+- **Records and reports:**
+    - **Fleet records and utilisation:** tour bikes count as hired, from the tour's start.
+    - **Daily summaries** gain `tours`: departures, booked, riders (no-shows left out), bikes, and riders by agent. The Dashboard shows **Tours, this FY** from these.
+    - **Archives and backups** keep departures as part of the day.
+
+### Tests and checks
+
+- **Tests:** 114 (109 before, plus 5 in `tests/tours.test.mjs`). They cover:
+    - recognising products;
+    - Tours settings saved, checked and retired, Admin only;
+    - departures and bookings kept, arrivals and no-shows, and Tour back to OXB (a hire can't use it);
+    - the summary's riders without no-shows;
+    - roster guiding refused for a shift too short or at the wrong site, one guide per session, guides in the roster and scanner views;
+    - tours in the configuration file.
+- **Browser** (Chrome, phone size, with the real 11 November manifest re-dated to today): checked
+    - Load Manifest grouping both tours, with the guide shown on one and "No guide rostered" on the other;
+    - the departure cards, Arrived, and Tour back;
+    - Today's Contacts by departure;
+    - Configuration → Tours;
+    - the roster editor offering only the sessions that fit, the staff Roster page showing Guiding, and the Dashboard's Tours section.
+
+**Manual:** a new Tours section with "SOP: Running a tour". The Roster (guiding), Dashboard, and Admin (Configuration → Tours, adding shifts) sections are updated. Help and the Claude Doc are updated.
+
+**Files:**
+- **New:** `tests/tours.test.mjs`.
+- **Server:** `netlify/lib/ops-core.mjs`, `maint-core.mjs`, `roster-core.mjs`.
+- **Pages:** `public/manifest.html`, `scanner.html`, `contacts.html`, `admin.html`, `roster.html`, `dashboard.html`, `help.html`, and the version label on every page.
+- **Docs and config:** `docs/manual.md`, `package.json`, `package-lock.json`, `netlify.toml`, this file.
+
 # SA eBikes Operations Tools v3.11
 
 ## New in v3.11: messages to staff, and the home screen front page

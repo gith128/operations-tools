@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.11 · Bike History</title>
+<title>SA eBikes · Operations Tools v3.12 · Bike History</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -276,7 +276,7 @@ table.t th{color:var(--text-dim);font-weight:700}
   <header>
     <div>
       <div class="logo">SA <span>eBikes</span></div>
-      <div class="logo-sub">Bike history · Operations Tools v3.11</div>
+      <div class="logo-sub">Bike history · Operations Tools v3.12</div>
     </div>
     <div class="sync-indicator" style="cursor:pointer" onclick="load()"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">loading…</span></div>
   </header>
@@ -295,7 +295,7 @@ table.t th{color:var(--text-dim);font-weight:700}
 <script src="/assets/fleet-report.js"></script>
 <script src="/assets/xlsx-lite.js"></script>
 <script>
-// SA eBikes Operations Tools v3.11: one bike's history, from purchase to disposal: the register and
+// SA eBikes Operations Tools v3.12: one bike's history, from purchase to disposal: the register and
 // its changes, moves, issues and repairs, M-checks, and the days it was hired (from the fleet records).
 const $ = id => document.getElementById(id);
 const esc = Ops.esc;
@@ -424,7 +424,7 @@ async function load() {
   $('syncDot').className = 'sync-dot syncing'; $('syncLabel').textContent = 'loading…';
   try {
     H = await Ops.get({ view: 'bikeHistory', bike: bikeId });
-    document.title = Brand.name() + ' · Operations Tools v3.11 · ' + H.bike + ' history';
+    document.title = Brand.name() + ' · Operations Tools v3.12 · ' + H.bike + ' history';
     render(); $('syncDot').className = 'sync-dot synced'; $('syncLabel').textContent = 'live ✓';
   } catch (e) {
     $('syncDot').className = 'sync-dot error'; $('syncLabel').textContent = e.status === 0 ? 'offline' : 'error';

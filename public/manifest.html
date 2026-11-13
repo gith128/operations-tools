@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.11 · Load Manifest</title>
+<title>SA eBikes · Operations Tools v3.12 · Load Manifest</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -86,7 +86,7 @@ tr.flagged td.mono{color:var(--warn-text);font-weight:500}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.11</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.12</a>
 <a class="back-home" href="/help#load-manifest" style="margin-left:6px">? Help</a>
 <a class="back-home" href="/dashboard" style="margin-left:6px">📊 Dashboard</a>
 <a class="back-home" href="/admin" style="margin-left:6px">⚙️ Admin</a>
@@ -165,6 +165,46 @@ tr.flagged td.mono{color:var(--warn-text);font-weight:500}
 // ============================================================
 let TODAYS_GROUPS   = [];   // { id, surname, qty, flags, flagged }
 let TODAYS_CONTACTS = [];
+// ── v3.12: tours ─────────────────────────────────────────────────────────────
+// Bookings for a tour (recognised from the product name, Configuration → Tours) are gathered into
+// one departure per tour and session, with each booking kept inside it. The guide comes from the
+// roster for that date.
+let RAW = null, TOURS = { tours: [], guides: {} }, DEP_IDS = {};
+const hhmm = t => { const m = String(t || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i); if (!m) return ''; let h = parseInt(m[1], 10) % 24; const ap = (m[3] || '').toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12; if (ap === 'am' && h === 12) h = 0; return String(h).padStart(2, '0') + ':' + (m[2] || '00'); };
+const tourOf = product => { const p = String(product || '').toLowerCase(); return p ? TOURS.tours.find(t => !t.retired && t.match.some(w => p.includes(String(w).toLowerCase()))) : null; };
+async function loadTours(date) {
+  try { TOURS = await Ops.get({ view: 'tours', date: date || manifestDateISO || Ops.todayISO() }); } catch { TOURS = { tours: [], guides: {} }; }
+}
+function buildDepartures() {
+  if (!RAW) return;
+  const deps = {}, hires = [];
+  for (const g of RAW.groups) {
+    const t = tourOf(g.product);
+    if (!t) { hires.push(g); continue; }
+    const session = hhmm(g.ptime), key = t.id + '|' + session;
+    const d = deps[key] = deps[key] || { id: DEP_IDS[key] = DEP_IDS[key] || Ops.uid(), kind: 'tour', tourId: t.id, tourName: t.name, session, code: '', surname: t.name + ' ' + (g.ptime || session),
+      qty: 0, flags: [], special: '', dropoff: '', hireDays: 1, site: t.location, product: g.product, agent: '', ptime: g.ptime, bookings: [] };
+    d.qty += g.qty;
+    const c = RAW.contacts.find(x => x.code === g.code) || {};
+    d.bookings.push({ code: g.code, name: c.name || g.surname, surname: g.surname, pax: g.qty, agent: g.agent, special: g.special });
+    if (g.special) d.special += (d.special ? '\n' : '') + g.surname + ': ' + g.special;
+  }
+  const out = Object.values(deps);
+  for (const d of out) {
+    const t = TOURS.tours.find(x => x.id === d.tourId);
+    if (!TOURS.guides[d.tourId + '|' + d.session]) d.flags.push('No guide rostered');
+    else d.guide = TOURS.guides[d.tourId + '|' + d.session].name;
+    if (t && d.session && !t.sessions.includes(d.session)) d.flags.push('Session not in Configuration \u2192 Tours');
+    d.flagged = d.flags.length > 0;
+  }
+  TODAYS_GROUPS = [...hires, ...out];
+  // Each tour booking's contact is tagged with its departure, and placed at the tour's start.
+  TODAYS_CONTACTS = RAW.contacts.map(c => {
+    const dep = out.find(d => d.bookings.some(b => b.code === c.code));
+    return dep ? { ...c, site: dep.site, tour: dep.tourName + ' ' + (dep.ptime || dep.session), tourGroupId: dep.id, flags: (c.flags || []).filter(f => f !== 'Unrecognised product') } : c;
+  });
+}
 let manifestDateISO = '';
 const esc = Ops.esc;
 
@@ -185,12 +225,14 @@ async function handleFile(file) {
   try {
     const result = await parseCSV(file);
     if (!result.groups.length) { showUploadState('idle'); showEmptyWarning(result.dateISO, file.name); return; }
+    RAW = { groups: result.groups, contacts: result.contacts };
     TODAYS_GROUPS   = result.groups;
     TODAYS_CONTACTS = result.contacts;
     document.getElementById('manifestDateInput').value = result.dateISO || Ops.todayISO();
     document.getElementById('dateSource').textContent = result.dateISO
       ? 'from the file name — change it if that\'s wrong'
       : 'no date in the file name — set to today, change it if needed';
+    await loadTours(result.dateISO || Ops.todayISO()); TOURS.date = result.dateISO || Ops.todayISO(); buildDepartures();
     onDateChange();
     showUploadState('done', file.name);
     document.getElementById('pushBtn').disabled = false;
@@ -282,7 +324,9 @@ async function parseCSV(file) {
 
 function groupTitle(g) {
   const [, mo, dy] = (manifestDateISO || Ops.todayISO()).split('-').map(Number);
-  const flagStr = g.flags.length ? (' \u26a0\ufe0f ' + g.flags.join(', ')) : '';
+  // A tour's guide is shown live on the scanner (from the roster), so it isn't fixed into the name.
+  const fl = g.flags.filter(f => !(g.kind === 'tour' && f === 'No guide rostered'));
+  const flagStr = fl.length ? (' \u26a0\ufe0f ' + fl.join(', ')) : '';
   return g.surname + ' (x' + g.qty + ') \u00b7 ' + dy + ' ' + Ops.MONTHS[mo - 1] + flagStr;
 }
 
@@ -397,6 +441,11 @@ function onDateChange() {
     warn.style.display = ''; warn.textContent = '\u26a0\ufe0f This date is more than a day ahead. The Contacts page only shows today\'s and tomorrow\'s manifest.';
   } else warn.style.display = 'none';
   renderGroups();
+  // Guides are rostered per date: a changed date may change them.
+  if (RAW && manifestDateISO && TOURS.date !== manifestDateISO && RAW.groups.some(g => tourOf(g.product))) {
+    TOURS.date = manifestDateISO;
+    loadTours(manifestDateISO).then(() => { TOURS.date = manifestDateISO; buildDepartures(); renderGroups(); });
+  }
 }
 
 function renderGroups() {
@@ -410,10 +459,13 @@ function renderGroups() {
       (g.special ? '<div class="special" onclick="this.classList.toggle(\'open\')">' + esc(g.special) + '</div>' : '') +
       (g.dropoff ? '<div class="special">Drop-off: ' + esc(g.dropoff) + '</div>' : '') +
       (g.ph && g.ph.phoneNote ? '<div class="special" style="color:var(--accent-text)">📞 Phone corrected: ' + esc(g.ph.phoneFrom) + ' → ' + esc(g.ph.phoneDisplay) + ' (' + esc(g.ph.phoneNote) + ')</div>' : '') +
-      (g.ph && g.ph.phoneCheck ? '<div class="special" style="color:#a33a35">📞 Check number: ' + esc(g.ph.phone) + ' doesn\'t look valid</div>' : '') + '</td>' +
+      (g.ph && g.ph.phoneCheck ? '<div class="special" style="color:#a33a35">📞 Check number: ' + esc(g.ph.phone) + ' doesn\'t look valid</div>' : '') +
+    (g.kind === 'tour' ? '<div class="special" style="display:block">🚴 Tour from ' + esc(Locs.name(g.site)) + (g.guide ? ' · guide ' + esc(g.guide) : '') + '</div>' +
+      g.bookings.map(b => '<div class="special" style="display:block">' + esc(b.surname) + ' · ' + b.pax + ' pax' + (b.agent ? ' · ' + esc(b.agent) : '') + '</div>').join('') : '') +
+    '</td>' +
     '<td>' + g.qty + '</td>' +
-    '<td><select class="days-sel' + (g.hireDays > 1 ? ' multi' : '') + '" aria-label="Hire length" onchange="setDays(' + n + ', this.value)">' +
-      [1, 2, 3, 4, 5, 6, 7].map(d => '<option value="' + d + '"' + (d === g.hireDays ? ' selected' : '') + '>' + d + '</option>').join('') + '</select></td>' +
+    '<td>' + (g.kind === 'tour' ? 'tour' : '<select class="days-sel' + (g.hireDays > 1 ? ' multi' : '') + '" aria-label="Hire length" onchange="setDays(' + n + ', this.value)">' +
+      [1, 2, 3, 4, 5, 6, 7].map(d => '<option value="' + d + '"' + (d === g.hireDays ? ' selected' : '') + '>' + d + '</option>').join('') + '</select>') + '</td>' +
     '<td>' + g.flags.map(f => '<span class="flag-pill">' + esc(f) + '</span>').join('') + '</td>' +
     '</tr>'
   ).join('');
@@ -432,7 +484,7 @@ function renderGroups() {
   const notes = [];
   // Products to check before loading (v3.4): never seen before, matching more than one location, or none.
   const seenNames = SEEN ? new Set(SEEN.map(p => p.name.toLowerCase())) : null;
-  const distinct = [...new Set(TODAYS_GROUPS.map(g => g.product).filter(Boolean))];
+  const distinct = [...new Set(TODAYS_GROUPS.filter(g => g.kind !== 'tour').map(g => g.product).filter(Boolean))];
   const review = distinct.map(p => {
     const m = Locs.matchAll(p), isNew = seenNames && !seenNames.has(p.toLowerCase());
     return { p, m, isNew, many: m.length > 1, none: !m.length };
@@ -443,7 +495,10 @@ function renderGroups() {
       esc(Locs.name(r.m[0].code)) + ' (matched "' + esc(r.m[0].word) + '"' + (r.many ? '; also ' + r.m.slice(1).map(x => esc(x.code) + ' ("' + esc(x.word) + '")').join(', ') : '') + ')') +
     (r.isNew && !r.none && !r.many ? '. Check this is right.' : '') + '</div>').join('') + '</div>');
   if (flaggedCount) notes.push('\u26a0\ufe0f <strong>' + flaggedCount + ' group' + (flaggedCount > 1 ? 's' : '') + ' flagged</strong>. Check booking details before dispatching.');
-  const bySite = [...Locs.hire().map(l => l.code), '?'].map(k => [k, TODAYS_GROUPS.filter(g => g.site === k).length]).filter(([, n]) => n);
+  const tourDeps = TODAYS_GROUPS.filter(g => g.kind === 'tour');
+  if (tourDeps.length) notes.push('🚴 <strong>' + tourDeps.length + ' tour departure' + (tourDeps.length > 1 ? 's' : '') + '</strong>: ' + tourDeps.map(d => esc(d.tourName) + ' ' + esc(d.ptime || d.session) + ', ' + d.qty + ' riders in ' + d.bookings.length + ' booking' + (d.bookings.length > 1 ? 's' : '') + (d.guide ? ', guide ' + esc(d.guide) : ', <b>no guide rostered</b>')).join('; ') +
+    (tourDeps.some(d => !d.guide) ? '<br>Add the guide to a shift at the tour\'s start in Admin → Roster ("Guiding"), then reload this page.' : ''));
+  const bySite = [...Locs.hire().map(l => l.code), '?'].map(k => [k, TODAYS_GROUPS.filter(g => g.kind !== 'tour' && g.site === k).length]).filter(([, n]) => n);
   if (bySite.length) notes.push('\ud83d\udccd ' + bySite.map(([k, n]) => esc(siteLabel(k)) + ' ' + n).join(' \u00b7 ') +
     (bySite.some(([k]) => k === '?') ? '<br><strong>Check the unrecognised product</strong> against the booking in Rezdy, and add a matching word to its location under Asset Register \u2192 Locations.' : ''));
   const multi = TODAYS_GROUPS.filter(g => g.hireDays > 1).length;
@@ -513,7 +568,7 @@ async function archiveOnly() {
 function noBookings(dateISO) {
   const d = dateISO || document.getElementById('noBookDate').value || Ops.todayISO();
   if (!confirm('Load a blank manifest for ' + Ops.displayDate(d) + '?\n\nThe current groups will be archived and replaced with no bookings. Multi-day and overdue groups still carry over, and walk-ins can be added in the Group Scanner.')) return;
-  TODAYS_GROUPS = []; TODAYS_CONTACTS = [];
+  TODAYS_GROUPS = []; TODAYS_CONTACTS = []; RAW = null;
   document.getElementById('manifestDateInput').value = d;
   onDateChange();
   archiveAndPush({ empty: true });
@@ -554,7 +609,8 @@ async function archiveAndPush(opts = {}) {
       manifestDateDisplay: Ops.displayDate(manifestDateISO),
       groups: TODAYS_GROUPS.map(g => ({ id: g.id, name: groupTitle(g), code: g.code, special: g.special, dropoff: g.dropoff, hireDays: g.hireDays,
         site: g.site === '?' ? '' : g.site, product: g.product, agent: g.agent, ptime: g.ptime,
-        qty: g.qty, equip: g.flags.filter(f => /^\d+× /.test(f)) })),
+        qty: g.qty, equip: g.flags.filter(f => /^\d+× /.test(f)),
+        ...(g.kind === 'tour' ? { kind: 'tour', tourId: g.tourId, tourName: g.tourName, session: g.session, bookings: g.bookings.map(b => ({ code: b.code, name: b.name, pax: b.pax, agent: b.agent, special: b.special })) } : {}) })),
       contacts: TODAYS_CONTACTS,
       ...(opts.empty ? { empty: true } : {}),
     });

@@ -1,4 +1,4 @@
-// SA eBikes Operations Tools v3.11 — nightly backup.
+// SA eBikes Operations Tools v3.12 — nightly backup.
 // Netlify runs this on its schedule for the live (published) site only. It takes a checked
 // snapshot of every live file into the separate backup store, copies any new daily archives,
 // and clears out snapshots past their keep date. Success or failure is recorded, and shows on

@@ -560,6 +560,31 @@ Site Checklists records the opening and closing of each site. Each site (VIC, OX
 
 A site added under Locations starts with a copy of the VIC lists until you save its own.
 
+## Tours
+
+Guided tours run from the same Rezdy manifest as hires. Every booking for the same tour and session becomes one **departure**, such as "Morning Tour 9:30 AM (x5)", with each booking still listed inside it: name, number of riders, who booked it (direct or an agent such as GetYourGuide) and any special requirements. Every rider gets their own bike.
+
+### How it works
+
+- **Recognised from the product name.** Each tour in **Configuration → Tours** has words from its Rezdy product name, where it starts and finishes (Oxenberry Farm), how long it runs, and its usual session times. A booking whose product contains those words is a tour booking; anything else is a hire, as before.
+- **Load Manifest** shows each departure with its bookings, the total riders and the guide. A departure with no guide rostered is flagged **No guide rostered**, and so is a session time not in Configuration → Tours. While anything is flagged, the page waits instead of opening the scanner, so it can be fixed first.
+- **The guide comes from the roster.** In **Admin → Roster**, a shift at the tour's start that covers the whole tour can be marked **Guiding** for that tour and session. The departure picks up the guide by itself, and follows any change made to the roster later. Staff see the guide but don't change it here. One guide per session.
+- **On the Group Scanner**, a departure's card shows the guide, when it's due back ("back about 12:00 pm"), and who's arrived ("Arrived 3 of 5 · waiting: Öttl (2)"). It turns **overdue** half an hour after that.
+    - **Arrived** ticks a booking off as it turns up. **No-show** marks one that didn't come, and takes its riders off the number of bikes needed. Tap either again to clear it.
+    - **Issue bikes** to the departure as to any group: the count is against the riders who came.
+    - **🏁 Tour back** (instead of Returned) checks every bike still out in at the tour's start and closes the departure. **Undo** is offered for 10 seconds; after that, use **↶ Undo drop-off** on the card.
+- **Today's Contacts** lists each departure's bookings together under a heading such as "🚴 Morning Tour 9:30 AM · 3 riders · 1 booking", with **📣 Message all** to send one message, from the usual templates, to every booking on that tour.
+- **Tour bikes count as hired** in the fleet records, utilisation and the Dashboard, from where the tour starts.
+- **The Dashboard** has **Tours, this FY**: departures and riders for each tour, the average riders per tour, no-show riders, and riders by who booked.
+
+### SOP: Running a tour
+
+1. **Ahead of the day:** in **Admin → Roster**, give the guide a shift at Oxenberry Farm that covers the tour, and choose the tour under **Guiding**.
+2. **Load the manifest** as usual. Check each departure shows its guide; if it says **No guide rostered**, fix the roster and reload the page.
+3. **As guests arrive,** tap **Arrived** on their booking. If someone doesn't come, tap **No-show**.
+4. **Issue the bikes** to the departure on the Group Scanner, then tap **🚴 Out** when the tour leaves.
+5. **When the tour is back,** tap **🏁 Tour back**. Every bike is checked in at Oxenberry Farm and the departure closes.
+
 ## Roster
 
 The Roster shows who's working where, day by day, with any notes for each shift. Open it from the **Roster** tile on the home screen. Rosters are set by the manager in Admin; staff can see them but not change them.
@@ -567,6 +592,7 @@ The Roster shows who's working where, day by day, with any notes for each shift.
 ### How it works
 
 - **Whole team** shows one week at a time, Monday to Sunday. The arrows move between weeks. Each day lists its shifts by site, with each person's **Known as** name, their times and any note. Today is outlined in green.
+- **🧭 Guiding** under a shift means that person is guiding a tour, with the tour, session and when it's due back. It's in the calendar entry too.
 - **Changed** next to a shift means it has been updated since the roster was emailed. Check it if it's yours.
 - **close** as a finish time means until the work's done, whenever that is.
 - **N/A** lists anyone who isn't available that day, with a note if there is one.
@@ -633,6 +659,7 @@ The Dashboard shows how hiring is going: bookings and bikes for the week, month 
 - **Load by model:** for each model (T3, Brando, Surf, Gabby, Trike…), its busiest day this week, as bikes out against bikes available. Bikes available come from that day's fleet record: in the fleet, not out of service and not in storage. Orange means 90% or more: that model is close to running out on its busy days.
 - **Bikes hired by location** this month.
 - **Most time out of service** this financial year, from the Issue Reporter's P5 issues.
+- **Tours** this financial year: departures and riders for each tour, the average per tour, no-show riders, and riders by who booked. See Tours.
 - **Repeat faults** this financial year: bikes that had the same fault type logged again within the repeat window, with the types. Tap a bike for its history.
 - **Bikes to review:** bikes 4 or more years old with a week or more out of service, and bikes hired far less often than the rest of the fleet.
 
@@ -688,7 +715,7 @@ Admin holds the roster, the team list, backups, archived days and settings. Open
 Admin has two areas, switched with the buttons at the top: **⚙️ Admin** for running things day to day, and **🎨 Configuration** for setting up the business. They share the admin password, and each has links to its groups at the top.
 
 - **⚙️ Admin** (/admin): **People** (Messages to staff, Team, Roster), **Day to day** (Rezdy products), **Fleet** (Fleet history and dashboard data) and **Data and safety** (Backups, Archived days).
-- **🎨 Configuration** (/config): **Business**, **Guests and sites** (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), **Maintenance** (Fault types), **Home screen**, and **Configuration file**.
+- **🎨 Configuration** (/config): **Business**, **Guests and sites** (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), **Tours**, **Maintenance** (Fault types), **Home screen**, and **Configuration file**.
 
 ### Messages to staff
 
@@ -708,6 +735,7 @@ Admin has two areas, switched with the buttons at the top: **⚙️ Admin** for 
     - **Time zone** is shown but not changed here: it's set for each installation in Netlify (the SAEBIKES_TIMEZONE setting), because the server needs it before it reads any settings.
     - **The preview** shows the name, a button and a bar in the chosen colours before you save. Each phone keeps a copy of these details, so pages never wait for them. The home screen picks up a change when it next opens; other screens within a few hours, or straight away once the home screen has been opened.
 - **Configuration file:** **⬇ Download configuration** saves everything on the Configuration page in one small file: business details and logo, fault types, home screen, QR codes, messages, site checklists and locations. Keep a copy with your backups. **⬆ Load a configuration file** lets you choose which parts to put back. A backup is taken first, so a load can be undone from Admin → Backups. Each part replaces what's there, except locations, which are added or updated but never removed. Hire records, issues and the asset register aren't touched. It's also how a new installation is set up.
+- **Tours** lists each guided tour: its name, words from its Rezdy product name (several, with commas), where it starts and finishes, its length in minutes, and its usual session times (24-hour, such as 09:30, 13:00). **+ Add a tour** adds one; **Retire** takes one out of use while past departures keep its name. **Save tours** applies them; Load Manifest uses them from the next manifest, and the roster offers their sessions for guiding. See Tours.
 - **Fault types** are the types staff choose when logging an issue. Rename one in place (its issues keep it), add one with **+ Add a fault type**, move them up or down, and **Retire** one that's no longer wanted: it leaves the list but stays on the issues that used it, and **Bring back** restores it. **Repeat window** is how many days count for a repeat fault (7 to 365; 90 to start). **Save fault types** applies them for everyone.
 - **Home screen** sets the order of the tools on the home screen and which are shown, for every phone. Use ↑ and ↓ to move a tool, **Hide** or **Show**, then **Save home screen**. Load Manifest is always shown, because Admin is opened from it. A hidden tool still opens from its address (such as /qr), and its links elsewhere in the app still work.
 
@@ -718,6 +746,7 @@ Once an **admin password** is set (see "SOP: Setting the admin password"), Admin
 **Roster** is the first card. It shows one week at a time, starting with next week.
 
 - **+ Add shift:** who, where, date, start, finish and a note. Tick **Until close** when the finish is whenever the work's done. Choose **N/A · Not available** as Where to show someone isn't available that day (the times disappear). Notes are seen by every staff member, so keep them to the day's work. A person can't be rostered for two shifts that overlap, or rostered on a day they're marked not available.
+- **Guiding a tour:** a shift at a tour's start that covers the whole tour (from the session time to when it's back) offers that session under **Guiding a tour**. Choosing it makes that person the departure's guide. Tours the shift doesn't cover aren't listed, and only one person can guide each session.
 - **Edit** on a shift opens it with its **history**: who added it, and every change since. **Remove shift** takes it off the roster; it stays in the history.
 - **Someone else's change wins until you've seen it.** If a shift was changed by someone else since you opened it, Save is refused with what they changed. Open it again to see their version, then make your change.
 - **Text [name] about this shift** appears when the person has a mobile in Team. It opens a text from this phone with the shift written in.

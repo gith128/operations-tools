@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.11 · Admin</title>
+<title>SA eBikes · Operations Tools v3.12 · Admin</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -73,6 +73,7 @@ body[data-area="ops"] .area-switch a[data-to="ops"],body[data-area="config"] .ar
 .biz-preview .pbtn{margin-top:10px;padding:12px;border-radius:12px;text-align:center;color:#fff;font-weight:800}
 .biz-preview .pbar{height:8px;border-radius:5px;margin-top:10px}
 .biz-preview .warn{font-size:12px;color:var(--danger-text,#b03a2e);margin-top:8px}
+.tour-ed{border-top:1px solid var(--border);padding:10px 0}.tour-ed.retired{opacity:.55}
 .cfg-sec{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 0}
 .note{font-size:12px;color:var(--text-muted);line-height:1.5;margin:4px 0}
 .bc-meta{font-size:12px;color:var(--text-muted);font-family:'DM Mono',monospace;line-height:1.5}
@@ -134,7 +135,7 @@ ul.snaps li{padding:10px 0;border-bottom:1px solid var(--border)}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.11</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.12</a>
 <a class="back-home" href="/manifest" style="margin-left:6px">← Back to Load Manifest</a>
 <a class="back-home" href="/help#admin" style="margin-left:6px">? Help</a>
 <div class="wrap">
@@ -144,7 +145,7 @@ ul.snaps li{padding:10px 0;border-bottom:1px solid var(--border)}
   <div class="admin-bar" id="adminBar" style="display:none"></div>
 
   <div class="adm-nav" data-area="ops"><a href="#people">People</a><a href="#daily">Day to day</a><a href="#fleetgrp">Fleet</a><a href="#data">Data and safety</a></div>
-  <div class="adm-nav" data-area="config"><a href="#bizgrp">Business</a><a href="#guests">Guests and sites</a><a href="#maint">Maintenance</a><a href="#screens">Home screen</a><a href="#cfgfile">Configuration file</a></div>
+  <div class="adm-nav" data-area="config"><a href="#bizgrp">Business</a><a href="#guests">Guests and sites</a><a href="#toursgrp">Tours</a><a href="#maint">Maintenance</a><a href="#screens">Home screen</a><a href="#cfgfile">Configuration file</a></div>
 
   <h2 class="grp" id="people" data-area="ops">People</h2>
 
@@ -318,6 +319,16 @@ ul.snaps li{padding:10px 0;border-bottom:1px solid var(--border)}
   <div class="card" id="locationsNote" data-area="config">
     <h2>Locations</h2>
     <p>Hire, delivery, collection and storage locations, and the words that match them to Rezdy products, are kept in the <a href="/fleet">Asset Register → Locations</a>, next to the bikes. They're included in the configuration file.</p>
+  </div>
+
+  <h2 class="grp" id="toursgrp" data-area="config">Tours</h2>
+
+  <div class="card" id="tours" data-area="config">
+    <h2>Tours</h2>
+    <p>Each guided tour, recognised in the Rezdy manifest by a word or phrase from its product name. Bookings for the same tour and session are gathered into one departure. Guides are set on the roster: mark a shift <b>Guiding</b>, at the tour's start, covering the whole tour.</p>
+    <div id="toursList">Loading…</div>
+    <div class="btn-row" style="margin-top:8px"><button class="btn" onclick="toursAdd()">+ Add a tour</button><button class="btn btn-primary" onclick="toursSave()">Save tours</button></div>
+    <div class="out" id="toursOut"></div>
   </div>
 
   <h2 class="grp" id="maint" data-area="config">Maintenance</h2>
@@ -694,7 +705,7 @@ const r12 = t => { if (t === 'close') return 'close'; const [h, m] = t.split(':'
 let RS = null, rsWeek = Ops.addDaysISO(rMonday(Ops.todayISO()), 7);
 function rsMove(n) { rsWeek = Ops.addDaysISO(rsWeek, n); loadRoster(); }
 async function loadRoster() {
-  try { RS = await Ops.get({ view: 'rosterAdmin', start: rsWeek, days: 7 }); if (RS.locations) Locs.set(RS.locations); renderRoster(); }
+  try { RS = await Ops.get({ view: 'rosterAdmin', start: rsWeek, days: 7 }); if (RS.locations) { Locs.set(RS.locations); if (typeof toursRender === 'function' && TR.length) toursRender(); } renderRoster(); }
   catch (e) { document.getElementById('rsList').innerHTML = '<div class="out show err">' + Ops.esc(e.message) + '</div>'; }
 }
 function renderRoster() {
@@ -709,6 +720,7 @@ function renderRoster() {
   for (const s of RS.shifts) {
     if (s.date !== day) { day = s.date; html += '<div class="rs-day">' + rDate(s.date) + '</div>'; }
     html += '<div class="rs-row"><span><b>' + (s.kind === 'na' ? 'N/A' : Ops.esc(s.site)) + '</b> · ' + Ops.esc(s.name) + ' ' + (s.kind === 'na' ? 'not available' : r12(s.start) + '–' + r12(s.end)) + (s.changed ? '<span class="rs-tag">changed</span>' : '') +
+      (s.guiding ? '<small>🧭 Guiding ' + Ops.esc(tourLabel(s.guiding)) + '</small>' : '') +
       (s.note ? '<small>' + Ops.esc(s.note) + '</small>' : '') + '</span><button class="btn" onclick="openShift(\'' + s.id + '\')">Edit</button></div>';
   }
   document.getElementById('rsList').innerHTML = html;
@@ -729,6 +741,7 @@ function openShift(id) {
     '<label>Date<input type="date" id="shDate" value="' + (s ? s.date : Ops.addDaysISO(rsWeek, 5)) + '"></label></div>' +
     '<div class="two" id="shTimes"><label>Start<input type="time" id="shStart" value="' + (s && !na ? s.start : '09:00') + '"></label><label>Finish<input type="time" id="shEnd" value="' + (s && !na && s.end !== 'close' ? s.end : '17:00') + '"' + (s && s.end === 'close' ? ' disabled' : '') + '>' +
       '<span class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="shClose" style="width:auto" onchange="document.getElementById(\'shEnd\').disabled=this.checked"' + (s && s.end === 'close' ? ' checked' : '') + '> Until close</span></label></div>' +
+    '<label id="shGuideWrap">Guiding a tour<select id="shGuide"></select><span class="hint" id="shGuideHint"></span></label>' +
     '<label>Note for the shift<textarea id="shNote" rows="2" maxlength="300">' + Ops.esc(s ? s.note : '') + '</textarea><span class="hint">Every staff member can see notes. Keep them to the day\'s work.</span></label>' +
     (s && s.history.length ? '<div class="hist"><div style="color:var(--text);font-weight:500">History</div>' + s.history.slice(-6).map(h => Ops.esc(new Date(h.at).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) + ' · ' + h.what + ' · ' + h.by)).join('<br>') + '</div>' : '') +
     '<div class="out" id="shOut"></div>' +
@@ -737,15 +750,34 @@ function openShift(id) {
     (s && m && m.mobile ? '<a class="btn wide" style="text-align:center;text-decoration:none" href="#" onclick="return textChange(\'' + s.id + '\')">Text ' + Ops.esc(m.name) + ' about this shift</a>' : '') +
     (s ? '<button class="btn wide" onclick="closeSheet()">Cancel</button>' : '') + '</div>');
   shKind();
+  ['shSite', 'shStart', 'shEnd', 'shClose'].forEach(k => document.getElementById(k).addEventListener('change', () => shGuides(s)));
+  shGuides(s);
 }
 // Not available has no times.
 function shKind() { const el = document.getElementById('shTimes'); if (el) el.style.display = document.getElementById('shSite').value === '__NA__' ? 'none' : ''; }
+// v3.12: the tour sessions this shift could guide: at the tour's start, and covering the whole tour.
+const tMins = t => { if (t === 'close') return 1440; const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
+function tourLabel(gd) { const t = (RS.tours || []).find(x => x.id === gd.tourId); return (t ? t.name : gd.tourId) + ' ' + r12(gd.session); }
+function shGuides(s) {
+  const sel = document.getElementById('shGuide'); if (!sel) return;
+  const site = document.getElementById('shSite').value, start = document.getElementById('shStart').value, end = document.getElementById('shClose').checked ? 'close' : document.getElementById('shEnd').value;
+  const cur = sel.value || (s && s.guiding ? s.guiding.tourId + '|' + s.guiding.session : '');
+  const opts = [], off = [];
+  for (const t of RS.tours || []) for (const ses of t.sessions) {
+    const fits = t.location === site && tMins(start) <= tMins(ses) && tMins(end) >= tMins(ses) + t.durationMins;
+    (fits ? opts : off).push([t.id + '|' + ses, t.name + ' ' + r12(ses) + ' (back ' + r12(String(Math.floor((tMins(ses) + t.durationMins) / 60)).padStart(2, '0') + ':' + String((tMins(ses) + t.durationMins) % 60).padStart(2, '0')) + ')']);
+  }
+  sel.innerHTML = '<option value="">Not guiding</option>' + opts.map(([v, l]) => '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + Ops.esc(l) + '</option>').join('');
+  document.getElementById('shGuideWrap').style.display = site === '__NA__' || !(RS.tours || []).length ? 'none' : '';
+  document.getElementById('shGuideHint').textContent = off.length && !opts.length ? 'No tour fits this shift: a guide\'s shift has to be at the tour\'s start and cover the whole tour.' : off.length ? 'Tours this shift doesn\'t cover aren\'t listed.' : '';
+}
 async function saveShift(id) {
   const s = id ? RS.shifts.find(x => x.id === id) : null;
   const v = k => document.getElementById(k).value;
   const isNA = v('shSite') === '__NA__';
   const shift = isNA ? { id: id || 'sh' + Ops.uid(), kind: 'na', memberId: v('shWho'), date: v('shDate'), note: v('shNote').trim() }
-    : { id: id || 'sh' + Ops.uid(), kind: 'shift', memberId: v('shWho'), site: v('shSite'), date: v('shDate'), start: v('shStart'), end: document.getElementById('shClose').checked ? 'close' : v('shEnd'), note: v('shNote').trim() };
+    : { id: id || 'sh' + Ops.uid(), kind: 'shift', memberId: v('shWho'), site: v('shSite'), date: v('shDate'), start: v('shStart'), end: document.getElementById('shClose').checked ? 'close' : v('shEnd'), note: v('shNote').trim(),
+      ...(v('shGuide') ? { guiding: { tourId: v('shGuide').split('|')[0], session: v('shGuide').split('|')[1] } } : {}) };
   if (!shift.memberId) { show('shOut', '✗ Choose who is working', false); return; }
   if (!ini()) { show('shOut', '✗ Set your name first with the 👤 button at the top', false); return; }
   try {
@@ -892,6 +924,28 @@ function showPlan(plan) {
   if (target) setTimeout(() => target.scrollIntoView(), 50);
 })();
 
+// ── tours (v3.12) ────────────────────────────────────────────────────────────
+let TR = [];
+function toursRender() {
+  const locs = (window.Locs && Locs.hire ? Locs.hire() : []).map(l => l.code);
+  document.getElementById('toursList').innerHTML = !TR.length ? '<p class="note">No tours yet.</p>' : TR.map((t, n) => '<div class="tour-ed' + (t.retired ? ' retired' : '') + '">' +
+    '<div class="biz-grid"><label>Name<input value="' + Ops.esc(t.name) + '" oninput="TR[' + n + '].name=this.value" maxlength="50"></label>' +
+    '<label>Rezdy product words (commas between)<input value="' + Ops.esc((t.match || []).join(', ')) + '" oninput="TR[' + n + '].match=this.value"></label>' +
+    '<label>Starts and finishes at<select onchange="TR[' + n + '].location=this.value">' + [...new Set([t.location, ...locs].filter(Boolean))].map(c => '<option' + (c === t.location ? ' selected' : '') + '>' + Ops.esc(c) + '</option>').join('') + '</select></label>' +
+    '<label>Length (minutes)<input type="number" min="15" max="720" value="' + (t.durationMins || 150) + '" oninput="TR[' + n + '].durationMins=this.value"></label>' +
+    '<label>Session times (24-hour, commas between)<input value="' + Ops.esc((t.sessions || []).join(', ')) + '" oninput="TR[' + n + '].sessions=this.value" placeholder="09:30, 13:00"></label></div>' +
+    '<button class="btn" style="margin:0" onclick="TR[' + n + '].retired=!TR[' + n + '].retired;toursRender()">' + (t.retired ? 'Bring back' : 'Retire') + '</button>' +
+    (!t.id ? ' <button class="btn" style="margin:0" onclick="TR.splice(' + n + ',1);toursRender()">Remove</button>' : '') + '</div>').join('');
+}
+function toursAdd() { TR.push({ name: '', match: [], location: 'OXB', durationMins: 150, sessions: [] }); toursRender(); }
+async function toursSave() {
+  try {
+    const r = await Ops.act('saveTours', { tours: TR.map(t => ({ id: t.id, name: t.name, match: t.match, location: t.location, durationMins: t.durationMins, sessions: t.sessions, retired: !!t.retired })), baseRev: ST.rev });
+    ST = r.settings; TR = (ST.tours || []).map(t => ({ ...t })); toursRender();
+    show('toursOut', '✓ Saved. Load Manifest uses them from the next manifest; the roster offers their sessions for guides.', true);
+  } catch (e) { show('toursOut', '✗ ' + e.message, false); if (e.code === 'changed') stLoad(); }
+}
+
 // ── Business (v3.10) ──────────────────────────────────────────────────────
 let BZ = null;
 const $b = id => document.getElementById(id);
@@ -955,7 +1009,7 @@ async function bzSave() {
 }
 
 // ── configuration file (v3.10) ────────────────────────────────────────────
-const CFG_SECTIONS = [['business', 'Business details and logo'], ['maintenance', 'Fault types and repeat window'], ['home', 'Home screen'], ['qr', 'QR codes'], ['messages', 'Message templates'], ['checklists', 'Site checklists'], ['locations', 'Locations (added or updated; none removed)']];
+const CFG_SECTIONS = [['business', 'Business details and logo'], ['tours', 'Tours'], ['maintenance', 'Fault types and repeat window'], ['home', 'Home screen'], ['qr', 'QR codes'], ['messages', 'Message templates'], ['checklists', 'Site checklists'], ['locations', 'Locations (added or updated; none removed)']];
 async function cfgDownload() {
   try {
     const c = await Ops.view('configExport');
@@ -1027,6 +1081,7 @@ const TILE_NAMES = { contacts: "📇 Today's Contacts", checklists: '✅ Site Ch
 async function stLoad() {
   try { ST = await Ops.view('settings'); FT = ST.faultTypes.map(t => ({ ...t })); HM = { order: [...ST.home.order], hidden: [...ST.home.hidden] };
     if (ST.business) bzFill(ST.business);
+    TR = (ST.tours || []).map(t => ({ ...t })); toursRender();
     document.getElementById('bzTz').textContent = 'Time zone: ' + (ST.timeZone || 'Australia/Adelaide') + '. It\'s set for each installation in Netlify (SAEBIKES_TIMEZONE), because the server needs it before it reads any settings.';
     document.getElementById('ftDays').value = ST.repeatDays; ftRender(); hmRender(); }
   catch (e) { document.getElementById('ftList').textContent = e.message; document.getElementById('hmList').textContent = e.message; }

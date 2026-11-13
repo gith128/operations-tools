@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.11 · Roster</title>
+<title>SA eBikes · Operations Tools v3.12 · Roster</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -54,7 +54,7 @@ h1{font-size:26px;font-weight:800;margin:0 0 4px}
 </head>
 <body>
 <div class="wrap">
-  <a class="back-home" href="/">← Back to Operations Tools v3.11</a>
+  <a class="back-home" href="/">← Back to Operations Tools v3.12</a>
   <a class="back-home" href="/help#roster" style="margin-left:6px">? Help</a>
   <h1>Roster</h1>
   <div class="sub" id="sub">Loading…</div>
@@ -74,6 +74,15 @@ h1{font-size:26px;font-weight:800;margin:0 0 4px}
 <script src="/assets/ops-client.js"></script>
 <script src="/assets/ops-plus.js"></script>
 <script>
+// v3.12: a shift guiding a tour says so, with when it's back.
+function guideText(s) {
+  if (!s.guiding) return '';
+  const t = ((typeof data !== 'undefined' && data && data.tours) || []).find(x => x.id === s.guiding.tourId), [h, m] = s.guiding.session.split(':').map(Number), back = h * 60 + m + (t ? t.durationMins : 0);
+  const f = x => (Math.floor(x / 60) % 12 || 12) + ':' + String(x % 60).padStart(2, '0') + (Math.floor(x / 60) < 12 ? 'am' : 'pm');
+  return 'Guiding ' + (t ? t.name : 'a tour') + ' ' + f(h * 60 + m) + (t ? ', back about ' + f(back) : '');
+}
+const guideHTML = s => (s.guiding ? '<div class="note">🧭 ' + esc(guideText(s)) + '</div>' : '');
+
 const $ = id => document.getElementById(id), esc = Ops.esc;
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -116,7 +125,7 @@ function renderAll(me) {
     return '<section class="day' + (isToday ? ' today' : '') + '"><h2>' + showDate(date) + (isToday ? '<small>TODAY</small>' : '') + '</h2>' +
       Object.entries(bySite).map(([site, list]) => '<div class="row"><div class="code" title="' + esc(site === 'N/A' ? 'Not available' : Locs.name(site)) + '">' + esc(site) + '</div><div class="people">' +
         list.map(s => '<div><span class="' + (me && me.id === s.memberId ? 'me' : '') + '">' + esc(s.name) + '</span> ' + (s.kind === 'na' ? 'not available' : span(s)) + (s.changed ? '<span class="tag">changed</span>' : '') +
-          (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + '</div>').join('') + '</div></div>').join('') + '</section>';
+          guideHTML(s) + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + '</div>').join('') + '</div></div>').join('') + '</section>';
   }).join('');
 }
 function renderMine(me) {
@@ -129,7 +138,7 @@ function renderMine(me) {
       '<div class="time">Not available</div>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + (s.changed ? '<div class="changed">Changed since the roster was emailed</div>' : '') + '</article>';
     const others = data.shifts.filter(o => o.date === s.date && o.id !== s.id && o.kind !== 'na').map(o => o.name + (o.site !== s.site ? ' at ' + o.site : '') + ' ' + span(o));
     return '<article class="shift' + (isToday ? ' today' : '') + '"><div class="top"><div class="when">' + (isToday ? 'Today · ' : '') + showDate(s.date) + '</div><div class="code" style="width:auto">' + esc(s.site) + '</div></div>' +
-      '<div class="time">' + span(s) + ' · ' + esc(Locs.name(s.site)) + '</div>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') +
+      '<div class="time">' + span(s) + ' · ' + esc(Locs.name(s.site)) + '</div>' + guideHTML(s) + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') +
       (s.changed ? '<div class="changed">Changed since the roster was emailed</div>' : '') +
       (others.length ? '<div class="also">Also on: ' + esc(others.join(', ')) + '</div>' : '') +
       '<button class="cal" onclick="addToCalendar(\'' + s.id + '\')">Add to my calendar</button></article>';
@@ -145,7 +154,7 @@ function addToCalendar(id) {
     // "Until close" has no set finish: the calendar shows 5:30 pm, and the title says until close.
     'DTSTART:' + stamp(s.date, s.start), 'DTEND:' + stamp(s.date, s.end === 'close' ? '17:30' : s.end),
     'SUMMARY:' + icsText(Brand.name() + ' shift · ' + Locs.name(s.site) + (s.end === 'close' ? ' (until close)' : '')), 'LOCATION:' + icsText(Locs.name(s.site)),
-    ...(s.note ? ['DESCRIPTION:' + icsText(s.note)] : []), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    ...(s.note || s.guiding ? ['DESCRIPTION:' + icsText([guideText(s), s.note].filter(Boolean).join('. '))] : []), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
   Ops.downloadText(ics, Brand.file() + '-shift-' + s.date + '.ics', 'text/calendar');
 }
 Team.onChange(() => render());

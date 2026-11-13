@@ -1,4 +1,4 @@
-// SA eBikes Operations Tools v3.11 — API at /api/ops
+// SA eBikes Operations Tools v3.12 — API at /api/ops
 // Storage: Netlify Blobs (built into Netlify, no external account or API key).
 // The live site uses the stores it always has. A deploy preview or branch deploy gets its own,
 // so a new version can be tried without touching live data (see backup-core.mjs).

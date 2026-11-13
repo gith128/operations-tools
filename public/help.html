@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.11 · Help &amp; SOPs</title>
+<title>SA eBikes · Operations Tools v3.12 · Help &amp; SOPs</title>
 <!-- Built from docs/manual.md by tools/build_help.py. Edit the manual, not this file. -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -45,10 +45,10 @@ tr:last-child td{border-bottom:none}
 <header><div class="head-row">
   <div class="head-top">
     <div><div class="logo">SA <span>eBikes</span></div>
-    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.11</div></div>
+    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.12</div></div>
     <a class="back-home" href="/">← Tools</a>
   </div>
-  <nav class="toc"><a href="#getting-started">Getting started</a><a href="#load-manifest">Load Manifest</a><a href="#todays-contacts">Today&#x27;s Contacts</a><a href="#group-scanner">Group Scanner</a><a href="#issue-reporter">Issue Reporter</a><a href="#asset-register">Asset Register</a><a href="#site-checklists">Site Checklists</a><a href="#roster">Roster</a><a href="#lost-property">Lost Property</a><a href="#show-qr">Show QR</a><a href="#dashboard">Dashboard</a><a href="#fleet-report">Fleet report</a><a href="#admin">Admin</a><a href="#daily-routine-and-troubleshooting">Daily routine and troubleshooting</a></nav>
+  <nav class="toc"><a href="#getting-started">Getting started</a><a href="#load-manifest">Load Manifest</a><a href="#todays-contacts">Today&#x27;s Contacts</a><a href="#group-scanner">Group Scanner</a><a href="#issue-reporter">Issue Reporter</a><a href="#asset-register">Asset Register</a><a href="#site-checklists">Site Checklists</a><a href="#tours">Tours</a><a href="#roster">Roster</a><a href="#lost-property">Lost Property</a><a href="#show-qr">Show QR</a><a href="#dashboard">Dashboard</a><a href="#fleet-report">Fleet report</a><a href="#admin">Admin</a><a href="#daily-routine-and-troubleshooting">Daily routine and troubleshooting</a></nav>
 </div></header>
 <main>
 <section><h2 id="getting-started">Getting started</h2>
@@ -684,11 +684,37 @@ tr:last-child td{border-bottom:none}
 <li>Tap <strong>Save checklist</strong>. Staff see the new list straight away. Past records keep the wording they were signed off with.</li>
 </ol>
 <p>A site added under Locations starts with a copy of the VIC lists until you save its own.</p>
-</section><section><h2 id="roster">Roster</h2>
-<p>The Roster shows who's working where, day by day, with any notes for each shift. Open it from the <strong>Roster</strong> tile on the home screen. Rosters are set by the manager in Admin; staff can see them but not change them.</p>
+</section><section><h2 id="tours">Tours</h2>
+<p>Guided tours run from the same Rezdy manifest as hires. Every booking for the same tour and session becomes one <strong>departure</strong>, such as "Morning Tour 9:30 AM (x5)", with each booking still listed inside it: name, number of riders, who booked it (direct or an agent such as GetYourGuide) and any special requirements. Every rider gets their own bike.</p>
 <h3 id="how-it-works_6">How it works</h3>
 <ul>
+<li><strong>Recognised from the product name.</strong> Each tour in <strong>Configuration → Tours</strong> has words from its Rezdy product name, where it starts and finishes (Oxenberry Farm), how long it runs, and its usual session times. A booking whose product contains those words is a tour booking; anything else is a hire, as before.</li>
+<li><strong>Load Manifest</strong> shows each departure with its bookings, the total riders and the guide. A departure with no guide rostered is flagged <strong>No guide rostered</strong>, and so is a session time not in Configuration → Tours. While anything is flagged, the page waits instead of opening the scanner, so it can be fixed first.</li>
+<li><strong>The guide comes from the roster.</strong> In <strong>Admin → Roster</strong>, a shift at the tour's start that covers the whole tour can be marked <strong>Guiding</strong> for that tour and session. The departure picks up the guide by itself, and follows any change made to the roster later. Staff see the guide but don't change it here. One guide per session.</li>
+<li><strong>On the Group Scanner</strong>, a departure's card shows the guide, when it's due back ("back about 12:00 pm"), and who's arrived ("Arrived 3 of 5 · waiting: Öttl (2)"). It turns <strong>overdue</strong> half an hour after that.<ul>
+<li><strong>Arrived</strong> ticks a booking off as it turns up. <strong>No-show</strong> marks one that didn't come, and takes its riders off the number of bikes needed. Tap either again to clear it.</li>
+<li><strong>Issue bikes</strong> to the departure as to any group: the count is against the riders who came.</li>
+<li><strong>🏁 Tour back</strong> (instead of Returned) checks every bike still out in at the tour's start and closes the departure. <strong>Undo</strong> is offered for 10 seconds; after that, use <strong>↶ Undo drop-off</strong> on the card.</li>
+</ul>
+</li>
+<li><strong>Today's Contacts</strong> lists each departure's bookings together under a heading such as "🚴 Morning Tour 9:30 AM · 3 riders · 1 booking", with <strong>📣 Message all</strong> to send one message, from the usual templates, to every booking on that tour.</li>
+<li><strong>Tour bikes count as hired</strong> in the fleet records, utilisation and the Dashboard, from where the tour starts.</li>
+<li><strong>The Dashboard</strong> has <strong>Tours, this FY</strong>: departures and riders for each tour, the average riders per tour, no-show riders, and riders by who booked.</li>
+</ul>
+<h3 id="sop-running-a-tour">SOP: Running a tour</h3>
+<ol>
+<li><strong>Ahead of the day:</strong> in <strong>Admin → Roster</strong>, give the guide a shift at Oxenberry Farm that covers the tour, and choose the tour under <strong>Guiding</strong>.</li>
+<li><strong>Load the manifest</strong> as usual. Check each departure shows its guide; if it says <strong>No guide rostered</strong>, fix the roster and reload the page.</li>
+<li><strong>As guests arrive,</strong> tap <strong>Arrived</strong> on their booking. If someone doesn't come, tap <strong>No-show</strong>.</li>
+<li><strong>Issue the bikes</strong> to the departure on the Group Scanner, then tap <strong>🚴 Out</strong> when the tour leaves.</li>
+<li><strong>When the tour is back,</strong> tap <strong>🏁 Tour back</strong>. Every bike is checked in at Oxenberry Farm and the departure closes.</li>
+</ol>
+</section><section><h2 id="roster">Roster</h2>
+<p>The Roster shows who's working where, day by day, with any notes for each shift. Open it from the <strong>Roster</strong> tile on the home screen. Rosters are set by the manager in Admin; staff can see them but not change them.</p>
+<h3 id="how-it-works_7">How it works</h3>
+<ul>
 <li><strong>Whole team</strong> shows one week at a time, Monday to Sunday. The arrows move between weeks. Each day lists its shifts by site, with each person's <strong>Known as</strong> name, their times and any note. Today is outlined in green.</li>
+<li><strong>🧭 Guiding</strong> under a shift means that person is guiding a tour, with the tour, session and when it's due back. It's in the calendar entry too.</li>
 <li><strong>Changed</strong> next to a shift means it has been updated since the roster was emailed. Check it if it's yours.</li>
 <li><strong>close</strong> as a finish time means until the work's done, whenever that is.</li>
 <li><strong>N/A</strong> lists anyone who isn't available that day, with a note if there is one.</li>
@@ -705,7 +731,7 @@ tr:last-child td{border-bottom:none}
 </ol>
 </section><section><h2 id="lost-property">Lost Property</h2>
 <p>Lost Property records anything guests leave behind: what it is, where and when it was found, where it's kept, who it might belong to, every attempt to return it, and how it ended.</p>
-<h3 id="how-it-works_7">How it works</h3>
+<h3 id="how-it-works_8">How it works</h3>
 <ul>
 <li><strong>Open</strong> lists items still waiting, newest first, with a photo, where each was found and where it's kept. Items held 30 days or more show <strong>held … days</strong>, so they get a decision. The home screen tile shows how many are open.</li>
 <li><strong>+ Add item</strong> takes a photo (shrunk on the phone to keep it small), what it is, the date and place found, where it's kept, and the owner if known. <strong>Whose is it?</strong> lists today's and the previous day's bookings: picking one fills in the guest's name and phone.</li>
@@ -730,7 +756,7 @@ tr:last-child td{border-bottom:none}
 </ol>
 </section><section><h2 id="show-qr">Show QR</h2>
 <p>Show QR puts the guest codes full screen on your phone for a guest to scan: the <strong>SA eBikes Ride Guide</strong>, the <strong>Online Waiver</strong> and the <strong>Google Review</strong>.</p>
-<h3 id="how-it-works_8">How it works</h3>
+<h3 id="how-it-works_9">How it works</h3>
 <ul>
 <li>Open it from the home screen tile, or the <strong>🔳 QR</strong> link on the Group Scanner.</li>
 <li>Tap a code to show it full screen. Use <strong>‹ Back</strong> and <strong>Next ›</strong> (or swipe) to move between codes; tapping the code itself does nothing, so a guest's phone bumping the screen won't move it on. <strong>Done</strong> goes back.</li>
@@ -741,13 +767,14 @@ tr:last-child td{border-bottom:none}
 <p>If a code is hard to scan outdoors, turn your phone's brightness up: the app can't do that for you.</p>
 </section><section><h2 id="dashboard">Dashboard</h2>
 <p>The Dashboard shows how hiring is going: bookings and bikes for the week, month and financial year to date, how each bike model is loaded, where hires start, and which bikes spend time in the workshop. Open it from the <strong>📊 Dashboard</strong> link on Load Manifest. It's read-only.</p>
-<h3 id="how-it-works_9">How it works</h3>
+<h3 id="how-it-works_10">How it works</h3>
 <ul>
 <li><strong>Week, month and financial year to date</strong> (the financial year starts 1 July): bookings and bikes hired, compared with last week, last month and the same date last financial year.</li>
 <li><strong>Trend:</strong> the last 8 weeks, or the last 6 months, of bikes hired and bookings.</li>
 <li><strong>Load by model:</strong> for each model (T3, Brando, Surf, Gabby, Trike…), its busiest day this week, as bikes out against bikes available. Bikes available come from that day's fleet record: in the fleet, not out of service and not in storage. Orange means 90% or more: that model is close to running out on its busy days.</li>
 <li><strong>Bikes hired by location</strong> this month.</li>
 <li><strong>Most time out of service</strong> this financial year, from the Issue Reporter's P5 issues.</li>
+<li><strong>Tours</strong> this financial year: departures and riders for each tour, the average per tour, no-show riders, and riders by who booked. See Tours.</li>
 <li><strong>Repeat faults</strong> this financial year: bikes that had the same fault type logged again within the repeat window, with the types. Tap a bike for its history.</li>
 <li><strong>Bikes to review:</strong> bikes 4 or more years old with a week or more out of service, and bikes hired far less often than the rest of the fleet.</li>
 </ul>
@@ -760,7 +787,7 @@ tr:last-child td{border-bottom:none}
 </ol>
 </section><section><h2 id="fleet-report">Fleet report</h2>
 <p>The Fleet report shows how hard each bike, model and location works: <strong>utilisation</strong>, the days a bike was hired divided by the days it was available. It answers questions like whether OXB has more bikes than it needs in winter, or whether the Brandos earn their place. Open it from <strong>📈 Fleet report</strong> on the Dashboard, or from the Asset Register. It's read-only, and open to all staff.</p>
-<h3 id="how-it-works_10">How it works</h3>
+<h3 id="how-it-works_11">How it works</h3>
 <p>Each day, every bike in the fleet gets one record, saved when the next day's manifest is loaded:</p>
 <ul>
 <li><strong>Hired:</strong> out with a group at any time that day, including days 2 and 3 of a multi-day hire. A 4-hour hire counts as a day. The record also keeps the location it went out from, and how many hires.</li>
@@ -795,7 +822,7 @@ tr:last-child td{border-bottom:none}
 <p>Admin has two areas, switched with the buttons at the top: <strong>⚙️ Admin</strong> for running things day to day, and <strong>🎨 Configuration</strong> for setting up the business. They share the admin password, and each has links to its groups at the top.</p>
 <ul>
 <li><strong>⚙️ Admin</strong> (/admin): <strong>People</strong> (Messages to staff, Team, Roster), <strong>Day to day</strong> (Rezdy products), <strong>Fleet</strong> (Fleet history and dashboard data) and <strong>Data and safety</strong> (Backups, Archived days).</li>
-<li><strong>🎨 Configuration</strong> (/config): <strong>Business</strong>, <strong>Guests and sites</strong> (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), <strong>Maintenance</strong> (Fault types), <strong>Home screen</strong>, and <strong>Configuration file</strong>.</li>
+<li><strong>🎨 Configuration</strong> (/config): <strong>Business</strong>, <strong>Guests and sites</strong> (QR codes for guests, Message templates, Site checklists, and a note on Locations, which are kept in the Asset Register), <strong>Tours</strong>, <strong>Maintenance</strong> (Fault types), <strong>Home screen</strong>, and <strong>Configuration file</strong>.</li>
 </ul>
 <h3 id="messages-to-staff">Messages to staff</h3>
 <ul>
@@ -817,14 +844,16 @@ tr:last-child td{border-bottom:none}
 </ul>
 </li>
 <li><strong>Configuration file:</strong> <strong>⬇ Download configuration</strong> saves everything on the Configuration page in one small file: business details and logo, fault types, home screen, QR codes, messages, site checklists and locations. Keep a copy with your backups. <strong>⬆ Load a configuration file</strong> lets you choose which parts to put back. A backup is taken first, so a load can be undone from Admin → Backups. Each part replaces what's there, except locations, which are added or updated but never removed. Hire records, issues and the asset register aren't touched. It's also how a new installation is set up.</li>
+<li><strong>Tours</strong> lists each guided tour: its name, words from its Rezdy product name (several, with commas), where it starts and finishes, its length in minutes, and its usual session times (24-hour, such as 09:30, 13:00). <strong>+ Add a tour</strong> adds one; <strong>Retire</strong> takes one out of use while past departures keep its name. <strong>Save tours</strong> applies them; Load Manifest uses them from the next manifest, and the roster offers their sessions for guiding. See Tours.</li>
 <li><strong>Fault types</strong> are the types staff choose when logging an issue. Rename one in place (its issues keep it), add one with <strong>+ Add a fault type</strong>, move them up or down, and <strong>Retire</strong> one that's no longer wanted: it leaves the list but stays on the issues that used it, and <strong>Bring back</strong> restores it. <strong>Repeat window</strong> is how many days count for a repeat fault (7 to 365; 90 to start). <strong>Save fault types</strong> applies them for everyone.</li>
 <li><strong>Home screen</strong> sets the order of the tools on the home screen and which are shown, for every phone. Use ↑ and ↓ to move a tool, <strong>Hide</strong> or <strong>Show</strong>, then <strong>Save home screen</strong>. Load Manifest is always shown, because Admin is opened from it. A hidden tool still opens from its address (such as /qr), and its links elsewhere in the app still work.</li>
 </ul>
 <p>Once an <strong>admin password</strong> is set (see "SOP: Setting the admin password"), Admin asks for it each time it's opened, and locks again as soon as you leave the page or tap <strong>Lock now</strong>. Switching to your mail or messages app to send the roster or a text doesn't lock it. Until it's set, a note at the top says so, Admin works with the staff PIN as before, and team contact details can't be stored.</p>
-<h3 id="how-it-works_11">How it works</h3>
+<h3 id="how-it-works_12">How it works</h3>
 <p><strong>Roster</strong> is the first card. It shows one week at a time, starting with next week.</p>
 <ul>
 <li><strong>+ Add shift:</strong> who, where, date, start, finish and a note. Tick <strong>Until close</strong> when the finish is whenever the work's done. Choose <strong>N/A · Not available</strong> as Where to show someone isn't available that day (the times disappear). Notes are seen by every staff member, so keep them to the day's work. A person can't be rostered for two shifts that overlap, or rostered on a day they're marked not available.</li>
+<li><strong>Guiding a tour:</strong> a shift at a tour's start that covers the whole tour (from the session time to when it's back) offers that session under <strong>Guiding a tour</strong>. Choosing it makes that person the departure's guide. Tours the shift doesn't cover aren't listed, and only one person can guide each session.</li>
 <li><strong>Edit</strong> on a shift opens it with its <strong>history</strong>: who added it, and every change since. <strong>Remove shift</strong> takes it off the roster; it stays in the history.</li>
 <li><strong>Someone else's change wins until you've seen it.</strong> If a shift was changed by someone else since you opened it, Save is refused with what they changed. Open it again to see their version, then make your change.</li>
 <li><strong>Text [name] about this shift</strong> appears when the person has a mobile in Team. It opens a text from this phone with the shift written in.</li>

@@ -1,4 +1,4 @@
-// SA eBikes Operations Tools v3.11 — server-side core.
+// SA eBikes Operations Tools v3.12 — server-side core.
 //
 // All data lives in one Netlify Blobs store, one file per area ("day" for today's groups and
 // contacts, "issues", "assets", "mchecks" and so on), plus "archive/<date>/<timestamp>" copies
@@ -14,15 +14,15 @@
 import { TZ } from './tz.mjs';
 export { TZ };
 import { takeSnapshot, listSnapshots, backupStatus, markOffsite, restoreSnapshot, downloadPart, currentCounts, SECTIONS, BackupError } from './backup-core.mjs';
-import { rosterActions, rosterView, emptyRoster, KEY_ROSTER, RosterError, todayAdelaide } from './roster-core.mjs';
+import { rosterActions, rosterView, emptyRoster, KEY_ROSTER, RosterError, todayAdelaide, guidesOn } from './roster-core.mjs';
 import { KEY_FLEET_DAYS, KEY_ASSET_HISTORY, emptyFleetDays, emptyAssetHistory, diffAssets, appendHistory, archiveIndex, buildFromArchives,
   buildFleetDay, addDays, p5Periods } from './fleet-core.mjs';
 export { KEY_FLEET_DAYS, KEY_ASSET_HISTORY };
-import { KEY_SETTINGS, emptySettings, cleanFaultTypes, cleanHome, repeatFaults, unavailableNow, MCHECK_FAULT, SettingsError, businessOf, brandView, cleanBusiness } from './maint-core.mjs';
+import { KEY_SETTINGS, emptySettings, cleanFaultTypes, cleanHome, repeatFaults, unavailableNow, MCHECK_FAULT, SettingsError, businessOf, brandView, cleanBusiness, toursOf, cleanTours } from './maint-core.mjs';
 export { KEY_SETTINGS };
 
 // The version these tools report (checked against package.json by tools/check.mjs).
-export const APP_VERSION = '3.11';
+export const APP_VERSION = '3.12';
 
 export const KEY_DAY = 'day';
 // Every Rezdy product name seen in a manifest, with the location it matched (v3.4).
@@ -100,11 +100,25 @@ export function summariseDay(day, assetsDoc, issuesDoc, checksDoc) {
     bySite[site] = (bySite[site] || 0) + codes.length;
   }
   for (const c of out) { const m = models[modelOf(c)] = models[modelOf(c)] || { fleet: 0, available: 0, out: 0 }; m.out++; }
+  // v3.12: tour departures that day: booked riders, riders who came (no-shows taken off), bikes, by
+  // tour and by agent.
+  const tours = {};
+  for (const g of day.groups || []) {
+    if (g.kind !== 'tour' || !started(g)) continue;
+    const t = tours[g.tourId] = tours[g.tourId] || { name: g.tourName || g.tourId, departures: 0, booked: 0, riders: 0, bikes: 0, byAgent: {} };
+    t.departures++; t.bikes += g.bikes.length;
+    for (const b of g.bookings || []) {
+      t.booked += b.pax;
+      if (b.arrival !== 'noshow') t.riders += b.pax;
+      const a = b.agent || 'Direct';
+      t.byAgent[a] = (t.byAgent[a] || 0) + (b.arrival === 'noshow' ? 0 : b.pax);
+    }
+  }
   const checks = (checksDoc ? checksDoc.checks : []).filter(c => adlDate(c.at) === date);
   return {
     date, bookings, walkins, groups: bookings + walkins,
     bikes: [...hired].length, bikesOut: out.size, bySite, models,
-    hired: [...hired], oos: oos.size,
+    hired: [...hired], oos: oos.size, ...(Object.keys(tours).length ? { tours } : {}),
     mchecksPass: checks.filter(c => c.result === 'pass').length, mchecksFail: checks.filter(c => c.result === 'fail').length,
     savedAt: Date.now(),
   };
@@ -480,7 +494,14 @@ export async function handleView(store, params, ctx = {}) {
   if (view === 'backupStatus' || view === 'backups' || view === 'backupPart') return backupView(store, view, params, ctx);
   if (view === 'scanner') {
     const [day, issues, assets, status, bc] = await Promise.all([read(store, KEY_DAY, emptyDay), read(store, KEY_ISSUES, emptyIssues), read(store, KEY_ASSETS, emptyAssets), read(store, KEY_CHECK_STATUS, emptyCheckStatus), read(store, KEY_BROADCASTS, emptyBroadcasts)]);
-    return { ...scannerView(day.data, issues.data, assets.data, status.data), urgent: urgentFor(bc.data) };
+    const v = { ...scannerView(day.data, issues.data, assets.data, status.data), urgent: urgentFor(bc.data) };
+    // v3.12: tours today, and their guides from the roster (only read when there's a tour).
+    if ((day.data.groups || []).some(g => g.kind === 'tour')) {
+      const [roster, team, st] = await Promise.all([read(store, KEY_ROSTER, emptyRoster), read(store, KEY_TEAM, emptyTeam), read(store, KEY_SETTINGS, emptySettings)]);
+      v.guides = guidesOn(roster.data, team.data.members, day.data.manifestDate);
+      v.tours = toursOf(st.data).map(t => ({ id: t.id, name: t.name, location: t.location, durationMins: t.durationMins, sessions: t.sessions }));
+    }
+    return v;
   }
   // M-check history: one bike (newest first), or every check for the export.
   if (view === 'mchecks') {
@@ -506,7 +527,13 @@ export async function handleView(store, params, ctx = {}) {
     const st = (await read(store, KEY_SETTINGS, emptySettings)).data;
     const bc = (await read(store, KEY_BROADCASTS, emptyBroadcasts)).data;
     return { rev: st.rev, faultTypes: st.faultTypes, repeatDays: st.repeatDays, home: cleanHome(st.home.order, st.home.hidden), brand: brandView(st), business: businessOf(st), timeZone: TZ,
-      broadcasts: broadcastsFor(bc, String(params.get('me') || '')) };
+      tours: toursOf(st), broadcasts: broadcastsFor(bc, String(params.get('me') || '')) };
+  }
+  // v3.12: tours (for Load Manifest), and who's rostered to guide each session on a date.
+  if (view === 'tours') {
+    const date = String(params.get('date') || '');
+    const [st, roster, team] = await Promise.all([read(store, KEY_SETTINGS, emptySettings), read(store, KEY_ROSTER, emptyRoster), read(store, KEY_TEAM, emptyTeam)]);
+    return { tours: toursOf(st.data), guides: DATE_RE.test(date) ? guidesOn(roster.data, team.data.members, date) : {} };
   }
   // v3.11 (Admin): every message from the last 90 days, with who has seen it and who hasn't.
   if (view === 'broadcastsAdmin') {
@@ -524,7 +551,7 @@ export async function handleView(store, params, ctx = {}) {
       read(store, KEY_SITE_LISTS, emptySiteLists), read(store, KEY_ASSETS, emptyAssets)]);
     const strip = d => { const { rev, updatedAt, ...rest } = d; return rest; };
     return { kind: 'operations-tools-configuration', schema: 1, appVersion: APP_VERSION, at: Date.now(), timeZone: TZ,
-      sections: { business: businessOf(st.data), maintenance: { faultTypes: st.data.faultTypes, repeatDays: st.data.repeatDays }, home: st.data.home,
+      sections: { business: businessOf(st.data), tours: toursOf(st.data), maintenance: { faultTypes: st.data.faultTypes, repeatDays: st.data.repeatDays }, home: st.data.home,
         qr: strip(qr.data), messages: strip(msg.data), checklists: strip(lists.data), locations: assets.data.locations } };
   }
   // v3.7: one bike's whole history, from purchase to disposal.
@@ -689,6 +716,15 @@ function findGroup(day, groupId) {
   return g;
 }
 
+// v3.12: a tour departure is a group with kind 'tour', its tour and session, and its bookings (each
+// with its pax and arrival). Bikes are issued to the departure as a whole.
+function tourFields(g) {
+  if (g.kind !== 'tour') return {};
+  const session = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(g.session || '')) ? g.session : '';
+  return { kind: 'tour', tourId: str(g.tourId, 40, 'Tour'), session, tourName: str(g.tourName, 60, 'Tour name'),
+    bookings: (Array.isArray(g.bookings) ? g.bookings : []).slice(0, 60).map(b => ({ code: str(b.code, 40, 'Order number'), name: str(b.name, 120, 'Customer name'),
+      pax: Math.max(0, Math.min(99, parseInt(b.pax, 10) || 0)), agent: str(b.agent, 60, 'Agent'), special: str(b.special, 1000, 'Special requirements'), arrival: '' })) };
+}
 function cleanContact(c) {
   return {
     code: str(c.code, 40, 'Order number', { required: true }),
@@ -704,6 +740,7 @@ function cleanContact(c) {
     hireDays: hireDaysOf(c.hireDays),
     ...hireWhere(c),
     ...phoneCheck(c),
+    ...(c.tourGroupId ? { tour: str(c.tour, 80, 'Tour'), tourGroupId: str(c.tourGroupId, 40, 'Tour group') } : {}),
   };
 }
 // Phone checks are done on the phone (libphonenumber); the server keeps what they found.
@@ -796,11 +833,22 @@ const dayActions = {
   },
   // Bikes left at a collection point (Dandelion) at the end of the hire: every bike still out is checked in
   // there and the group is closed. The bikes are moved to that location in the register.
+  // v3.12: a booking on a tour departure ticked as arrived, marked a no-show, or cleared.
+  async setArrival(day, p) {
+    const g = findGroup(day, p.groupId);
+    const b = (g.bookings || []).find(x => x.code === p.code);
+    if (!b) throw new HttpError(404, 'That booking isn\'t on this tour', 'not-found');
+    const state = ['arrived', 'noshow', ''].includes(p.state) ? p.state : null;
+    if (state === null) throw new HttpError(400, 'Arrived, no-show or neither', 'invalid');
+    b.arrival = state; b.arrivalAt = state ? ts(p.at) : null; b.arrivalBy = state ? byOf(p) : '';
+  },
   async dropOff(day, p, ctx) {
     const g = findGroup(day, p.groupId);
     const loc = String(p.location || '').toUpperCase();
     const l = (ctx && ctx.locations || []).find(x => x.code === loc && !x.retired);
-    if (!l || l.kind !== 'collection') throw new HttpError(400, 'Choose a collection point', 'invalid');
+    // A tour comes back to where it started (Tour back); other drop-offs go to a collection point.
+    const tourBack = g.kind === 'tour' && l && loc === g.site;
+    if (!l || (l.kind !== 'collection' && !tourBack)) throw new HttpError(400, 'Choose a collection point', 'invalid');
     const at = ts(p.at), by = byOf(p);
     // Already dropped there (a retry): pass the bikes on again, so their moves are finished if the
     // first attempt stopped part-way. Moving a bike already at the drop-off point changes nothing.
@@ -1018,6 +1066,7 @@ const dayActions = {
         // v3.5: bikes booked, and any non-standard equipment ("1× Child Seat"), shown when issuing.
         qty: Math.max(0, Math.min(99, parseInt(g.qty, 10) || 0)),
         equip: (Array.isArray(g.equip) ? g.equip : []).slice(0, 6).map(x => String(x || '').trim().slice(0, 40)).filter(Boolean),
+        ...tourFields(g),
       }));
     let contacts = (Array.isArray(p.contacts) ? p.contacts : []).slice(0, 300).map(cleanContact);
     // Only locations on the list count; anything else is left without a location.
@@ -1862,7 +1911,8 @@ export async function handleAction(store, body, ctx = {}) {
     return { ok: true, result: body.dryRun ? 'preview' : 'rebuilt', month, days: recs.map(sum), kept: keep.length };
   }
   // v3.7: fault types, the repeat window, and the home screen (Admin).
-  if (action === 'saveFaultTypes' || action === 'saveHomeTiles' || action === 'saveBusiness') {
+  if (action === 'saveFaultTypes' || action === 'saveHomeTiles' || action === 'saveBusiness' || action === 'saveTours') {
+    const locs = action === 'saveTours' ? (await read(store, KEY_ASSETS, emptyAssets)).data.locations : null;
     const out = await mutate(store, KEY_SETTINGS, emptySettings, doc => {
       if (body.baseRev != null && (doc.rev || 0) !== body.baseRev) throw new HttpError(409, 'Someone changed these settings since you opened them. Reload Admin and try again.', 'changed');
       try {
@@ -1871,11 +1921,12 @@ export async function handleAction(store, body, ctx = {}) {
           const d = parseInt(body.repeatDays, 10);
           if (body.repeatDays != null) { if (!(d >= 7 && d <= 365)) throw new SettingsError('The repeat window must be 7 to 365 days'); doc.repeatDays = d; }
         } else if (action === 'saveBusiness') doc.business = cleanBusiness(body.business, businessOf(doc));
+        else if (action === 'saveTours') doc.tours = cleanTours(body.tours, toursOf(doc), locs);
         else doc.home = cleanHome(body.order, body.hidden);
       } catch (e) { if (e instanceof SettingsError) throw new HttpError(400, e.message, 'invalid'); throw e; }
     });
     const st = out.data;
-    return { ok: true, result: 'saved', settings: { rev: st.rev, faultTypes: st.faultTypes, repeatDays: st.repeatDays, home: cleanHome(st.home.order, st.home.hidden), brand: brandView(st), business: businessOf(st), timeZone: TZ } };
+    return { ok: true, result: 'saved', settings: { rev: st.rev, faultTypes: st.faultTypes, repeatDays: st.repeatDays, home: cleanHome(st.home.order, st.home.hidden), brand: brandView(st), business: businessOf(st), timeZone: TZ, tours: toursOf(st) } };
   }
   // v3.11: messages to staff.
   if (action === 'postBroadcast' || action === 'withdrawBroadcast' || action === 'ackBroadcast') {
@@ -1914,7 +1965,8 @@ export async function handleAction(store, body, ctx = {}) {
     let backupId = null;
     if (ctx.backups) { try { backupId = (await takeSnapshot(store, ctx.backups, { reason: 'pre-config-load', by: byOf(body), appVersion: APP_VERSION, budgetMs: 15000, copyArchives: false, prune: false })).id || null; } catch (e) { throw new HttpError(503, 'The backup before loading didn\'t finish, so nothing was loaded. Try again.', 'backup-failed'); } }
     const bad = e => { if (e instanceof SettingsError) throw new HttpError(400, e.message, 'invalid'); throw e; };
-    if (['business', 'maintenance', 'home'].some(k => want.has(k) && S[k])) await mutate(store, KEY_SETTINGS, emptySettings, doc => {
+    const locsNow = (await read(store, KEY_ASSETS, emptyAssets)).data.locations.concat(want.has('locations') && Array.isArray(S.locations) ? S.locations : []);
+    if (['business', 'maintenance', 'home', 'tours'].some(k => want.has(k) && S[k])) await mutate(store, KEY_SETTINGS, emptySettings, doc => {
       try {
         if (want.has('business') && S.business) { doc.business = cleanBusiness(S.business, businessOf(doc)); done.push('business'); }
         if (want.has('maintenance') && S.maintenance) {
@@ -1923,6 +1975,7 @@ export async function handleAction(store, body, ctx = {}) {
           done.push('maintenance');
         }
         if (want.has('home') && S.home) { doc.home = cleanHome(S.home.order, S.home.hidden); done.push('home'); }
+        if (want.has('tours') && Array.isArray(S.tours)) { doc.tours = cleanTours(S.tours, toursOf(doc), locsNow); done.push('tours'); }
       } catch (e) { bad(e); }
     });
     const whole = async (k, key, empty, check) => {
@@ -2024,7 +2077,7 @@ async function backupAction(store, action, body, ctx) {
 // Once SAEBIKES_ADMIN_PASSWORD is set in Netlify, everything on the Admin page and every roster
 // change needs it (ops.mjs checks it and passes ctx.admin). Until it's set, Admin works with the
 // staff PIN as before, but contact details can't be stored or read at all ("strict").
-const ADMIN_ACTIONS = new Set(['addMember', 'updateMember', 'retireMember', 'backupNow', 'markOffsite', 'rebuildDaily', 'rebuildFleet', 'restoreSnapshot', 'saveFaultTypes', 'saveHomeTiles', 'saveBusiness', 'configImport', 'postBroadcast', 'withdrawBroadcast',
+const ADMIN_ACTIONS = new Set(['addMember', 'updateMember', 'retireMember', 'backupNow', 'markOffsite', 'rebuildDaily', 'rebuildFleet', 'restoreSnapshot', 'saveFaultTypes', 'saveHomeTiles', 'saveBusiness', 'configImport', 'postBroadcast', 'withdrawBroadcast', 'saveTours',
   'saveChecklist', 'saveMessages', 'saveQrLinks', ...Object.keys(rosterActions)]);
 const ADMIN_VIEWS = new Set(['backups', 'backupPart', 'teamAdmin', 'rosterAdmin', 'fleetRebuildInfo', 'configExport', 'broadcastsAdmin']);
 function needAdmin(ctx, { strict = false } = {}) {
@@ -2040,8 +2093,8 @@ export function adminInfo(ctx) { const a = (ctx && ctx.admin) || {}; return { co
 
 // ── roster (see roster-core.mjs) ───────────────────────────────────────────
 async function rosterContext(store) {
-  const [team, assets] = await Promise.all([read(store, KEY_TEAM, emptyTeam), read(store, KEY_ASSETS, emptyAssets)]);
-  return { members: team.data.members, locations: assets.data.locations, today: todayAdelaide(), now: Date.now() };
+  const [team, assets, st] = await Promise.all([read(store, KEY_TEAM, emptyTeam), read(store, KEY_ASSETS, emptyAssets), read(store, KEY_SETTINGS, emptySettings)]);
+  return { members: team.data.members, locations: assets.data.locations, tours: toursOf(st.data), today: todayAdelaide(), now: Date.now() };
 }
 async function rosterAction(store, action, body) {
   const rctx = await rosterContext(store);

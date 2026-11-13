@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.11 · Dashboard</title>
+<title>SA eBikes · Operations Tools v3.12 · Dashboard</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -255,7 +255,7 @@ main{padding:18px 16px 60px}
 <script src="/assets/ops-client.js"></script>
 <script src="/assets/ops-plus.js"></script>
 <script>
-// SA eBikes Operations Tools v3.11: fleet and demand dashboard. Read-only, from the daily summaries
+// SA eBikes Operations Tools v3.12: fleet and demand dashboard. Read-only, from the daily summaries
 // (one per hire day, saved when the next manifest is loaded) plus today so far.
 const $ = id => document.getElementById(id);
 const esc = Ops.esc;
@@ -343,6 +343,25 @@ function render() {
   const model = id => (D.assets.find(a => a.id === id) || {}).model || '';
   h += '<p class="sec">Most time out of service, this FY</p>' + (!ws.length ? '<p class="note">No bike has been out of service (P5) this financial year.</p>' :
     ws.slice(0, 6).map(([b, d]) => '<div class="row"><span>' + esc(b) + (model(b) ? ' · ' + esc(model(b)) : '') + '</span><span>' + (d < 1 ? 'under a day' : Math.round(d) + ' day' + (Math.round(d) === 1 ? '' : 's')) + '</span></div>').join(''));
+
+  // tours (v3.12): departures and riders this FY, by tour and by agent (no-shows not counted as riders)
+  const tAgg = {}, tAgent = {};
+  for (const [dt, sum] of Object.entries(D.days || {})) {
+    if (dt < fy || !sum.tours) continue;
+    for (const [id, t] of Object.entries(sum.tours)) {
+      const x = tAgg[id] = tAgg[id] || { name: t.name, departures: 0, booked: 0, riders: 0 };
+      x.departures += t.departures; x.booked += t.booked; x.riders += t.riders;
+      for (const [a, n] of Object.entries(t.byAgent || {})) tAgent[a] = (tAgent[a] || 0) + n;
+    }
+  }
+  const tList = Object.values(tAgg);
+  if (tList.length) {
+    h += '<p class="sec">Tours, this FY</p>' + tList.sort((a, b) => b.riders - a.riders).map(t =>
+      '<div class="row"><span>' + esc(t.name) + '</span><span>' + t.departures + ' departure' + (t.departures === 1 ? '' : 's') + ' · ' + t.riders + ' rider' + (t.riders === 1 ? '' : 's') +
+      ' · ' + (t.departures ? (t.riders / t.departures).toFixed(1) : 0) + ' a tour' + (t.booked > t.riders ? ' · ' + (t.booked - t.riders) + ' no-show rider' + (t.booked - t.riders === 1 ? '' : 's') : '') + '</span></div>').join('') +
+      '<div class="row"><span>By who booked</span><span>' + Object.entries(tAgent).filter(([, n]) => n).sort((a, b) => b[1] - a[1]).map(([a, n]) => esc(a) + ' ' + n).join(' · ') + '</span></div>' +
+      '<p class="note">Riders are those who came (no-shows left out). Tour bikes also count in the load and utilisation figures, from where each tour starts.</p>';
+  }
 
   // repeat faults this FY (v3.7): the same fault type logged again on a bike within the window set in Admin
   const ftLabel = id => ((D.faultTypes || []).find(t => t.id === id) || { label: id }).label;

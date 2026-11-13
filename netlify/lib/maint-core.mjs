@@ -1,4 +1,4 @@
-// SA eBikes Operations Tools v3.10 — settings: business, maintenance and the home screen.
+// SA eBikes Operations Tools v3.12 — settings: business, tours, maintenance and the home screen.
 //
 //   app-settings { faultTypes: [{ id, label, retired? }], repeatDays, home: { order: [tile], hidden: [tile] } }
 //
@@ -22,7 +22,51 @@ export const ALWAYS_SHOWN = ['manifest'];
 // logo: '' = the logo shipped with the app (/assets/brand/logo.png); 'none' = no logo; or a data: URL.
 export const DEFAULT_BUSINESS = { name: 'SA eBikes', tagline: 'Just like riding a bike... just more fun', main: '#415b30', bright: '#5fd64f', font: 'baloo', country: 'AU', logo: '', showName: true };
 export const FONTS = ['baloo', 'app'];
-export const emptySettings = () => ({ rev: 0, updatedAt: 0, faultTypes: DEFAULT_FAULT_TYPES.map(t => ({ ...t })), repeatDays: 90, home: { order: [...HOME_TILES], hidden: [] }, business: { ...DEFAULT_BUSINESS } });
+// v3.12: guided tours. Each is recognised from the Rezdy product name by its matching words, starts
+// and finishes at one location, runs for a set time, and has its usual session times (for rostering
+// guides ahead). Bookings for the same tour and session are one departure.
+export const DEFAULT_TOURS = [
+  { id: 'morning', name: 'Morning Tour', match: ['Guided Morning E-Bike Tour'], location: 'OXB', durationMins: 150, sessions: ['09:30'] },
+  { id: 'wine-stories', name: 'Wine & Stories Tour', match: ['Wine & Stories'], location: 'OXB', durationMins: 150, sessions: ['13:00'] },
+];
+export const emptySettings = () => ({ rev: 0, updatedAt: 0, faultTypes: DEFAULT_FAULT_TYPES.map(t => ({ ...t })), repeatDays: 90, home: { order: [...HOME_TILES], hidden: [] }, business: { ...DEFAULT_BUSINESS },
+  tours: DEFAULT_TOURS.map(t => ({ ...t, match: [...t.match], sessions: [...t.sessions] })) });
+export const toursOf = st => (st && Array.isArray(st.tours) ? st.tours : DEFAULT_TOURS);
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const minsOf = t => { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
+// The tours as saved: ids kept (renames follow), new ones get an id from their name; a tour left out
+// is kept, retired, so past departures keep their name.
+export function cleanTours(given, existing, locations) {
+  if (!Array.isArray(given)) throw new SettingsError('Send the list of tours');
+  const have = new Map((existing || []).map(t => [t.id, t])), ids = new Set(), names = new Set(), out = [];
+  const okLoc = new Set((locations || []).filter(l => !l.retired).map(l => l.code));
+  for (const t of given.slice(0, 30)) {
+    const name = String((t && t.name) || '').trim().replace(/\s+/g, ' ');
+    if (!name) throw new SettingsError('Each tour needs a name');
+    if (name.length > 50) throw new SettingsError('Keep tour names under 50 characters');
+    if (names.has(name.toLowerCase())) throw new SettingsError('"' + name + '" is in the list twice');
+    names.add(name.toLowerCase());
+    const match = [...new Set((Array.isArray(t.match) ? t.match : String(t.match || '').split(',')).map(w => String(w).trim()).filter(Boolean))].slice(0, 10);
+    if (!match.length && !t.retired) throw new SettingsError('Give "' + name + '" at least one matching word from its Rezdy product name');
+    const location = String(t.location || '').toUpperCase();
+    if (okLoc.size && !okLoc.has(location)) throw new SettingsError('Choose where "' + name + '" starts');
+    const durationMins = parseInt(t.durationMins, 10);
+    if (!(durationMins >= 15 && durationMins <= 720)) throw new SettingsError('A tour lasts between 15 minutes and 12 hours');
+    const sessions = [...new Set((Array.isArray(t.sessions) ? t.sessions : String(t.sessions || '').split(',')).map(x => String(x).trim()).filter(Boolean))];
+    for (const x of sessions) if (!HHMM.test(x)) throw new SettingsError('Session times are 24-hour, such as 09:30 or 13:00');
+    let tid = t.id && have.has(t.id) ? t.id : '';
+    if (!tid) { const base = slug(name); tid = base; let n = 2; while (have.has(tid) || ids.has(tid)) tid = base + '-' + n++; }
+    ids.add(tid);
+    out.push({ id: tid, name, match, location, durationMins, sessions: sessions.sort(), ...(t.retired ? { retired: true } : {}) });
+  }
+  for (const t of existing || []) if (!ids.has(t.id)) out.push({ ...t, retired: true });
+  return out;
+}
+// The tour a Rezdy product belongs to: the first active tour with a matching word in its name.
+export function tourFor(product, tours) {
+  const p = String(product || '').toLowerCase();
+  return p ? tours.find(t => !t.retired && t.match.some(w => p.includes(String(w).toLowerCase()))) || null : null;
+}
 export const businessOf = st => ({ ...DEFAULT_BUSINESS, ...((st && st.business) || {}) });
 // What every page needs to show the business: small, apart from the logo (about 50 KB at most).
 export const brandView = st => { const b = businessOf(st); return { ...b, logo: b.logo === 'none' ? '' : b.logo || '/assets/brand/logo.png', rev: (st && st.rev) || 0 }; };

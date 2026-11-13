@@ -1,6 +1,6 @@
 {
   "name": "sa-ebikes-operations-tools",
-  "version": "3.11.0",
+  "version": "3.12.0",
   "private": true,
   "description": "SA eBikes Operations Tools: scanner, contacts, manifest, issues, asset register, checklists, lost property, dashboard and backups",
   "scripts": {

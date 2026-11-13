@@ -97,12 +97,36 @@ function cleanShift(x, rctx) {
   if (!start || !end) throw bad('Enter a start and finish time');
   if (mins(end) <= mins(start)) throw bad('The finish time must be after the start');
   const note = String(x.note || '').trim().slice(0, 300);
-  return { kind: 'shift', date, site, memberId, start, end, note };
+  // v3.12: a shift can be marked as guiding a tour session. It must be at the tour's location and
+  // cover the whole tour (from the session time to the end of its duration), so a guide is always
+  // rostered on for it.
+  let guiding = null;
+  if (x.guiding && x.guiding.tourId) {
+    const t = (rctx.tours || []).find(y => y.id === x.guiding.tourId && !y.retired);
+    const session = String(x.guiding.session || '');
+    if (!t || !TIME_RE.test(session)) throw bad('Choose the tour and session being guided');
+    if (site !== t.location) throw bad(t.name + ' starts at ' + t.location + ': the shift has to be there to guide it');
+    if (mins(start) > mins(session) || (end !== 'close' && mins(end) < mins(session) + t.durationMins))
+      throw bad('The shift doesn\'t cover the whole ' + t.name + ' (' + showTime(session) + ' to ' + showTime(addMins(session, t.durationMins)) + ')');
+    guiding = { tourId: t.id, session };
+  }
+  return { kind: 'shift', date, site, memberId, start, end, note, ...(guiding ? { guiding } : {}) };
+}
+const addMins = (t, n) => { const m = mins(t) + n; return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+// v3.12: who's rostered to guide each tour session on a date: { 'tourId|09:30': { memberId, name } }.
+export function guidesOn(doc, members, date) {
+  const out = {};
+  for (const sh of (doc && doc.shifts) || []) {
+    if (sh.date !== date || !sh.guiding) continue;
+    const m = members.find(x => x.id === sh.memberId);
+    out[sh.guiding.tourId + '|' + sh.guiding.session] = { memberId: sh.memberId, name: m ? (m.knownAs || m.name) : 'someone no longer on the team' };
+  }
+  return out;
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const kindOf = s => (s.kind === 'na' ? 'na' : 'shift');
-const sameShift = (a, b) => kindOf(a) === kindOf(b) && a.date === b.date && (a.site || '') === (b.site || '') && a.memberId === b.memberId && (a.start || '') === (b.start || '') && (a.end || '') === (b.end || '') && (a.note || '') === (b.note || '');
+const sameShift = (a, b) => kindOf(a) === kindOf(b) && a.date === b.date && (a.site || '') === (b.site || '') && a.memberId === b.memberId && (a.start || '') === (b.start || '') && (a.end || '') === (b.end || '') && (a.note || '') === (b.note || '') && JSON.stringify(a.guiding || null) === JSON.stringify(b.guiding || null);
 
 // Two shifts for one person at overlapping times, or a shift on a day they're not available
 // (or marked not available twice), can't both stand.
@@ -129,6 +153,7 @@ function describe(old, sh, rctx) {
   if (!isNA(sh) && !isNA(old) && old.start !== sh.start) out.push(`start ${old.start} → ${sh.start}`);
   if (!isNA(sh) && !isNA(old) && old.end !== sh.end) out.push(`finish ${old.end} → ${sh.end}`);
   if ((old.note || '') !== (sh.note || '')) out.push('note changed');
+  if (JSON.stringify(old.guiding || null) !== JSON.stringify(sh.guiding || null)) out.push(sh.guiding ? 'guiding ' + ((rctx.tours || []).find(t => t.id === sh.guiding.tourId) || { name: 'a tour' }).name + ' ' + showTime(sh.guiding.session) : 'no longer guiding');
   return out.join(', ');
 }
 const historyOf = s => (s.history = s.history || []);
@@ -154,6 +179,13 @@ export const rosterActions = {
     const id = shiftId(p.shift && p.shift.id);
     const sh = cleanShift(p.shift, rctx);
     const existing = doc.shifts.find(s => s.id === id);
+    // One guide per tour session.
+    if (sh.guiding) {
+      const other = doc.shifts.find(s => s.id !== id && !s.removed && s.date === sh.date && s.guiding && s.guiding.tourId === sh.guiding.tourId && s.guiding.session === sh.guiding.session);
+      if (other) throw conflict(memberName(rctx, other.memberId) + ' is already guiding that tour at ' + showTime(sh.guiding.session), 'guide-taken');
+    }
+    if (!existing && !sh.guiding) delete sh.guiding;
+    if (existing && !sh.guiding) sh.guiding = undefined;
     if (!existing) {
       const clash = overlapWith(doc.shifts, sh);
       if (clash) throw conflict(clashText(rctx, clash, sh), 'overlap');
@@ -393,7 +425,7 @@ export function rosterView(doc, rctx, { start, days = 7, admin = false } = {}) {
     const m = names.get(s.memberId) || { name: '?', initials: '?' };
     const wk = doc.weeks[weekOf(s)] || {};
     const out = { id: s.id, kind: kindOf(s), date: s.date, site: s.site || '', memberId: s.memberId, name: m.name, initials: m.initials, start: s.start || '', end: s.end || '', note: s.note || '',
-      changed: !!(wk.emailedAt && s.changedAt > wk.emailedAt) };
+      changed: !!(wk.emailedAt && s.changedAt > wk.emailedAt), ...(s.guiding ? { guiding: s.guiding } : {}) };
     if (admin) Object.assign(out, { v: s.v, history: s.history || [] });
     return out;
   }).sort((a, b) => a.date.localeCompare(b.date) || (a.kind === 'na') - (b.kind === 'na') || a.site.localeCompare(b.site) || a.start.localeCompare(b.start));
@@ -407,5 +439,6 @@ export function rosterView(doc, rctx, { start, days = 7, admin = false } = {}) {
   // Staff see each person's Known as name and initials, nothing else.
   const members = rctx.members.filter(m => !m.retired).map(m => ({ id: m.id, name: m.name, initials: m.initials }));
   const locations = rctx.locations.filter(l => !l.retired).map(l => ({ code: l.code, name: l.name, kind: l.kind }));
-  return { rev: doc.rev, from, to, today: rctx.today, shifts, weeks, members, locations };
+  const tours = (rctx.tours || []).filter(t => !t.retired).map(t => ({ id: t.id, name: t.name, location: t.location, durationMins: t.durationMins, sessions: t.sessions }));
+  return { rev: doc.rev, from, to, today: rctx.today, shifts, weeks, members, locations, tours };
 }

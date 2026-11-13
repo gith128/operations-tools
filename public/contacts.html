@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.11 · Today's Contacts</title>
+<title>SA eBikes · Operations Tools v3.12 · Today's Contacts</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -118,12 +118,13 @@ h1{font-size:22px;font-weight:800;margin-bottom:4px}
 .back-home:active{transform:scale(.98)}
 .staff-lock-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted,#777);margin-left:6px}
 
+.tour-msg{float:right;font:inherit;font-size:11px;font-weight:700;padding:3px 9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--accent-text);cursor:pointer;margin-top:-3px}
 </style>
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.11</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.12</a>
 <a class="back-home" href="/help#todays-contacts" style="margin-left:6px">? Help</a>
 <div class="wrap">
   <h1>📇 Today's Contacts</h1>
@@ -418,9 +419,18 @@ function sectionedContacts() {
   const byTime = (a, b) => timeMins(CONTACTS[a].ptime) - timeMins(CONTACTS[b].ptime) || surname(CONTACTS[a]).localeCompare(surname(CONTACTS[b]));
   const carried = c => c.startDate && bookingDateISO && c.startDate < bookingDateISO;
   const attn = idx.filter(i => carried(CONTACTS[i])).sort(byTime);
-  const rest = idx.filter(i => !attn.includes(i)).sort(byTime);
+  // v3.12: each tour departure's bookings together, with a button to message all of them.
+  const tourKeys = [...new Set(idx.filter(i => !attn.includes(i) && CONTACTS[i].tourGroupId).map(i => CONTACTS[i].tourGroupId))];
+  const tourIdx = tourKeys.map(k => idx.filter(i => CONTACTS[i].tourGroupId === k).sort(byTime));
+  const rest = idx.filter(i => !attn.includes(i) && !CONTACTS[i].tourGroupId).sort(byTime);
   const items = [];
   if (attn.length) { items.push({ head: 'Carried over · ' + attn.length, attn: true }); attn.forEach(i => items.push({ i })); }
+  tourIdx.sort((a, b) => timeMins(CONTACTS[a[0]].ptime) - timeMins(CONTACTS[b[0]].ptime)).forEach(list => {
+    const c = CONTACTS[list[0]], riders = list.reduce((n, i) => n + (CONTACTS[i].totalBikes || 0), 0);
+    items.push({ head: '🚴 ' + (c.tour || 'Tour') + ' · ' + riders + ' rider' + (riders === 1 ? '' : 's') + ' · ' + list.length + ' booking' + (list.length === 1 ? '' : 's'), tour: c.tourGroupId });
+    list.forEach(i => items.push({ i }));
+  });
+  if (tourIdx.length && rest.length && sortMode !== 'location') items.push({ head: 'Hires · ' + rest.length });
   if (sortMode === 'location') {
     const codes = Locs.hire().map(l => l.code);
     rest.forEach(i => { const c = CONTACTS[i].site; if (c && !codes.includes(c)) codes.push(c); });
@@ -551,7 +561,15 @@ function renderContacts() {
       actionsHTML(c, i) +
     '</div>';
   document.getElementById('cards').innerHTML = sectionedContacts().map(it => it.head
-    ? '<div class="sec-head' + (it.attn ? ' attn' : '') + '">' + esc(it.head) + '</div>' : card(CONTACTS[it.i], it.i)).join('');
+    ? '<div class="sec-head' + (it.attn ? ' attn' : '') + '">' + esc(it.head) +
+      (it.tour ? ' <button class="tour-msg" onclick="messageTour(\'' + it.tour + '\')">📣 Message all</button>' : '') + '</div>' : card(CONTACTS[it.i], it.i)).join('');
+}
+
+// v3.12: one message to every booking on a tour departure, using the usual message templates.
+function messageTour(groupId) {
+  const list = CONTACTS.filter(c => c.tourGroupId === groupId && c.phone);
+  if (!list.length) { showToast('No phone numbers on this tour', 'warning'); return; }
+  Msg.broadcast(list, { onChange: () => loadContacts(false).catch(() => {}) });
 }
 
 // ============================================================

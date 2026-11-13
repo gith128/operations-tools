@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.11 · Group Scanner</title>
+<title>SA eBikes · Operations Tools v3.12 · Group Scanner</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -206,6 +206,12 @@ label.bike-row{cursor:pointer}
 .toast.success{border-color:var(--accent);color:var(--accent-text)}
 .toast.warning{border-color:var(--warn);color:var(--warn-text)}
 .toast.error{border-color:var(--danger);color:var(--danger-text)}
+.tour-box{margin:8px 0;padding:10px 12px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent-line)}
+.tour-line{font-size:13px;margin-bottom:4px}.tour-warn{color:var(--warn-text);font-weight:700}
+.tour-bk{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--accent-line);font-size:13px}
+.tour-bk button{font:inherit;font-size:12px;font-weight:700;padding:6px 10px;margin-left:4px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-elev);color:var(--text-dim);cursor:pointer}
+.tour-bk.arrived button:not(.ns){background:var(--accent);border-color:var(--accent);color:#fff}
+.tour-bk.noshow{opacity:.6}.tour-bk.noshow button.ns{background:var(--warn-soft);border-color:var(--warn);color:var(--warn-text)}
 .urgent-bar{margin:10px 16px 0;padding:11px 14px;border-radius:12px;background:var(--danger-soft,#fbe9e7);border:1.5px solid rgba(192,57,43,.45);color:var(--danger-text,#8e2a1f);font-size:13px;line-height:1.45}
 .urgent-bar b{display:block;font-size:14px;margin-bottom:2px}
 .last-scans{margin:0 0 12px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-elev)}
@@ -236,7 +242,7 @@ label.bike-row{cursor:pointer}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.11</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.12</a>
 <a class="back-home" href="/help#group-scanner" style="margin-left:6px">? Help</a>
 <a class="back-home" href="/qr" style="margin-left:6px">🔳 QR</a>
 <div class="app">
@@ -492,6 +498,7 @@ function applyOp(groups, op) {
       g.bikes.forEach(b => { if (!b.inAt) { b.inAt = p.at; b.droppedAt = p.location; } });
       g.status = 'returned'; g.droppedAt = p.location; g.exceptions = [];
     } break;
+    case 'setArrival': if (g) { const b = (g.bookings || []).find(x => x.code === p.code); if (b) b.arrival = p.state; } break;
     case 'undoDropOff': if (g && g.droppedAt) {
       g.bikes.forEach(b => { if (b.droppedAt === g.droppedAt) { delete b.inAt; delete b.droppedAt; } });
       g.status = 'out'; delete g.droppedAt;
@@ -534,6 +541,8 @@ function acceptView(v) {
   if (!v) return;
   if (v.locations) Locs.set(v.locations);
   if (typeof v.rev === 'number' && v.rev >= server.rev) {
+    // Guides, tours and urgent messages come only with the regular refresh: keep them meanwhile.
+    for (const k of ['guides', 'tours', 'urgent']) if (v[k] === undefined && server[k] !== undefined && !(k === 'guides' && !(v.groups || []).some(g => g.kind === 'tour'))) v[k] = server[k];
     server = v;
     try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(v)); } catch {}
   }
@@ -595,7 +604,7 @@ function siteHTML(g) {
   const t = (g.ptime ? ' · ' + esc(g.ptime) : '') + due;
   if (!g.site) return '<span class="site-badge need-loc">⚠ NO LOCATION · set it below</span>';
   return '<span class="site-badge' + (Locs.isDelivery(g.site) ? ' DEL' : '') + '">' + Locs.icon(g.site) + ' ' + esc(Locs.name(g.site).toUpperCase()) + t + '</span>' +
-    (g.droppedAt ? '<span class="site-badge">↩ DROPPED AT ' + esc(Locs.name(g.droppedAt).toUpperCase()) + '</span>' : '');
+    (g.droppedAt ? '<span class="site-badge">' + (g.kind === 'tour' && g.droppedAt === g.site ? '🏁 TOUR BACK' : '↩ DROPPED AT ' + esc(Locs.name(g.droppedAt).toUpperCase())) + '</span>' : '');
 }
 const isDeliveryGroup = g => Locs.isDelivery(g.site);
 // Options for a hire-location menu: hire sites, then home delivery.
@@ -606,7 +615,7 @@ function walkinRowHTML(g) {
   if (!g.site) bits.push('<select class="need" aria-label="Set location" onchange="setGroupSite(\'' + g.id + '\', this.value)"><option value="">📍 Set location…</option>' + siteOptions('') + '</select>');
   // Bikes left at a collection point (Dandelion) at the end of the hire.
   if (g.status === 'returned' && g.droppedAt) bits.push('<button onclick="correctDrop(\'' + g.id + '\')">↶ Undo drop-off</button>');
-  if (g.status !== 'returned' && g.bikes.some(b => !b.inAt)) Locs.collection().forEach(l => bits.push('<button onclick="dropOff(\'' + g.id + '\',\'' + esc(l.code) + '\')">↩ Dropped at ' + esc(l.name) + '</button>'));
+  if (g.kind !== 'tour' && g.status !== 'returned' && g.bikes.some(b => !b.inAt)) Locs.collection().forEach(l => bits.push('<button onclick="dropOff(\'' + g.id + '\',\'' + esc(l.code) + '\')">↩ Dropped at ' + esc(l.name) + '</button>'));
   if (g.walkin) {
     if (g.contactName) bits.push('<span class="who">👤 ' + esc(g.contactName) + (g.contactPhone ? ' · ' + esc(g.contactPhone) : '') + '</span>');
     if (!g.contactPhone && g.bikes.some(b => !b.inAt)) bits.push('<span class="nophone">No phone yet</span>');
@@ -928,7 +937,7 @@ function describeOp(op) {
   const p = op.payload || {}, g = server && (server.groups || []).find(x => x.id === p.groupId);
   const gn = g ? ' (' + g.name + ')' : '';
   const names = { addBike: 'Scan ' + (p.bike && p.bike.code), removeBike: 'Take a bike off', checkIn: 'Check in ' + (p.code || ''), deleteGroup: 'Delete group', clearGroup: 'Clear all',
-    resetDay: 'Reset day', setGroupStatus: 'Mark ' + (p.status || 'status'), createGroup: 'Add group ' + (p.name || ''), dropOff: 'Drop-off', mcheck: 'M-check ' + ((p.check && p.check.bike) || ''),
+    resetDay: 'Reset day', setGroupStatus: 'Mark ' + (p.status || 'status'), createGroup: 'Add group ' + (p.name || ''), dropOff: 'Drop-off', setArrival: 'Arrival ' + (p.code || ''), mcheck: 'M-check ' + ((p.check && p.check.bike) || ''),
     undoDropOff: 'Undo drop-off', restoreGroup: 'Restore group', voidMcheck: 'Void M-check' };
   return (names[op.action] || op.action) + gn;
 }
@@ -1059,7 +1068,7 @@ function renderScan() {
   $('manualInput').placeholder = ret ? 'Enter returning bike ID…' : mc ? 'Enter bike ID to M-check…' : 'Enter bike ID manually…';
   $('issueBar').innerHTML = '';
   if (mc) { $('bikeList').innerHTML = mcheckListHTML(); return; }
-  $('activeInfo').innerHTML = active ? progressHTML(active) + siteHTML(active) + dayBadgeHTML(active) + specialHTML(active) : '';
+  $('activeInfo').innerHTML = active ? progressHTML(active) + siteHTML(active) + dayBadgeHTML(active) + (active.kind === 'tour' ? tourHTML(active) : specialHTML(active)) : '';
   if (ret) { renderPhoneLoc(); $('bikeList').innerHTML = returnListHTML(); return; }
   // Groups still waiting to go out, by start time; groups already out or back are behind Show all.
   const ordered = sectioned(groups).filter(it => it.g).map(it => it.g);
@@ -1103,7 +1112,39 @@ function fmtDateTime(ts) { return new Date(ts).toLocaleString('en-AU', { day: '2
 // ── issuing: progress, Mark out, and on to the next group (v3.5) ───────────
 let showAllChips = false;
 // Bikes booked: from the manifest, or the "(x2)" in the group's name.
-const bookedQty = g => g.qty || (() => { const m = /\(x(\d+)\)/i.exec(g.name || ''); return m ? +m[1] : 0; })();
+const bookedQty = g => g.kind === 'tour' ? (g.bookings || []).reduce((n, b) => n + (b.arrival === 'noshow' ? 0 : b.pax), 0)
+  : g.qty || (() => { const m = /\(x(\d+)\)/i.exec(g.name || ''); return m ? +m[1] : 0; })();
+// ── v3.12: tour departures ───────────────────────────────────────────────────
+// One group per tour and session, with each booking inside it: tick each as it arrives (or mark a
+// no-show), bikes issued against the riders who came, the guide from the roster, and Tour back
+// checks every bike in at the tour's start.
+const tourInfo = g => (server.tours || []).find(t => t.id === g.tourId) || null;
+const guideOf = g => ((server.guides || {})[g.tourId + '|' + g.session] || {}).name || '';
+const showHM = m => { const h = Math.floor(m / 60) % 24, mm = m % 60; return (h % 12 || 12) + ':' + String(mm).padStart(2, '0') + (h < 12 ? ' am' : ' pm'); };
+function tourBackMins(g) { const t = tourInfo(g); if (!t || !g.session) return null; const [h, m] = g.session.split(':').map(Number); return h * 60 + m + t.durationMins; }
+function tourHTML(g) {
+  if (g.kind !== 'tour') return '';
+  const guide = guideOf(g), back = tourBackMins(g);
+  const now = new Date(), nowM = now.getHours() * 60 + now.getMinutes();
+  const late = back != null && g.status && g.status !== 'returned' && nowM > back + 30 && (g.startDate || server.manifestDate) === server.manifestDate;
+  const bk = g.bookings || [], came = bk.filter(b => b.arrival === 'arrived'), waiting = bk.filter(b => !b.arrival);
+  return '<div class="tour-box">' +
+    '<div class="tour-line">' + (guide ? '🧭 Guide: <b>' + esc(guide) + '</b>' : '<span class="tour-warn">⚠ No guide rostered</span>') +
+      (back != null ? ' · back about ' + showHM(back) : '') + (late ? ' <span class="tour-warn">· overdue</span>' : '') + '</div>' +
+    '<div class="tour-line">Arrived ' + came.reduce((n, b) => n + b.pax, 0) + ' of ' + bookedQty(g) + (waiting.length ? ' · waiting: ' + waiting.map(b => esc(String(b.name || b.code).split(' ').pop()) + ' (' + b.pax + ')').join(', ') : '') + '</div>' +
+    bk.map(b => '<div class="tour-bk' + (b.arrival ? ' ' + b.arrival : '') + '"><span><b>' + esc(b.name || b.code) + '</b> · ' + b.pax + ' pax' + (b.agent ? ' · ' + esc(b.agent) : '') + '</span>' +
+      '<span><button onclick="setArrival(\'' + g.id + '\',\'' + esc(b.code) + '\',\'' + (b.arrival === 'arrived' ? '' : 'arrived') + '\')">' + (b.arrival === 'arrived' ? '✓ Arrived' : 'Arrived') + '</button>' +
+      '<button class="ns" onclick="setArrival(\'' + g.id + '\',\'' + esc(b.code) + '\',\'' + (b.arrival === 'noshow' ? '' : 'noshow') + '\')">' + (b.arrival === 'noshow' ? '✗ No-show' : 'No-show') + '</button></span>' +
+      (b.special ? '<div class="special" style="width:100%">' + esc(b.special) + '</div>' : '') + '</div>').join('') + '</div>';
+}
+function setArrival(groupId, code, state) { enqueue('setArrival', { groupId, code, state, at: Date.now() }); }
+function tourBack(groupId) {
+  const g = groupsView().find(x => x.id === groupId); if (!g) return;
+  const out = g.bikes.filter(b => !b.inAt).length;
+  if (!confirm(g.name + ': tour back?\n\n' + (out ? 'All ' + out + ' bike' + (out === 1 ? '' : 's') + ' still out are checked in at ' + Locs.name(g.site) + ', and the tour is closed.' : 'The tour is closed.'))) return;
+  enqueue('dropOff', { groupId, location: g.site, at: Date.now() });
+  if (window.UndoBar) setTimeout(() => UndoBar.show(g.name + ' back at ' + g.site, () => enqueue('undoDropOff', { groupId, undo: true })), 0);
+}
 // Still to go out: not marked out, overnight or returned.
 const isWaiting = g => !g.status;
 function progressHTML(g) {
@@ -1401,7 +1442,7 @@ function renderGroups() {
         ${isActive ? '<div class="active-badge">ACTIVE ON THIS PHONE</div>' : ''}
       </div>
       <div>${statusBadge}${siteHTML(g)}${dayBadgeHTML(g)}</div>
-      ${specialHTML(g)}
+      ${g.kind === 'tour' ? tourHTML(g) : specialHTML(g)}
       ${walkinRowHTML(g)}
       ${bikeRowsHTML(g.bikes, 'No bikes yet', g)}
       ${exceptionsHTML(g)}
@@ -1410,8 +1451,10 @@ function renderGroups() {
       <div class="card-actions">
         <button class="btn btn-out btn-sm" onclick="setGroupStatus('${g.id}','out')">🚴 Out</button>
         ${hireDaysOf(g) > 1 && !isLastDay(g) ? `<button class="btn btn-overnight btn-sm" onclick="setGroupStatus('${g.id}','overnight')">🌙 Out overnight</button>` : ''}
-        <button class="btn btn-returned btn-sm" onclick="setGroupStatus('${g.id}','returned')">${returnLabel}</button>
-        <select class="hire-sel" aria-label="Hire length" onchange="setHireDays('${g.id}', this.value)">${[1, 2, 3, 4, 5, 6, 7].map(d => `<option value="${d}"${d === hireDaysOf(g) ? ' selected' : ''}>${d === 1 ? '1-day hire' : d + '-day hire'}</option>`).join('')}</select>
+        ${g.kind === 'tour'
+          ? (g.status === 'returned' ? `<button class="btn btn-returned btn-sm" onclick="setGroupStatus('${g.id}','returned')">↩ Undo Returned</button>` : `<button class="btn btn-returned btn-sm" onclick="tourBack('${g.id}')">🏁 Tour back</button>`)
+          : `<button class="btn btn-returned btn-sm" onclick="setGroupStatus('${g.id}','returned')">${returnLabel}</button>
+        <select class="hire-sel" aria-label="Hire length" onchange="setHireDays('${g.id}', this.value)">${[1, 2, 3, 4, 5, 6, 7].map(d => `<option value="${d}"${d === hireDaysOf(g) ? ' selected' : ''}>${d === 1 ? '1-day hire' : d + '-day hire'}</option>`).join('')}</select>`}
         <button class="btn btn-secondary btn-sm" onclick="setActive('${g.id}');switchTab('scan')">${isActive ? 'Go to Scanner' : 'Set Active'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">Delete</button>
       </div>
