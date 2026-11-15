@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.12 · Help &amp; SOPs</title>
+<title>SA eBikes · Operations Tools v3.13 · Help &amp; SOPs</title>
 <!-- Built from docs/manual.md by tools/build_help.py. Edit the manual, not this file. -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -45,7 +45,7 @@ tr:last-child td{border-bottom:none}
 <header><div class="head-row">
   <div class="head-top">
     <div><div class="logo">SA <span>eBikes</span></div>
-    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.12</div></div>
+    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.13</div></div>
     <a class="back-home" href="/">← Tools</a>
   </div>
   <nav class="toc"><a href="#getting-started">Getting started</a><a href="#load-manifest">Load Manifest</a><a href="#todays-contacts">Today&#x27;s Contacts</a><a href="#group-scanner">Group Scanner</a><a href="#issue-reporter">Issue Reporter</a><a href="#asset-register">Asset Register</a><a href="#site-checklists">Site Checklists</a><a href="#tours">Tours</a><a href="#roster">Roster</a><a href="#lost-property">Lost Property</a><a href="#show-qr">Show QR</a><a href="#dashboard">Dashboard</a><a href="#fleet-report">Fleet report</a><a href="#admin">Admin</a><a href="#daily-routine-and-troubleshooting">Daily routine and troubleshooting</a></nav>
@@ -139,7 +139,12 @@ tr:last-child td{border-bottom:none}
 <h3 id="undo-and-corrections">Undo and corrections</h3>
 <p>Mistakes are put right in one of three ways. Nothing is erased: the original stays on the record, and the record shows who put it right and when.</p>
 <ul>
-<li><strong>Undo (10 seconds).</strong> After adding a bike to a group, checking a bike in, marking a group Out, a Dandelion drop-off or signing off an M-check, a dark bar at the bottom of the screen offers <strong>Undo</strong> for 10 seconds. One tap reverses it; no reason is asked. A bike checked in goes back to where it was; an M-check sign-off undone leaves the bike due again. The record shows <strong>↶ Undone</strong> with the time and initials.</li>
+<li><strong>Undo (10 seconds).</strong> After adding a bike to a group, checking a bike in, marking a group Out or Out overnight, a Dandelion drop-off, 🏁 Tour back or signing off an M-check, a small <strong>↶ Undo</strong> button shows for 10 seconds, with a green line under it running down. One tap reverses it; no reason is asked. A bike checked in goes back to where it was; an M-check sign-off undone leaves the bike due again. The record shows <strong>↶ Undone</strong> with the time and initials.<ul>
+<li><strong>On the Scan tab,</strong> it's at the end of that action's row in <strong>Last scans</strong>, above the camera, for example "EB-012 · added to Smith (x2) · ↶ Undo". Marking a group out adds a row too, so its Undo is still there after the screen has moved on to the next group.</li>
+<li><strong>On the Groups tab,</strong> the group's most recent action also shows as a line inside its card, for example "🚴 marked Out · ↶ Undo".</li>
+<li><strong>Either one does it.</strong> Tapping Undo in one place takes it away from the other. Nothing floats over the screen, so it can't cover a button or the camera.</li>
+</ul>
+</li>
 <li><strong>Correction (any time after).</strong> A sheet asks for your initials and a reason, then shows <strong>✎ Corrected</strong> with the time, initials and reason on the record. Each record can be corrected once. Corrections are:<ul>
 <li><strong>Untick a checked-in bike</strong> (Groups tab): it goes back to being out, and moves back to where it was.</li>
 <li><strong>↶ Undo drop-off</strong> on a group dropped at Dandelion: its bikes go back to being out, move back, and the group is open again.</li>
@@ -250,7 +255,7 @@ tr:last-child td{border-bottom:none}
 <li><strong>✓ Checking in:</strong> scan each bike as it comes back. It's ticked in on whichever group has it out, so a mixed return doesn't need sorting first. The list shows each group with bikes still out. When every bike in a group is back, it moves to the top with a <strong>Mark returned</strong> button, so there's no need to go to the Groups tab. Set <strong>This phone is at</strong> once on each phone (VIC, OXB, TRA and so on); every bike checked in on that phone, by scan or by tick box, is moved to that location in the Asset Register. The first time each day, the app asks where you're checking in, and each confirmation shows where the bike is going (→ VIC). If a group was hired from somewhere else, or was a home delivery, it asks once for that group whether its bikes go to this phone's location or back where they were hired from (TRA for deliveries). Tick <strong>M-check each bike as it's checked in</strong> to have the checklist open straight after each check-in.</li>
 <li><strong>🔧 M-check:</strong> lists every bike at the rack that's due an M-check (it hasn't passed one since it last went out). Tap a bike, or scan or type it, to open the checklist. The camera stays on between bikes. See the M-check SOP below.</li>
 <li><strong>While a form is open</strong> (an M-check, taking a bike off, a return), the camera ignores what it sees, so a bike in view can't be checked in behind the form.</li>
-<li><strong>Last scans:</strong> the last three results stay on screen above the camera, newest first: the time, the bike and what happened. Green is fine, amber needs a look, red was refused. They stay until the next scan pushes them down, so a warning isn't lost if you look away.</li>
+<li><strong>Last scans:</strong> the last three results stay on screen above the camera, newest first: the time, the bike and what happened. Green is fine, amber needs a look, red was refused. They stay until the next scan pushes them down, so a warning isn't lost if you look away. For 10 seconds, a row can end in <strong>↶ Undo</strong> (see Undo and corrections). An M-check signed off, and a group marked out, dropped off or back from a tour, add a row too, without a beep.</li>
 <li><strong>Sounds:</strong> one short beep for OK, two beeps for a warning, a low tone for refused, and a buzz on Android phones (iPhones can't vibrate for a web page). <strong>🔊 Sounds on</strong> under Start Scanning turns them off or on for that phone. An iPhone's silent switch also silences them.</li>
 <li><strong>The camera:</strong><ul>
 <li>If a bike's label won't read after about 6 seconds, <strong>Can't read it? Type the bike ID below</strong> appears. Tap it to type the ID.</li>
@@ -311,6 +316,8 @@ tr:last-child td{border-bottom:none}
 </ol>
 <p>If the bike is being swapped because something is wrong with it, choose <strong>Fault found</strong> instead. The app offers to log the fault straight away: the Issue Reporter opens with the bike filled in, and comes back to the scanner once it's logged. Choose Cancel to scan the replacement first, then log the fault before anyone else takes the bike.</p>
 <h3 id="sop-correcting-a-wrong-scan">SOP: Correcting a wrong scan</h3>
+<p><strong>Within 10 seconds:</strong> tap <strong>↶ Undo</strong> at the end of that bike's row in Last scans. That's all.</p>
+<p>After that:</p>
 <ol>
 <li>Tap <strong>×</strong> next to the bike that was scanned by mistake.</li>
 <li>Choose <strong>Scanned by mistake</strong>.</li>
@@ -383,7 +390,7 @@ tr:last-child td{border-bottom:none}
 <h3 id="sop-group-dropped-at-dandelion">SOP: Group dropped at Dandelion</h3>
 <ol>
 <li>When a group calls to say they've left the bikes at Dandelion Wines, open the <strong>Groups</strong> tab.</li>
-<li>On their group, tap <strong>↩ Dropped at Dandelion Wines</strong> and confirm.</li>
+<li>On their group, tap <strong>↩ Dropped at Dandelion Wines</strong> and confirm. Tapped the wrong group? <strong>↶ Undo</strong> shows inside its card for 10 seconds.</li>
 <li>When the bikes are collected, use <strong>Asset Register → Move bikes to a location</strong> to scan them from DLN onto the trailer (TRA) or back to the Visitor Centre.</li>
 </ol>
 <h3 id="sop-end-of-day">SOP: End of day</h3>
@@ -694,7 +701,7 @@ tr:last-child td{border-bottom:none}
 <li><strong>On the Group Scanner</strong>, a departure's card shows the guide, when it's due back ("back about 12:00 pm"), and who's arrived ("Arrived 3 of 5 · waiting: Öttl (2)"). It turns <strong>overdue</strong> half an hour after that.<ul>
 <li><strong>Arrived</strong> ticks a booking off as it turns up. <strong>No-show</strong> marks one that didn't come, and takes its riders off the number of bikes needed. Tap either again to clear it.</li>
 <li><strong>Issue bikes</strong> to the departure as to any group: the count is against the riders who came.</li>
-<li><strong>🏁 Tour back</strong> (instead of Returned) checks every bike still out in at the tour's start and closes the departure. <strong>Undo</strong> is offered for 10 seconds; after that, use <strong>↶ Undo drop-off</strong> on the card.</li>
+<li><strong>🏁 Tour back</strong> (instead of Returned) checks every bike still out in at the tour's start and closes the departure. <strong>↶ Undo</strong> shows for 10 seconds inside the card (and in Last scans); after that, use <strong>↶ Undo drop-off</strong> on the card.</li>
 </ul>
 </li>
 <li><strong>Today's Contacts</strong> lists each departure's bookings together under a heading such as "🚴 Morning Tour 9:30 AM · 3 riders · 1 booking", with <strong>📣 Message all</strong> to send one message, from the usual templates, to every booking on that tour.</li>
@@ -1139,6 +1146,10 @@ tr:last-child td{border-bottom:none}
 <tr>
 <td>A group was marked Returned by mistake</td>
 <td>Tap Undo Returned on the Groups tab.</td>
+</tr>
+<tr>
+<td>I tapped the wrong thing and the ↶ Undo has gone</td>
+<td>Undo lasts 10 seconds. After that, use the correction for that record (see Getting started → Undo and corrections): for example, untick the bike on the Groups tab, or ↶ Undo drop-off on the card.</td>
 </tr>
 <tr>
 <td>A bike was taken off by mistake</td>

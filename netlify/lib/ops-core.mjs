@@ -22,7 +22,7 @@ import { KEY_SETTINGS, emptySettings, cleanFaultTypes, cleanHome, repeatFaults, 
 export { KEY_SETTINGS };
 
 // The version these tools report (checked against package.json by tools/check.mjs).
-export const APP_VERSION = '3.12';
+export const APP_VERSION = '3.13';
 
 export const KEY_DAY = 'day';
 // Every Rezdy product name seen in a manifest, with the location it matched (v3.4).

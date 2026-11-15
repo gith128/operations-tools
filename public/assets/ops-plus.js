@@ -371,19 +371,11 @@
   else init();
 })();
 
-// ── v3.9: Undo (10 seconds, no reason) and corrections (initials and a reason) ─────────────
-// UndoBar.show(text, onUndo): a bar at the bottom of the screen for 10 seconds with an Undo button.
+// ── v3.9: corrections (initials and a reason). v3.13: Undo is drawn inside the Group Scanner itself
+// (offerUndo in scanner.html), so the floating UndoBar is gone.
 // Correct.ask({ title, sub, action, onOK(by, reason) }): a sheet asking for initials and a reason.
 (function () {
   const css = `
-.undo-bar{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(140%);z-index:6000;display:flex;align-items:center;gap:12px;
-  max-width:min(94vw,460px);width:max-content;padding:10px 10px 10px 16px;border-radius:14px;background:#1f2428;color:#fff;font:600 13px 'Syne',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .2s}
-.undo-bar.show{transform:translateX(-50%) translateY(0)}
-.undo-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.undo-bar button{flex:none;padding:9px 14px;border-radius:10px;border:none;background:var(--bright);color:#14210a;font:800 13px 'Syne',sans-serif;cursor:pointer}
-.undo-bar .bar{position:absolute;left:12px;right:12px;bottom:4px;height:2px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden}
-.undo-bar .bar i{display:block;height:100%;background:var(--bright);transform-origin:left;animation:undoBar 10s linear forwards}
-@keyframes undoBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .cor-back{position:fixed;inset:0;z-index:6500;background:rgba(20,24,28,.45);display:none;align-items:flex-end;justify-content:center}
 .cor-back.open{display:flex}
 .cor-sheet{background:var(--bg-elev,#fff);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));font-family:'Syne',sans-serif;color:var(--text,#1f2428)}
@@ -396,19 +388,6 @@
 .cor-line{font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted,#8a8f93);margin-top:4px}`;
   function addCss() { if (document.getElementById('corCss')) return; const st = document.createElement('style'); st.id = 'corCss'; st.textContent = css; document.head.appendChild(st); }
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let timer = null;
-  window.UndoBar = {
-    show(text, onUndo) {
-      addCss();
-      let el = document.getElementById('undoBar');
-      if (!el) { el = document.createElement('div'); el.id = 'undoBar'; el.className = 'undo-bar'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-      el.innerHTML = '<span>' + esc(text) + '</span><button type="button">Undo</button><div class="bar"><i></i></div>';
-      el.querySelector('button').onclick = () => { UndoBar.hide(); onUndo(); };
-      requestAnimationFrame(() => el.classList.add('show'));
-      clearTimeout(timer); timer = setTimeout(UndoBar.hide, 10000);
-    },
-    hide() { clearTimeout(timer); const el = document.getElementById('undoBar'); if (el) el.classList.remove('show'); },
-  };
   window.Correct = {
     // opts: { title, sub, action (button text), onOK(by, reason) }
     ask(opts) {

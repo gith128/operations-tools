@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.12 · Group Scanner</title>
+<title>SA eBikes · Operations Tools v3.13 · Group Scanner</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -215,10 +215,16 @@ label.bike-row{cursor:pointer}
 .urgent-bar{margin:10px 16px 0;padding:11px 14px;border-radius:12px;background:var(--danger-soft,#fbe9e7);border:1.5px solid rgba(192,57,43,.45);color:var(--danger-text,#8e2a1f);font-size:13px;line-height:1.45}
 .urgent-bar b{display:block;font-size:14px;margin-bottom:2px}
 .last-scans{margin:0 0 12px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-elev)}
-.ls-row{display:grid;grid-template-columns:58px 74px minmax(0,1fr);gap:8px;align-items:baseline;padding:7px 11px;font-size:12px;border-top:1px solid var(--border)}
+.ls-row{display:grid;grid-template-columns:58px 74px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:7px 11px;font-size:12px;border-top:1px solid var(--border)}
 .ls-row:first-child{border-top:none}
 .ls-row .t{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)}
-.ls-row .c{font-family:'DM Mono',monospace;font-weight:700}
+.ls-row .c{font-family:'DM Mono',monospace;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.undo-link{position:relative;flex:none;align-self:center;font:inherit;font-size:12px;font-weight:800;padding:6px 10px 8px;border-radius:9px;border:1.5px solid var(--accent);background:var(--bg-elev);color:var(--accent-text);cursor:pointer;white-space:nowrap}
+.undo-link::after{content:'';position:absolute;left:9px;right:9px;bottom:3px;height:2px;border-radius:2px;background:var(--bright);transform-origin:left;animation:undoLeft 10s linear forwards;animation-delay:calc(var(--left, 10000ms) - 10000ms)}
+@keyframes undoLeft{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.ls-row:not(:first-child) .undo-link{opacity:1}
+.undo-line{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 8px;padding:6px 6px 6px 11px;border-radius:10px;background:var(--bg-soft);border:1.5px solid var(--border);font-size:13px}
+.undo-line span{overflow:hidden;text-overflow:ellipsis}
 .ls-row.ok .c{color:var(--accent-text)}.ls-row.ok{box-shadow:inset 4px 0 0 var(--bright)}.ls-row.warn{background:var(--warn-soft)}.ls-row.warn .c{color:var(--warn-text)}
 .ls-row.bad{background:var(--danger-soft)}.ls-row.bad .c{color:var(--danger-text)}
 .ls-row:not(:first-child){opacity:.6}
@@ -242,7 +248,7 @@ label.bike-row{cursor:pointer}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.12</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.13</a>
 <a class="back-home" href="/help#group-scanner" style="margin-left:6px">? Help</a>
 <a class="back-home" href="/qr" style="margin-left:6px">🔳 QR</a>
 <div class="app">
@@ -717,14 +723,14 @@ function withCheckinLoc(g, cb, cancel) {
 }
 function doCheckIn(g, b, loc, fromScan) {
   enqueue('checkIn', { groupId: g.id, bikeId: b.id, in: true, at: Date.now(), location: loc });
-  if (window.UndoBar) setTimeout(() => UndoBar.show(b.code + ' checked in' + (loc ? ' at ' + loc : ''), () => {
+  const u = offerUndo(b.code + ' checked in' + (loc ? ' at ' + loc : ''), g.id, () => {
     enqueue('checkIn', { groupId: g.id, bikeId: b.id, in: false, undo: true, at: Date.now(), location: '' });
     feedback('warn', b.code, 'check-in undone' + (loc ? ': moved back from ' + loc : ''));
-  }), 0);
+  });
   if (mcAfterIn) setTimeout(() => openCheck(b.code), 600);
   const n = inCount(g) + 1, total = g.bikes.length, to = loc ? ' · → ' + loc : '';
-  if (fromScan && g._alsoOn) feedback('warn', b.code, 'in on ' + g.name + ', but also listed on ' + g._alsoOn);
-  else feedback('ok', b.code, 'in · ' + g.name + ' · ' + n + ' of ' + total + (loc ? ' · → ' + loc : ''));
+  if (fromScan && g._alsoOn) feedback('warn', b.code, 'in on ' + g.name + ', but also listed on ' + g._alsoOn, u);
+  else feedback('ok', b.code, 'in · ' + g.name + ' · ' + n + ' of ' + total + (loc ? ' · → ' + loc : ''), u);
   if (fromScan && g._alsoOn) showToast('⚠ ' + b.code + ' checked in on ' + g.name + to + ', but it is also listed on ' + g._alsoOn, 'warning');
   else if (n === total) showToast('✓ ' + b.code + ' in · ' + g.name + ' all back' + to + '. Tap Mark returned below.', 'success');
   else showToast('✓ ' + b.code + ' in · ' + g.name + ' · ' + n + ' of ' + total + to, 'success');
@@ -818,7 +824,8 @@ function submitCheck() {
   else {
     doFlash('var(--bright)'); showToast('✓ ' + code + ' M-checked · ' + by, 'success');
     const checkId = mcCheckIdDone;
-    if (window.UndoBar) UndoBar.show(code + ' M-check signed off', () => { enqueue('voidMcheck', { checkId, undo: true, by }); feedback('warn', code, 'M-check sign-off undone: due again'); });
+    const u = offerUndo(code + ' M-check signed off', '', () => { enqueue('voidMcheck', { checkId, undo: true, by }); feedback('warn', code, 'M-check sign-off undone: due again'); });
+    scanRow('ok', code, 'M-check signed off · ' + by, u);
   }
 }
 function mcheckListHTML() {
@@ -1143,7 +1150,8 @@ function tourBack(groupId) {
   const out = g.bikes.filter(b => !b.inAt).length;
   if (!confirm(g.name + ': tour back?\n\n' + (out ? 'All ' + out + ' bike' + (out === 1 ? '' : 's') + ' still out are checked in at ' + Locs.name(g.site) + ', and the tour is closed.' : 'The tour is closed.'))) return;
   enqueue('dropOff', { groupId, location: g.site, at: Date.now() });
-  if (window.UndoBar) setTimeout(() => UndoBar.show(g.name + ' back at ' + g.site, () => enqueue('undoDropOff', { groupId, undo: true })), 0);
+  const u = offerUndo('🏁 Tour back at ' + g.site, groupId, () => { enqueue('undoDropOff', { groupId, undo: true }); scanRow('warn', g.name, 'tour back undone: bikes out again'); });
+  scanRow('ok', g.name, '🏁 tour back at ' + g.site, u);
 }
 // Still to go out: not marked out, overnight or returned.
 const isWaiting = g => !g.status;
@@ -1214,27 +1222,27 @@ function addBike(code, opts = {}) {
   if (!opts.force && registerLoaded() && !(server.bikeInfo || {})[code]) { askUnregistered(code, group); return; }
   const entryId = uid();
   enqueue('addBike', { groupId: group.id, bike: { id: entryId, code, ts: Date.now() } });
-  // v3.9: 10 seconds to undo it, no reason needed.
-  if (window.UndoBar) UndoBar.show(code + ' added to ' + group.name, () => {
+  // v3.9: 10 seconds to undo it, no reason needed. v3.13: offered in the last-scans row and the group's card.
+  const u = offerUndo(code + ' added', group.id, () => {
     enqueue('removeBike', { groupId: group.id, bikeId: entryId, reason: 'undone', removedAt: Date.now() });
     feedback('warn', code, 'undone: taken off ' + group.name);
   });
   const what = bikeWhat({ code });
   const disposed = ((server.bikeInfo || {})[code] || {}).disposed;
   if (disposed) {
-    feedback('warn', code, 'added, but recorded as disposed: check the ID');
+    feedback('warn', code, 'added, but recorded as disposed: check the ID', u);
     showToast('⚠ ' + code + ' added — but it is recorded as disposed (' + disposed.split('-').reverse().join('/') + '). Check the ID.', 'warning');
   } else if (openIssueBikes.has(code)) {
-    feedback('warn', code, 'added, has an open issue');
+    feedback('warn', code, 'added, has an open issue', u);
     showToast('⚠ ' + code + ' added — has open issue logged', 'warning');
   } else if (!(server.bikeInfo || {})[code] && registerLoaded()) {
-    feedback('warn', code, 'added, not in the register');
+    feedback('warn', code, 'added, not in the register', u);
     showToast('⚠ ' + code + ' added — not in asset register', 'warning');
   } else if (mcDue().has(code)) {
-    feedback('warn', code, 'added, not M-checked since its last ride');
+    feedback('warn', code, 'added, not M-checked since its last ride', u);
     showToast('⚠ ' + code + ' added — not M-checked since its last ride', 'warning');
   } else {
-    feedback('ok', code, (what ? what + ', ' : '') + 'added to ' + group.name);
+    feedback('ok', code, (what ? what + ', ' : '') + 'added to ' + group.name, u);
     showToast('✓ ' + code + (what ? ' · ' + what : '') + ' added', 'success');
   }
 }
@@ -1242,16 +1250,51 @@ function addBike(code, opts = {}) {
 // ── scan feedback (v3.8): sound, vibration, flash, and the last three results kept on screen ──
 const lastScans = [];
 const FLASH = { ok: 'var(--bright)', warn: 'var(--warn)', bad: 'var(--danger)' };
-function feedback(kind, code, text) {
+function feedback(kind, code, text, undoId) {
   doFlash(FLASH[kind]);
   if (window.OpsScan) OpsScan.feedback(kind);
-  lastScans.unshift({ kind, code, text, at: Date.now() });
-  lastScans.length = Math.min(lastScans.length, 3);
-  const el = $('lastScans');
-  el.style.display = 'block';
-  el.innerHTML = lastScans.map(x => '<div class="ls-row ' + x.kind + '"><span class="t">' + new Date(x.at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) +
-    '</span><span class="c">' + esc(x.code) + '</span><span>' + esc(x.text) + '</span></div>').join('');
+  scanRow(kind, code, text, undoId);
 }
+// A row in the last-scans strip, without sound or flash (used for M-check sign-offs and group actions).
+function scanRow(kind, code, text, undoId) {
+  lastScans.unshift({ kind, code, text, at: Date.now(), undo: undoId || '' });
+  lastScans.length = Math.min(lastScans.length, 3);
+  drawLastScans();
+}
+function drawLastScans() {
+  const el = $('lastScans');
+  if (!lastScans.length) return;
+  el.style.display = 'block';
+  el.innerHTML = lastScans.map(x => { const u = x.undo && liveUndo(x.undo);
+    return '<div class="ls-row ' + x.kind + '"><span class="t">' + new Date(x.at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) +
+    '</span><span class="c">' + esc(x.code) + '</span><span>' + esc(x.text) + '</span>' + (u ? undoLinkHTML(u) : '') + '</div>'; }).join('');
+}
+
+// ── v3.13: Undo inside the screen, not a floating bar ──────────────────────────
+// For 10 seconds after an action, "↶ Undo" shows in its last-scans row (Scan tab) and, for an action on a
+// group, in a line inside that group's card (Groups tab). Tapping either uses it up in both. After 10 seconds
+// it goes, and the correction (initials and a reason) on the group or record is the way back, as before.
+const UNDO_MS = 10000;
+const undos = [];
+function offerUndo(text, groupId, fn) {
+  const u = { id: uid(), text, groupId: groupId || '', until: Date.now() + UNDO_MS, fn };
+  undos.push(u);
+  setTimeout(() => { const i = undos.indexOf(u); if (i >= 0) { undos.splice(i, 1); drawUndos(); } }, UNDO_MS + 50);
+  if (groupId) drawUndos();
+  return u.id;
+}
+function liveUndo(id) { const u = undos.find(x => x.id === id); return u && u.until > Date.now() ? u : null; }
+function doUndo(id) {
+  const u = liveUndo(id);
+  if (!u) { showToast('Too late to undo here. Use the correction on the record instead.', 'warning'); drawUndos(); return; }
+  undos.splice(undos.indexOf(u), 1);
+  u.fn();
+  drawUndos();
+}
+function undoLinkHTML(u) { return '<button type="button" class="undo-link" style="--left:' + Math.max(0, u.until - Date.now()) + 'ms" onclick="doUndo(\'' + u.id + '\')" aria-label="Undo: ' + esc(u.text) + '">↶ Undo</button>'; }
+// The card shows only the group's most recent Undo, so a group being scanned doesn't fill with lines.
+function groupUndoHTML(g) { const u = undos.filter(x => x.groupId === g.id && x.until > Date.now()).pop(); return u ? '<div class="undo-line"><span>' + esc(u.text) + '</span>' + undoLinkHTML(u) + '</div>' : ''; }
+function drawUndos() { drawLastScans(); if ($('tab-groups').classList.contains('active')) renderGroups(); }
 function drawSoundBtn() { const on = !window.OpsScan || OpsScan.sound.on(); $('soundBtn').textContent = on ? '🔊 Sounds on' : '🔇 Sounds off'; }
 function toggleSound() { OpsScan.sound.set(!OpsScan.sound.on()); drawSoundBtn(); }
 
@@ -1442,6 +1485,7 @@ function renderGroups() {
         ${isActive ? '<div class="active-badge">ACTIVE ON THIS PHONE</div>' : ''}
       </div>
       <div>${statusBadge}${siteHTML(g)}${dayBadgeHTML(g)}</div>
+      ${groupUndoHTML(g)}
       ${g.kind === 'tour' ? tourHTML(g) : specialHTML(g)}
       ${walkinRowHTML(g)}
       ${bikeRowsHTML(g.bikes, 'No bikes yet', g)}
@@ -1511,7 +1555,11 @@ function setGroupStatus(id, status) {
   if (status === 'overnight' && isLastDay(g)) { showToast('Last day of the hire: bikes are due back today', 'warning'); return; }
   const prev = g.status || '', next = g.status === status ? '' : status;
   enqueue('setGroupStatus', { groupId: id, status: next });
-  if (next && window.UndoBar) UndoBar.show(g.name + (next === 'out' ? ' marked Out' : ' marked Out overnight'), () => enqueue('setGroupStatus', { groupId: id, status: prev, undo: true }));
+  if (next) {
+    const what = next === 'out' ? 'marked Out' : 'marked Out overnight';
+    const u = offerUndo('🚴 ' + what, id, () => { enqueue('setGroupStatus', { groupId: id, status: prev, undo: true }); scanRow('warn', g.name, what + ': undone'); });
+    scanRow('ok', g.name, what, u);
+  }
 }
 
 function renderSummary() {
@@ -1663,7 +1711,8 @@ function closeDrop() { $('dropModal').classList.remove('open'); dropPlan = null;
 function confirmDrop() {
   const d = dropPlan; if (!d) return; closeDrop();
   enqueue('dropOff', { groupId: d.groupId, location: d.loc, at: Date.now() });
-  if (window.UndoBar) setTimeout(() => UndoBar.show(d.name + ' dropped at ' + Locs.name(d.loc), () => enqueue('undoDropOff', { groupId: d.groupId, undo: true })), 0);
+  const u = offerUndo('↩ Dropped at ' + Locs.name(d.loc), d.groupId, () => { enqueue('undoDropOff', { groupId: d.groupId, undo: true }); scanRow('warn', d.name, 'drop-off undone: bikes out again'); });
+  scanRow('ok', d.name, 'dropped at ' + Locs.name(d.loc), u);
   showToast('↩ ' + d.name + ' dropped at ' + Locs.name(d.loc), 'success');
 }
 // Location and contact on a group after it's been created.

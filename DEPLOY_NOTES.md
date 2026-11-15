@@ -1,3 +1,56 @@
+# SA eBikes Operations Tools v3.13
+
+## New in v3.13: Undo inside the screen
+
+**Before deploying:** **Admin → Backups → Back up now**.
+
+**Rolling back:** publish the v3.12 deploy in Netlify. Nothing is stored differently: this release only changes how Undo is shown, so the floating Undo bar simply comes back.
+
+**To deploy:** unzip into an empty folder, then drag the **5 folders and 4 files** inside `sa-ebikes-ops-v3.13` onto GitHub's upload page (not "choose your files"), or use GitHub Desktop.
+
+### What changes for staff
+
+The dark Undo bar at the bottom of the screen is gone. For the same 10 seconds, after the same actions, a small **↶ Undo** button now shows inside the screen, with a green line under it running down:
+
+- **Scan tab:** at the end of that action's row in **Last scans**, above the camera. For example "EB-012 · added to Smith (x2) · ↶ Undo".
+    - **Every action has a row,** including ones that didn't before: an M-check signed off, a group marked Out or Out overnight, a Dandelion drop-off and 🏁 Tour back. These rows add no beep or flash.
+    - **Mark out:** its Undo stays in Last scans after the screen moves on to the next group, so it's still there when needed.
+    - **Each row keeps its own Undo,** so scanning three bikes quickly leaves all three undoable. The old bar only ever showed the latest.
+- **Groups tab:** a line inside the group's card, for example "🚴 marked Out · ↶ Undo". It shows only the group's most recent action, so a group being scanned doesn't fill up with lines.
+- **Either one does it.** Tapping Undo in one place takes it away from the other.
+- **Too late:** if the 10 seconds run out just as it's tapped, a message points to the correction instead.
+
+Nothing floats over the screen any more, so Undo can't cover a button or the camera.
+
+**What doesn't change:**
+- what each Undo does and the "↶ Undone" trail;
+- the `undo: true` changes, queued and working offline;
+- corrections (initials and a reason) after the 10 seconds.
+
+### Underneath
+
+- **Code:** `offerUndo`, `doUndo`, `scanRow` and `groupUndoHTML` in `public/scanner.html`. `UndoBar` and its styles are removed from `public/assets/ops-plus.js`. Nothing else used them.
+- **Pages left open:** a page still open from v3.12 checks for `UndoBar` before using it. Until it reloads, it simply offers no Undo.
+- **Server:** no changes.
+
+### Tests and checks
+
+- **Tests:** 114, unchanged. Only the page changed.
+- **Browser** (Chrome, phone size, dev server): checked each action Undo covers:
+    - **A bike added:** taken off as "undone".
+    - **Marked Out:** from Last scans, and again from the card, after the screen had moved on to the next group. Each one was used up in both places.
+    - **A bike checked in:** unticked and moved back from VIC.
+    - **An M-check pass:** voided.
+    - **🏁 Tour back:** the departure back out, with no bikes in.
+    - **A Dandelion drop-off:** the group back out.
+    - **After 10.5 seconds:** both the row link and the card line had gone.
+    - **No page errors.**
+- **Worth a look on the phones:** the Undo button is a comfortable tap beside the row on the iPhone 13 and 15.
+
+**Manual:** Getting started → Undo and corrections, Group Scanner → Last scans, Tours (Tour back), "SOP: Correcting a wrong scan", "SOP: Group dropped at Dandelion", and a new troubleshooting row ("the ↶ Undo has gone"). Help and the Claude Doc are updated, and the issuing guide's Undo bar section is updated.
+
+**Files:** `public/scanner.html`, `public/assets/ops-plus.js`, `public/help.html`, the version label on every page, `docs/manual.md`, `netlify/lib/ops-core.mjs` (`APP_VERSION`), `package.json`, `package-lock.json`, `netlify.toml`, this file.
+
 # SA eBikes Operations Tools v3.12
 
 ## New in v3.12: Tours

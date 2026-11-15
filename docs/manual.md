@@ -73,7 +73,10 @@ Pages check for updates less often when nobody is touching the screen, and stop 
 
 Mistakes are put right in one of three ways. Nothing is erased: the original stays on the record, and the record shows who put it right and when.
 
-- **Undo (10 seconds).** After adding a bike to a group, checking a bike in, marking a group Out, a Dandelion drop-off or signing off an M-check, a dark bar at the bottom of the screen offers **Undo** for 10 seconds. One tap reverses it; no reason is asked. A bike checked in goes back to where it was; an M-check sign-off undone leaves the bike due again. The record shows **↶ Undone** with the time and initials.
+- **Undo (10 seconds).** After adding a bike to a group, checking a bike in, marking a group Out or Out overnight, a Dandelion drop-off, 🏁 Tour back or signing off an M-check, a small **↶ Undo** button shows for 10 seconds, with a green line under it running down. One tap reverses it; no reason is asked. A bike checked in goes back to where it was; an M-check sign-off undone leaves the bike due again. The record shows **↶ Undone** with the time and initials.
+    - **On the Scan tab,** it's at the end of that action's row in **Last scans**, above the camera, for example "EB-012 · added to Smith (x2) · ↶ Undo". Marking a group out adds a row too, so its Undo is still there after the screen has moved on to the next group.
+    - **On the Groups tab,** the group's most recent action also shows as a line inside its card, for example "🚴 marked Out · ↶ Undo".
+    - **Either one does it.** Tapping Undo in one place takes it away from the other. Nothing floats over the screen, so it can't cover a button or the camera.
 - **Correction (any time after).** A sheet asks for your initials and a reason, then shows **✎ Corrected** with the time, initials and reason on the record. Each record can be corrected once. Corrections are:
     - **Untick a checked-in bike** (Groups tab): it goes back to being out, and moves back to where it was.
     - **↶ Undo drop-off** on a group dropped at Dandelion: its bikes go back to being out, move back, and the group is open again.
@@ -188,7 +191,7 @@ The Group Scanner records which bikes go out with which booking, and checks them
 - **✓ Checking in:** scan each bike as it comes back. It's ticked in on whichever group has it out, so a mixed return doesn't need sorting first. The list shows each group with bikes still out. When every bike in a group is back, it moves to the top with a **Mark returned** button, so there's no need to go to the Groups tab. Set **This phone is at** once on each phone (VIC, OXB, TRA and so on); every bike checked in on that phone, by scan or by tick box, is moved to that location in the Asset Register. The first time each day, the app asks where you're checking in, and each confirmation shows where the bike is going (→ VIC). If a group was hired from somewhere else, or was a home delivery, it asks once for that group whether its bikes go to this phone's location or back where they were hired from (TRA for deliveries). Tick **M-check each bike as it's checked in** to have the checklist open straight after each check-in.
 - **🔧 M-check:** lists every bike at the rack that's due an M-check (it hasn't passed one since it last went out). Tap a bike, or scan or type it, to open the checklist. The camera stays on between bikes. See the M-check SOP below.
 - **While a form is open** (an M-check, taking a bike off, a return), the camera ignores what it sees, so a bike in view can't be checked in behind the form.
-- **Last scans:** the last three results stay on screen above the camera, newest first: the time, the bike and what happened. Green is fine, amber needs a look, red was refused. They stay until the next scan pushes them down, so a warning isn't lost if you look away.
+- **Last scans:** the last three results stay on screen above the camera, newest first: the time, the bike and what happened. Green is fine, amber needs a look, red was refused. They stay until the next scan pushes them down, so a warning isn't lost if you look away. For 10 seconds, a row can end in **↶ Undo** (see Undo and corrections). An M-check signed off, and a group marked out, dropped off or back from a tour, add a row too, without a beep.
 - **Sounds:** one short beep for OK, two beeps for a warning, a low tone for refused, and a buzz on Android phones (iPhones can't vibrate for a web page). **🔊 Sounds on** under Start Scanning turns them off or on for that phone. An iPhone's silent switch also silences them.
 - **The camera:**
     - If a bike's label won't read after about 6 seconds, **Can't read it? Type the bike ID below** appears. Tap it to type the ID.
@@ -248,6 +251,10 @@ The Group Scanner records which bikes go out with which booking, and checks them
 If the bike is being swapped because something is wrong with it, choose **Fault found** instead. The app offers to log the fault straight away: the Issue Reporter opens with the bike filled in, and comes back to the scanner once it's logged. Choose Cancel to scan the replacement first, then log the fault before anyone else takes the bike.
 
 ### SOP: Correcting a wrong scan
+
+**Within 10 seconds:** tap **↶ Undo** at the end of that bike's row in Last scans. That's all.
+
+After that:
 
 1. Tap **×** next to the bike that was scanned by mistake.
 2. Choose **Scanned by mistake**.
@@ -324,7 +331,7 @@ When checking in a whole group, tick **M-check each bike as it's checked in** so
 ### SOP: Group dropped at Dandelion
 
 1. When a group calls to say they've left the bikes at Dandelion Wines, open the **Groups** tab.
-2. On their group, tap **↩ Dropped at Dandelion Wines** and confirm.
+2. On their group, tap **↩ Dropped at Dandelion Wines** and confirm. Tapped the wrong group? **↶ Undo** shows inside its card for 10 seconds.
 3. When the bikes are collected, use **Asset Register → Move bikes to a location** to scan them from DLN onto the trailer (TRA) or back to the Visitor Centre.
 
 ### SOP: End of day
@@ -572,7 +579,7 @@ Guided tours run from the same Rezdy manifest as hires. Every booking for the sa
 - **On the Group Scanner**, a departure's card shows the guide, when it's due back ("back about 12:00 pm"), and who's arrived ("Arrived 3 of 5 · waiting: Öttl (2)"). It turns **overdue** half an hour after that.
     - **Arrived** ticks a booking off as it turns up. **No-show** marks one that didn't come, and takes its riders off the number of bikes needed. Tap either again to clear it.
     - **Issue bikes** to the departure as to any group: the count is against the riders who came.
-    - **🏁 Tour back** (instead of Returned) checks every bike still out in at the tour's start and closes the departure. **Undo** is offered for 10 seconds; after that, use **↶ Undo drop-off** on the card.
+    - **🏁 Tour back** (instead of Returned) checks every bike still out in at the tour's start and closes the departure. **↶ Undo** shows for 10 seconds inside the card (and in Last scans); after that, use **↶ Undo drop-off** on the card.
 - **Today's Contacts** lists each departure's bookings together under a heading such as "🚴 Morning Tour 9:30 AM · 3 riders · 1 booking", with **📣 Message all** to send one message, from the usual templates, to every booking on that tour.
 - **Tour bikes count as hired** in the fleet records, utilisation and the Dashboard, from where the tour starts.
 - **The Dashboard** has **Tours, this FY**: departures and riders for each tour, the average riders per tour, no-show riders, and riders by who booked.
@@ -953,6 +960,7 @@ A normal hire day uses the tools in this order.
 | A bike shows the wrong location | It was moved without being scanned or edited. Open it in the Asset Register, set the right location with your initials, and save. |
 | "not M-checked since its last ride" when issuing | Do the M-check now if you can: switch to M-check and sign the bike off. The bike is issued either way, and the hire records whether it was checked. |
 | A group was marked Returned by mistake | Tap Undo Returned on the Groups tab. |
+| I tapped the wrong thing and the ↶ Undo has gone | Undo lasts 10 seconds. After that, use the correction for that record (see Getting started → Undo and corrections): for example, untick the bike on the Groups tab, or ↶ Undo drop-off on the card. |
 | A bike was taken off by mistake | Scan it back onto the group. The trail will show both entries. |
 | "Out of service" but the bike has been fixed | The repair hasn't been recorded. Resolve the issue in the Issue Reporter. |
 | The home screen's backup line is red | The last backup failed, or none has been taken for 36 hours. Tell the manager today. The app keeps working as normal. See "SOP: The backup line is red". |
