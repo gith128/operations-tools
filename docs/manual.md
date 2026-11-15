@@ -85,9 +85,31 @@ Mistakes are put right in one of three ways. Nothing is erased: the original sta
     - **↶ Reopen: not fixed** on an issue marked repaired by mistake (Issue Reporter → the issue).
     - **✎ Logged in error** on an issue logged on the wrong bike, or that wasn't a real fault: it's closed and left out of repeats, time out of service and the Dashboard. Log it again on the right bike.
     - **↶ Restore** a bike removed from the register by mistake (Asset Register → Removed bikes): it comes back as it was, and past days count it as in the fleet all along.
-- **Just edit it.** Asset details, contacts, a group's location or hire length, lost property details and notes are simply edited, as before.
+- **Just edit it.** Asset details, contacts, a booking's details (see Editing a booking), a group's hire length, lost property details and notes are simply edited, as before.
 
 **Not reversible here:** loading a manifest (Load Manifest warns first), Reset day, a message already sent to a guest, and site checklist sign-offs (sign again instead). Anything else lost can be recovered from the nightly backups in Admin.
+
+### Editing a booking
+
+A booking that changes on the day is changed in the app, so every phone shows the same thing. The change carries who made it and when, and what it was before. Rezdy isn't changed: if the change is real (a new time, an extra bike), change it in Rezdy too.
+
+- **Where:** **✎ Edit booking** on the group's card (Group Scanner → Groups), under the active group on the Scan tab, and **✎ Edit** on the customer's card in Today's Contacts. They open the same sheet.
+- **What can be changed:**
+    - pick-up time and pick-up location;
+    - return time and return location;
+    - bikes booked (the group's name changes to match, for example Smith (x3), and so does "1 of 3 scanned");
+    - equipment, separated by commas, for example "1× Child Seat, 1× Trailer".
+- **Notes:** **Add a note** puts a short note on the booking, with your initials and the time, for example "Running 30 min late, rang 10:05". Notes can't be edited or removed, so the record stays complete. Add another note to correct one.
+- **Your initials** are needed to save. They're filled in from 👤 when someone is set on the phone.
+- **What shows on the cards:**
+    - an amber box lists each change, for example **✎ Pick-up time 11:00 AM** · was 9:30 AM · SO 10:12, and the notes;
+    - a return time or place shows as **↩ Return 4:00 PM to Dandelion Wines**;
+    - setting a field back to Rezdy's value takes its line away.
+
+  The sheet lists the last eight changes, with who and when.
+- **A tour booking** takes notes only (**📝 Note** on the booking, in the departure's card or in Today's Contacts). Its time is the departure's session; to move it to another session, change it in Rezdy and reload the manifest.
+- **Two people at once:** if someone else saved a change to the same booking after you opened it, yours isn't saved. The latest shows, so check it and make your change again if it's still needed.
+- **Loading the manifest again the same day keeps the changes and notes.** Load Manifest lists each change that differs from Rezdy (for example "Smith: pick-up time 11:00 AM (Rezdy says 9:30 AM)"), and waits on the page so it can be read. If Rezdy has since been changed to match, the line simply goes. A booking no longer in Rezdy drops off the list, and its changes stay in the day's archive.
 
 ## Load Manifest
 
@@ -110,7 +132,7 @@ Load Manifest takes the day's Rezdy **pickup manifest** and sets up the scanner 
 
     Every product name and where it went is kept in **Admin → Rezdy products**.
 - The date warning appears if the date is in the past, or more than a day ahead. The Contacts page only treats today's and tomorrow's manifest as current.
-- **Push to Scanner + Contacts** replaces the groups on every phone. If the same date is already loaded and bikes have been scanned for it, it asks first: loading it again takes those scans off every scanner (they stay in the day's archive). Before it replaces anything, the server archives the current groups and scans, and the page downloads them as `Group_File_<date>.csv`. Multi-day hires still running, and any group with bikes not yet checked in (marked Overdue), are carried into the new day with their bikes, and the log says how many. Then it opens the Group Scanner by itself, unless there's a product to check first.
+- **Push to Scanner + Contacts** replaces the groups on every phone. If the same date is already loaded and bikes have been scanned for it, it asks first: loading it again takes those scans off every scanner (they stay in the day's archive). Booking changes and notes made that day are kept, and any change that differs from Rezdy is listed in the log (see Getting started → Editing a booking). Before it replaces anything, the server archives the current groups and scans, and the page downloads them as `Group_File_<date>.csv`. Multi-day hires still running, and any group with bikes not yet checked in (marked Overdue), are carried into the new day with their bikes, and the log says how many. Then it opens the Group Scanner by itself, unless there's a product to check first.
 - **No bookings today** (under the upload box, with a date): loads a day with no bookings, after you confirm. Everything a real upload does still happens: the current day is archived and downloaded, its summary saved, and multi-day and overdue groups carried over. A file with no bookings in it shows a warning with **Continue: no bookings** or **Choose another file**.
 - **📊 Dashboard** and **⚙️ Admin** links sit at the top of the page.
 - **Download Archive CSV Only** saves the current groups without loading anything new.
@@ -149,7 +171,8 @@ Today's Contacts lists every booking from the loaded manifest with one-tap call,
 ### How it works
 
 - Each card shows the customer's name, order number, start time and agent, where the hire is (for example 📍 Visitor Centre or 📍 Beresford, or 🚚 Home Delivery with an amber border), the bikes booked and any equipment flags. The heading counts bookings at each location.
-- A multi-day hire shows a badge such as **Day 2 of 2** beside the order number. Special requirements and any drop-off location appear in small grey text; tap to read all of it.
+- A multi-day hire shows a badge such as **Day 2 of 2** beside the order number. Special requirements appear in small grey text; tap to read all of it. A return time or place shows as **↩ Return**.
+- **✎ Edit** changes the pick-up, return, bikes booked or equipment, or adds a note (**📝 Note** on a tour booking). Changes and notes show in an amber box on the card. See Getting started → Editing a booking.
 - Tap a number to call, or use the SMS and WhatsApp buttons. The contact button saves that one customer to the phone as a vCard.
 - **Save all to Contacts (.vcf)** saves every customer at once. This helps WhatsApp show names in group chats.
 - The heading shows the manifest date. If the loaded manifest isn't today's or tomorrow's, the page says it is out of date and shows no customers.
@@ -320,6 +343,13 @@ When checking in a whole group, tick **M-check each bike as it's checked in** so
 4. Add the contact's name and phone if you have them. If not, leave them for later.
 5. Tap **Create Group**, then scan the bikes as normal.
 6. Get a phone number before the group rides off if you can. Add it with **+ Add contact** on the group card, or **+ Add phone** on Today's Contacts, even after they've left.
+
+### SOP: A booking changes on the day
+
+1. Open the booking: **✎ Edit booking** on its group card, or **✎ Edit** on its card in Today's Contacts.
+2. Change what's different (pick-up time, location, return, bikes booked, equipment), or type a note.
+3. Check your initials and tap **Save**. Every phone shows the change within seconds.
+4. If the change is real, make it in Rezdy too (time, bikes, equipment), so the booking and the bill match.
 
 ### SOP: Overdue group
 
@@ -960,6 +990,7 @@ A normal hire day uses the tools in this order.
 | A bike shows the wrong location | It was moved without being scanned or edited. Open it in the Asset Register, set the right location with your initials, and save. |
 | "not M-checked since its last ride" when issuing | Do the M-check now if you can: switch to M-check and sign the bike off. The bike is issued either way, and the hire records whether it was checked. |
 | A group was marked Returned by mistake | Tap Undo Returned on the Groups tab. |
+| A booking change won't save: "Someone changed this booking" | Another phone saved a change first. The card now shows the latest: check it, then make your change again if it's still needed. |
 | I tapped the wrong thing and the ↶ Undo has gone | Undo lasts 10 seconds. After that, use the correction for that record (see Getting started → Undo and corrections): for example, untick the bike on the Groups tab, or ↶ Undo drop-off on the card. |
 | A bike was taken off by mistake | Scan it back onto the group. The trail will show both entries. |
 | "Out of service" but the bike has been fixed | The repair hasn't been recorded. Resolve the issue in the Issue Reporter. |

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.13 · Today's Contacts</title>
+<title>SA eBikes · Operations Tools v3.14 · Today's Contacts</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -106,6 +106,7 @@ h1{font-size:22px;font-weight:800;margin-bottom:4px}
 .act-sms{background:var(--bg-soft);color:var(--text);border:1px solid var(--border)}
 .act-sms:hover{background:var(--border)}
 .act-vcf{background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
+.act-edit{grid-column:1 / -1;background:var(--bg-elev);color:var(--text);border:1.5px solid var(--border-strong)}
 .act-vcf:hover{background:var(--bg-soft)}
 
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--text);color:#fff;padding:12px 20px;border-radius:100px;font-size:13px;font-family:'DM Mono',monospace;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .25s ease;z-index:100}
@@ -124,7 +125,7 @@ h1{font-size:22px;font-weight:800;margin-bottom:4px}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.13</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.14</a>
 <a class="back-home" href="/help#todays-contacts" style="margin-left:6px">? Help</a>
 <div class="wrap">
   <h1>📇 Today's Contacts</h1>
@@ -214,6 +215,7 @@ async function loadContacts(isManual) {
   }
   lastFetchTs = Date.now();
   const incoming = record.contacts || [];
+  BKE = record.bookingEdits || {};
   if (record.locations) Locs.set(record.locations);
   const iso      = record.manifestDate || '';
   const display  = record.manifestDateDisplay || iso;
@@ -510,7 +512,28 @@ function actionsHTML(c, idx) {
     '<a class="act act-sms'  + cls + '" href="' + sms + '">' + ICON_SMS + ' Text</a>' +
     '<button class="act act-vcf" onclick="downloadOne(' + idx + ')">' + ICON_VCF + ' Save</button>' +
     (c.phone ? '<button class="act act-send" onclick="openMessage(' + idx + ')">💬 Message</button>' : '') +
+    (!showPrev && window.BookingEdit ? '<button class="act act-edit" onclick="editContactBooking(' + idx + ')">' + (c.tourGroupId ? '📝 Note' : '✎ Edit') + '</button>' : '') +
   '</div>';
+}
+
+// ── v3.14: Edit booking: pick-up, return, bikes booked, equipment and notes (a tour booking: notes only) ──
+let BKE = {};
+const isEquip = f => /^\d+× /.test(f);
+const contactCur = c => ({ ptime: c.ptime || '', site: c.site || '', retTime: c.retTime || '', dropoff: c.dropoff || '', qty: c.totalBikes || 0,
+  equip: c.equip || (c.flags || []).filter(isEquip) });
+function editContactBooking(idx) {
+  const c = CONTACTS[idx]; if (!c) return;
+  BookingEdit.open({ title: c.name || c.code, code: c.code, tour: !!c.tourGroupId, cur: contactCur(c), rec: BKE[c.code],
+    onSave: async ({ changes, note, baseV, by }) => {
+      try {
+        await Ops.act('editBooking', { code: c.code, baseV, by, changes, ...(note ? { note } : {}) });
+        showToast('✓ ' + (Object.keys(changes).length ? 'Booking updated' : 'Note added') + ' · ' + (c.name || c.code), 'success');
+      } catch (e) {
+        if (e.code === 'changed') { showToast('Someone changed this booking a moment ago. Here is the latest: check it, then make your change again.', 'warning'); }
+        else { showToast(e.message || Ops.NOT_CONFIRMED, 'error'); throw e; }
+      }
+      await loadContacts(false).catch(() => {});
+    } });
 }
 
 // A message to the guest: late for pickup, late returning, weather, or one of the guest links.
@@ -552,9 +575,9 @@ function renderContacts() {
         '<div class="cust-name">' + esc(c.name) + '</div>' +
         '<div class="cust-meta">' + esc(c.code) + ' · ' + esc(c.ptime || bookingDate || '') + (c.agent ? ' · ' + esc(c.agent) : '') + dayBadgeHTML(c) + '</div>' +
         siteHTML(c) + (c.walkin ? '<span class="walkin-tag">Walk-in</span>' : '') +
-        '<div class="cust-bikes">' + bikeLinesHTML(c.bikeLines) + flagsHTML(c.flags) + '</div>' +
+        '<div class="cust-bikes">' + bikeLinesHTML(c.bikeLines) + flagsHTML(c.equip ? (c.flags || []).filter(f => !isEquip(f)).concat(c.equip) : c.flags) + '</div>' +
         (c.special ? '<div class="special" onclick="this.classList.toggle(\'open\')">' + esc(c.special) + '</div>' : '') +
-        (c.dropoff ? '<div class="special">Drop-off: ' + esc(c.dropoff) + '</div>' : '') +
+        (window.BookingEdit ? BookingEdit.returnHTML(c) + BookingEdit.summaryHTML(showPrev ? null : BKE[c.code], contactCur(c)) : (c.dropoff ? '<div class="special">Drop-off: ' + esc(c.dropoff) + '</div>' : '')) +
         pickupHTML(c) +
       '</div>' +
       phoneRowHTML(c) + lastMessageHTML(c) +

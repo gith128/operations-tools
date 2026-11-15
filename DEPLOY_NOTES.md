@@ -1,3 +1,91 @@
+# SA eBikes Operations Tools v3.14
+
+## New in v3.14: Edit booking
+
+**Before deploying:** **Admin → Backups → Back up now**.
+
+**Rolling back:** publish the v3.13 deploy in Netlify.
+- **Values stay as edited.** An edited time, location, return or bike count is stored in the group's and contact's own fields, so v3.13 keeps showing it.
+- **What goes:** the change markers, notes and history (`day.bookingEdits`, which v3.13 ignores), until v3.14 is back. They stay in the day file and the archives.
+- **Return time:** v3.13 doesn't show it.
+- **Reloads:** after a rollback, a same-day reload replaces edited values with Rezdy's again.
+
+**To deploy:** unzip into an empty folder, then drag the **5 folders and 4 files** inside `sa-ebikes-ops-v3.14` onto GitHub's upload page (not "choose your files"), or use GitHub Desktop.
+
+### What changes for staff
+
+- **✎ Edit booking:**
+    - **Where:** on each group card (Group Scanner → Groups), under the active group on the Scan tab, and as **✎ Edit** on each customer card in Today's Contacts.
+    - **One sheet changes:**
+        - **Pick-up:** time and location.
+        - **Return:** time and location. Return time is new; it's blank unless someone sets it.
+        - **Bikes booked:** the group's "(x2)" and "1 of 2 scanned" follow.
+        - **Equipment.**
+    - **Adds a note,** for example "Running 30 min late, rang 10:05".
+    - **Needs initials** to save.
+- **Every change is tracked:** what it was, what it became, who and when. Cards show an amber box with each change ("✎ Pick-up time 11:00 AM · was 9:30 AM · SO 10:12") and the notes. Setting a field back to Rezdy's value takes its line away. The sheet lists the last eight changes.
+    - **No duplicate lines:** a return time or place, or equipment, added where Rezdy had none shows on its own line (**↩ Return 4:00 PM to Dandelion Wines**, or the equipment chips), not as "was none".
+- **Tour bookings** get **📝 Note** only, on each booking in the departure's card and in Today's Contacts. A tour booking's time is its session.
+- **Both screens agree.** The new value is written to the group and to the contact. Sorting, the active group chips, guest messages ("late for pickup" uses the new time) and the Scan tab's count all follow it.
+- **Two phones:** a change saved after someone else's is refused, and the latest shows.
+    - **Group Scanner:** it's queued offline like any change, and a refusal goes in the "not saved" list.
+    - **Today's Contacts:** reloads the card and asks again.
+- **Reloading the same day keeps edits and notes.** The new log in Load Manifest lists each change that still differs from Rezdy ("Smith: pick-up time 11:00 AM (Rezdy says 9:30 AM)"). When there are any, the page waits instead of jumping to the scanner.
+    - **Rezdy caught up:** if Rezdy now says the same, the marker clears.
+    - **Cancelled bookings:** a booking no longer in Rezdy drops off, and its edits stay in the archive.
+    - **The same-day reload question** now says edits and notes are kept.
+- **Rezdy isn't changed.** The sheet says so: a real change still needs making in Rezdy.
+
+### Underneath
+
+- **New action `editBooking`** (staff), which takes:
+    - `groupId` or `code`;
+    - `baseV`;
+    - `by` (required);
+    - `changes`: any of `ptime`, `site`, `retTime`, `dropoff`, `qty`, `equip`;
+    - `note`: `{ id, text }`.
+
+  **Retries:** the same change, or the same note id, arriving twice returns `already-saved`.
+  **Conflicts:** a different change on an old `baseV` is refused with `changed` (409).
+  **Walk-ins:** a walk-in with no booking number gets one (`WALK-…`), as when a contact is added.
+- **`day.bookingEdits[code]`** holds the booking's record:
+    - `v`: its version;
+    - `orig`: Rezdy's value for each field changed;
+    - `history`: the last 100 changes;
+    - `notes`: the last 50.
+
+  It's carried with multi-day and overdue hires into the next day, kept on a same-day reload, and archived with the day. The `scanner` and `contacts` views include it.
+- **`setGroupSite`** on a group whose location was already set now records the change in the same history.
+- **Shared code:** the sheet and the card display are `BookingEdit` in `public/assets/ops-plus.js`, used by both pages.
+
+### Tests and checks
+
+- **Tests:** 119 (114 before, plus 5 in `tests/booking.test.mjs`). They cover:
+    - an edit reaching group and contact, with the name, count and history;
+    - a value put back clearing its marker;
+    - notes not added twice;
+    - a stale edit refused;
+    - a repeat recognised;
+    - initials and values checked;
+    - tour bookings taking notes only;
+    - a walk-in given a booking number;
+    - a same-day reload keeping an edit, clearing the one Rezdy now matches, and dropping a cancelled booking;
+    - a location change recorded.
+- **Browser** (Chrome, phone size, dev server):
+    - **Scan tab:** edited the active group (time, bikes 2 → 3, child seat, return 4:00 PM to Dandelion, a note). The chip moved to 11:00 AM as Smith (x3) 0/3, with **Needs 1× Child Seat** and the amber box.
+    - **Groups tab:** added a tour booking note; the sheet showed no time fields.
+    - **Today's Contacts:** showed the same; changed fields were marked in the sheet; putting the time back cleared its line.
+    - **Conflicts and reloads:** a stale edit was refused (409), and a same-day reload listed the kept changes.
+    - **No page errors.**
+
+**Manual:** a new "Editing a booking" section in Getting started, and "SOP: A booking changes on the day". Today's Contacts, Load Manifest (same-day reload) and Undo and corrections ("Just edit it") are updated, with a new troubleshooting row. Help and the Claude Doc are updated, and the issuing guide's step 3 points to the amber box and ✎ Edit booking.
+
+**Files:**
+- **New:** `tests/booking.test.mjs`.
+- **Server:** `netlify/lib/ops-core.mjs`.
+- **Pages:** `public/assets/ops-plus.js`, `public/scanner.html`, `public/contacts.html`, `public/manifest.html`, `public/help.html`, and the version label on every page.
+- **Docs and config:** `docs/manual.md`, `package.json`, `package-lock.json`, `netlify.toml`, this file.
+
 # SA eBikes Operations Tools v3.13
 
 ## New in v3.13: Undo inside the screen

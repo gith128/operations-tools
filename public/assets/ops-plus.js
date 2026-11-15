@@ -416,3 +416,133 @@
     },
   };
 })();
+
+// ── v3.14: Edit booking ──────────────────────────────────────────────────────────────
+// BookingEdit.open({ title, tour, cur, rec, onSave(payload) }): a sheet to change a booking's pick-up and
+// return, bikes booked and equipment, and to add a staff note. cur = the values now ({ ptime, site, retTime,
+// dropoff, qty, equip }); rec = the booking's record from day.bookingEdits (or none). onSave gets
+// { changes, note, baseV, by } with only the fields that changed, and returns a promise (or nothing).
+// BookingEdit.summaryHTML(rec, cur): what's been changed (with what it was, who and when) and the notes.
+// BookingEdit.returnHTML(cur): "Return 4:00 PM to Dandelion Wines", when either is known.
+(function () {
+  const css = `
+.bke-back{position:fixed;inset:0;z-index:6400;font-family:'Syne',sans-serif;background:rgba(20,24,28,.45);display:none;align-items:flex-end;justify-content:center}
+.bke-back.open{display:flex}
+.bke-sheet{background:var(--bg-elev,#fff);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));color:var(--text,#1f2428)}
+.bke-sheet h3{font-size:18px;font-weight:800;margin:0 0 2px}
+.bke-sheet .bke-sub{font-size:12px;color:var(--text-dim,#5a6269);margin:0 0 12px}
+.bke-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 10px}
+.bke-grid label,.bke-full label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim,#5a6269);margin-bottom:4px}
+.bke-full{margin-top:10px}
+.bke-sheet input,.bke-sheet select,.bke-sheet textarea{width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 11px;border-radius:11px;border:1.5px solid var(--border,#d4cdbd);background:var(--bg,#fbf9f4);color:inherit}
+.bke-sheet input.chg,.bke-sheet select.chg{border-color:var(--warn,#d9a03f);background:var(--warn-soft,#fdf3e1)}
+.bke-row{display:flex;gap:10px;margin-top:14px}.bke-row button{flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--border,#d4cdbd);background:var(--bg-elev,#fff);font-weight:800;font-size:14px;font-family:inherit;cursor:pointer;color:inherit}
+.bke-row button.go{background:var(--accent,#415b30);border-color:var(--accent,#415b30);color:#fff}
+.bke-hist{margin-top:14px;font-size:12px;color:var(--text-dim,#5a6269);line-height:1.6}
+.bke-hist b{color:var(--text,#1f2428)}
+.bke-note-tour{font-size:12px;color:var(--text-dim,#5a6269);margin:0 0 10px}
+.bk-box{margin:8px 0;padding:8px 11px;border-radius:10px;background:var(--warn-soft,#fdf3e1);border:1.5px solid rgba(217,160,63,.45);font-size:13px;line-height:1.5}
+.bk-box .bk-ch b{font-weight:800}.bk-box .was{color:var(--text-dim,#5a6269);font-size:12px}
+.bk-box .bk-note{margin-top:2px}.bk-box .bk-note .was{white-space:nowrap}
+.bk-ret{margin:6px 0;font-size:13px}
+.bk-edit{display:inline-block;margin:2px 0 8px;padding:6px 12px;border-radius:9px;border:1.5px solid var(--border,#d4cdbd);background:var(--bg-elev,#fff);font:inherit;font-size:12px;font-weight:700;color:var(--text-dim,#5a6269);cursor:pointer}`;
+  function addCss() { if (document.getElementById('bkeCss')) return; const st = document.createElement('style'); st.id = 'bkeCss'; st.textContent = css; document.head.appendChild(st); }
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const LABEL = { ptime: 'Pick-up time', site: 'Pick-up location', retTime: 'Return time', dropoff: 'Return location', qty: 'Bikes booked', equip: 'Equipment' };
+  const ORDER = ['ptime', 'site', 'retTime', 'dropoff', 'qty', 'equip'];
+  // "9:30 AM" ↔ "09:30" for the time inputs.
+  function toInput(t) {
+    const m = /^(\d{1,2}):(\d{2})\s*([AP]M)?$/i.exec(String(t || '').trim()); if (!m) return '';
+    let h = +m[1]; const ap = (m[3] || '').toUpperCase();
+    if (ap === 'PM' && h < 12) h += 12; if (ap === 'AM' && h === 12) h = 0;
+    return String(h).padStart(2, '0') + ':' + m[2];
+  }
+  function fromInput(v) {
+    const m = /^(\d{2}):(\d{2})$/.exec(v || ''); if (!m) return '';
+    const h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + ' ' + (h < 12 ? 'AM' : 'PM');
+  }
+  const show = (f, v) => f === 'equip' ? ((v || []).join(', ') || 'none') : f === 'site' ? (v ? (window.Locs ? Locs.name(v) : v) : 'none') : (v === '' || v == null ? 'none' : String(v));
+  const hm = at => new Date(at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+  const same = (a, b) => JSON.stringify(a == null ? '' : a) === JSON.stringify(b == null ? '' : b);
+  let state = null;
+  window.BookingEdit = {
+    open(o) {
+      addCss();
+      state = o;
+      let el = document.getElementById('bkeBack');
+      if (!el) { el = document.createElement('div'); el.id = 'bkeBack'; el.className = 'bke-back'; el.onclick = e => { if (e.target === el) BookingEdit.close(); }; document.body.appendChild(el); }
+      const c = o.cur || {}, rec = o.rec || {}, orig = rec.orig || {};
+      const mine = window.Team && Team.initials ? Team.initials() : '';
+      const hire = window.Locs ? Locs.hire() : [];
+      const siteOpts = (c.site && !hire.some(l => l.code === c.site) ? [{ code: c.site, name: c.site }] : []).concat(hire)
+        .map(l => '<option value="' + esc(l.code) + '"' + (l.code === c.site ? ' selected' : '') + '>' + esc(l.code + ' · ' + l.name) + '</option>').join('');
+      const names = window.Locs ? Locs.list.filter(l => !l.retired).map(l => '<option value="' + esc(l.name) + '">').join('') : '';
+      const mark = f => f in orig ? ' class="chg" title="Was ' + esc(show(f, orig[f])) + '"' : '';
+      const fields = o.tour ? '<p class="bke-note-tour">A tour booking\'s time is its session. Notes can be added here; to move it to another session, change it in Rezdy and reload the manifest.</p>' :
+        '<div class="bke-grid">' +
+          '<div><label for="bkePt">Pick-up time</label><input id="bkePt" type="time" value="' + toInput(c.ptime) + '"' + mark('ptime') + '></div>' +
+          '<div><label for="bkeSite">Pick-up location</label><select id="bkeSite"' + mark('site') + '>' + (c.site ? '' : '<option value="">Not set</option>') + siteOpts + '</select></div>' +
+          '<div><label for="bkeRt">Return time</label><input id="bkeRt" type="time" value="' + toInput(c.retTime) + '"' + mark('retTime') + '></div>' +
+          '<div><label for="bkeDo">Return location</label><input id="bkeDo" list="bkeLocNames" maxlength="200" value="' + esc(c.dropoff || '') + '" placeholder="Where it started"' + mark('dropoff') + '><datalist id="bkeLocNames">' + names + '</datalist></div>' +
+          '<div><label for="bkeQty">Bikes booked</label><input id="bkeQty" type="number" inputmode="numeric" min="0" max="99" value="' + esc(c.qty || 0) + '"' + mark('qty') + '></div>' +
+          '<div><label for="bkeEq">Equipment</label><input id="bkeEq" maxlength="200" value="' + esc((c.equip || []).join(', ')) + '" placeholder="e.g. 1× Child Seat"' + mark('equip') + '></div>' +
+        '</div>';
+      const hist = (rec.history || []).slice(-8).reverse().map(h => '<div><b>' + esc(LABEL[h.field] || h.field) + '</b> ' + esc(show(h.field, h.from)) + ' → ' + esc(show(h.field, h.to)) + ' · ' + esc(h.by) + ' ' + hm(h.at) + '</div>').join('');
+      const notes = (rec.notes || []).map(n => '<div>📝 ' + esc(n.text) + ' · ' + esc(n.by) + ' ' + hm(n.at) + '</div>').join('');
+      el.innerHTML = '<div class="bke-sheet" role="dialog" aria-label="Edit booking"><h3>✎ ' + esc(o.title || 'Edit booking') + '</h3>' +
+        '<p class="bke-sub">' + (o.code ? esc(o.code) + ' · ' : '') + 'Changes show on every phone, with your initials. Rezdy isn\'t changed, so update it too if the change is real.</p>' +
+        fields +
+        '<div class="bke-full"><label for="bkeNote">Add a note</label><textarea id="bkeNote" rows="2" maxlength="500" placeholder="For example: running 30 min late, rang 10:05"></textarea></div>' +
+        '<div class="bke-full" style="max-width:130px"><label for="bkeBy">Your initials</label><input id="bkeBy" maxlength="5" style="text-transform:uppercase" value="' + esc(mine) + '"></div>' +
+        '<div class="bke-row"><button type="button" onclick="BookingEdit.close()">Cancel</button><button type="button" class="go" id="bkeGo" onclick="BookingEdit.save()">Save</button></div>' +
+        (notes || hist ? '<div class="bke-hist">' + notes + (hist ? (notes ? '<div style="margin-top:6px"></div>' : '') + hist : '') + '</div>' : '') +
+        '</div>';
+      el.classList.add('open');
+    },
+    async save() {
+      if (!state) return;
+      const by = document.getElementById('bkeBy').value.trim().toUpperCase();
+      if (!by) { document.getElementById('bkeBy').focus(); if (window.showToast) showToast('Enter your initials', 'warning'); return; }
+      const c = state.cur || {}, changes = {};
+      if (!state.tour) {
+        const v = {
+          ptime: fromInput(document.getElementById('bkePt').value),
+          site: document.getElementById('bkeSite').value,
+          retTime: fromInput(document.getElementById('bkeRt').value),
+          dropoff: document.getElementById('bkeDo').value.trim(),
+          qty: Math.max(0, Math.min(99, parseInt(document.getElementById('bkeQty').value, 10) || 0)),
+          equip: document.getElementById('bkeEq').value.split(',').map(x => x.trim()).filter(Boolean),
+        };
+        for (const f of ORDER) {
+          const cur = f === 'qty' ? (c.qty || 0) : f === 'equip' ? (c.equip || []) : (c[f] || '');
+          // A time typed the same as before, but written differently ("09:30" vs "9:30 AM"), isn't a change.
+          if ((f === 'ptime' || f === 'retTime') && toInput(cur) === toInput(v[f])) continue;
+          if (f === 'site' && !v.site) continue;
+          if (!same(cur, v[f])) changes[f] = v[f];
+        }
+      }
+      const text = document.getElementById('bkeNote').value.trim();
+      const note = text ? { id: Math.random().toString(36).slice(2, 12) + Date.now().toString(36), text } : null;
+      if (!Object.keys(changes).length && !note) { BookingEdit.close(); return; }
+      const go = document.getElementById('bkeGo'); go.disabled = true; go.textContent = 'Saving…';
+      try { await state.onSave({ changes, note, baseV: (state.rec && state.rec.v) || 0, by }); BookingEdit.close(); }
+      catch (e) { go.disabled = false; go.textContent = 'Save'; }
+    },
+    close() { const el = document.getElementById('bkeBack'); if (el) el.classList.remove('open'); state = null; },
+    summaryHTML(rec, cur) {
+      if (!rec) return '';
+      const orig = rec.orig || {}, last = {};
+      for (const h of rec.history || []) last[h.field] = h;
+      // A return time or place, or equipment, added where Rezdy had none already shows on its own line.
+      const shownElsewhere = f => (f === 'retTime' || f === 'dropoff' || f === 'equip') && show(f, orig[f]) === 'none';
+      const ch = ORDER.filter(f => f in orig && !shownElsewhere(f)).map(f => '<div class="bk-ch">✎ ' + esc(LABEL[f]) + ' <b>' + esc(show(f, cur ? cur[f] : last[f] && last[f].to)) + '</b> <span class="was">was ' + esc(show(f, orig[f])) +
+        (last[f] ? ' · ' + esc(last[f].by) + ' ' + hm(last[f].at) : '') + '</span></div>').join('');
+      const notes = (rec.notes || []).map(n => '<div class="bk-note">📝 ' + esc(n.text) + ' <span class="was">' + esc(n.by) + ' ' + hm(n.at) + '</span></div>').join('');
+      return ch || notes ? '<div class="bk-box">' + ch + notes + '</div>' : '';
+    },
+    returnHTML(cur) {
+      if (!cur || (!cur.retTime && !cur.dropoff)) return '';
+      return '<div class="bk-ret">↩ Return' + (cur.retTime ? ' ' + esc(cur.retTime) : '') + (cur.dropoff ? ' to ' + esc(cur.dropoff) : '') + '</div>';
+    },
+  };
+})();

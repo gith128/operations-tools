@@ -22,7 +22,7 @@ import { KEY_SETTINGS, emptySettings, cleanFaultTypes, cleanHome, repeatFaults, 
 export { KEY_SETTINGS };
 
 // The version these tools report (checked against package.json by tools/check.mjs).
-export const APP_VERSION = '3.13';
+export const APP_VERSION = '3.14';
 
 export const KEY_DAY = 'day';
 // Every Rezdy product name seen in a manifest, with the location it matched (v3.4).
@@ -391,6 +391,7 @@ function scannerView(day, issuesDoc, assetsDoc, statusDoc) {
     bikeInfo: bikeInfo(assetsDoc),
     locations: (assetsDoc ? assetsDoc.locations : DEFAULT_LOCATIONS).filter(l => !l.retired).map(l => ({ code: l.code, name: l.name, kind: l.kind })),
     contactInfo: contactInfo(day),
+    bookingEdits: day.bookingEdits || {},
     // v3.9: the day's undos and corrections, and groups deleted today (so they can be restored).
     corrections: day.corrections || [],
     deletedGroups: (day.deletedGroups || []).filter(g => !g.restoredAt).map(g => ({ id: g.id, name: g.name, bikes: g.bikes.length, deletedAt: g.deletedAt })),
@@ -408,6 +409,7 @@ function contactInfo(day) {
 }
 const contactsView = (day, assetsDoc) => ({
   rev: day.rev, manifestDate: day.manifestDate, manifestDateDisplay: day.manifestDateDisplay, contacts: day.contacts,
+  bookingEdits: day.bookingEdits || {},
   locations: assetsDoc ? assetsDoc.locations.filter(l => !l.retired).map(l => ({ code: l.code, name: l.name, kind: l.kind })) : [],
 });
 // The issue reporter also gets the asset register, so it can confirm bike details as an ID is entered.
@@ -807,6 +809,62 @@ function setContact(day, g, c) {
 const staleDay = (day, p) => !!(p && p.dayOf && day.manifestDate && p.dayOf !== day.manifestDate);
 const dayChanged = () => new HttpError(409, 'A new day has been loaded since this was done, so it was not applied', 'day-changed');
 
+// ── v3.14: editing a booking ─────────────────────────────────────────────────────
+// Pick-up time and location, return time and location, bikes booked and equipment can be changed on the
+// day, and staff can add notes. The new value is written to the group and its contact, so every screen
+// (sorting, messages, "1 of 2 scanned") follows it. Each booking's record, kept by booking number in
+// day.bookingEdits, holds:
+//   v        raised on every edit, so two phones can't overwrite each other unseen;
+//   orig     the value from Rezdy for each field changed (cleared when the field is put back to it);
+//   history  every change: field, from, to, who and when;
+//   notes    staff notes, each with who and when.
+// A reload of the same day keeps the edits (see loadManifest). Rezdy itself isn't changed.
+export const BOOKING_FIELDS = ['ptime', 'site', 'retTime', 'dropoff', 'qty', 'equip'];
+const BOOKING_LABEL = { ptime: 'Pick-up time', site: 'Pick-up location', retTime: 'Return time', dropoff: 'Return location', qty: 'Bikes booked', equip: 'Equipment' };
+function bookingValue(field, v, ctx) {
+  if (field === 'qty') {
+    const n = parseInt(v, 10);
+    if (!(n >= 0 && n <= 99)) throw new HttpError(400, 'Bikes booked must be a number from 0 to 99', 'invalid');
+    return n;
+  }
+  if (field === 'equip') return (Array.isArray(v) ? v : String(v || '').split(',')).slice(0, 6).map(x => String(x || '').trim().slice(0, 40)).filter(Boolean);
+  if (field === 'site') {
+    const site = hireWhere({ site: v }).site;
+    if (!site || !hireCodes(ctx && ctx.locations).includes(site)) throw new HttpError(400, 'Choose a hire location or Home Delivery', 'invalid');
+    return site;
+  }
+  return str(v, field === 'dropoff' ? 200 : 40, BOOKING_LABEL[field]);
+}
+const sameVal = (a, b) => JSON.stringify(a == null ? '' : a) === JSON.stringify(b == null ? '' : b);
+function groupValue(g, field) {
+  if (field === 'qty') return g.qty || (() => { const m = /\(x(\d+)\)/i.exec(g.name || ''); return m ? +m[1] : 0; })();
+  if (field === 'equip') return g.equip || [];
+  return g[field] || '';
+}
+// Write a value to the group and its contact. Bikes booked also updates the "(x2)" in the group's name.
+function setBookingValue(day, g, field, val) {
+  const c = g.code ? (day.contacts || []).find(x => x.code === g.code) : null;
+  if (field === 'qty') {
+    g.qty = val;
+    if (/\(x\d+\)/i.test(g.name)) g.name = g.name.replace(/\(x\d+\)/i, '(x' + val + ')');
+    if (c) c.totalBikes = val;
+  } else {
+    g[field] = val;
+    if (c && field !== 'equip') c[field] = val;
+    if (c && field === 'equip') c.equip = val;
+  }
+}
+// The group a booking number belongs to: a hire's own group, or the tour departure holding it.
+function bookingTarget(day, p) {
+  if (p.groupId) { const g = findGroup(day, p.groupId); return { g, code: g.code || '', tour: g.kind === 'tour' }; }
+  const code = str(p.code, 40, 'Order number', { required: true });
+  const g = day.groups.find(x => x.code === code && x.kind !== 'tour');
+  if (g) return { g, code, tour: false };
+  const t = day.groups.find(x => x.kind === 'tour' && (x.bookings || []).some(b => b.code === code));
+  if (t) return { g: t, code, tour: true };
+  throw new HttpError(404, 'That booking is no longer on today\'s list', 'no-group');
+}
+
 const dayActions = {
   // A walk-in or other group added by hand: where it's hired from, when it started, 4 hours or a full day,
   // and optionally a contact (name and phone), which can also be added later.
@@ -827,9 +885,53 @@ const dayActions = {
     const g = findGroup(day, p.groupId);
     const site = hireWhere(p).site;
     if (!site || !hireCodes(ctx && ctx.locations).includes(site)) throw new HttpError(400, 'Choose a hire location or Home Delivery', 'invalid');
+    // v3.14: changing a location already set is a booking edit, so it's kept in the booking's history.
+    if (g.site && g.site !== site && g.code) {
+      const rec = (day.bookingEdits = day.bookingEdits || {})[g.code] = day.bookingEdits[g.code] || { v: 0, orig: {}, history: [], notes: [] };
+      if (!('site' in rec.orig)) rec.orig.site = g.site;
+      rec.history.push({ field: 'site', from: g.site, to: site, at: Date.now(), by: byOf(p) });
+      if (rec.orig.site === site) delete rec.orig.site;
+      rec.v = (rec.v || 0) + 1;
+    }
     g.site = site;
     const c = g.code && day.contacts.find(x => x.code === g.code);
     if (c) c.site = site;
+  },
+  // v3.14: changes to a booking and staff notes. p: { groupId | code, baseV, by, changes: {field: value}, note: { id, text } }
+  async editBooking(day, p, ctx) {
+    const { g, code: code0, tour } = bookingTarget(day, p);
+    const by = byOf(p);
+    if (!by) throw new HttpError(400, 'Enter your initials, so the change shows who made it', 'invalid');
+    const changes = p.changes && typeof p.changes === 'object' ? p.changes : {};
+    const fields = Object.keys(changes).filter(f => BOOKING_FIELDS.includes(f));
+    if (tour && fields.length) throw new HttpError(400, 'A tour booking can only have notes added here', 'invalid');
+    const want = {};
+    for (const f of fields) want[f] = bookingValue(f, changes[f], ctx);
+    const note = p.note && String(p.note.text || '').trim() ? { id: id(p.note.id, 'Note id'), text: str(p.note.text, 500, 'Note') } : null;
+    if (!fields.length && !note) throw new HttpError(400, 'Nothing to save', 'invalid');
+    // A walk-in group with no booking number gets one, as when a contact is added.
+    let code = code0;
+    if (!code) { code = g.code = 'WALK-' + g.id.slice(0, 8).toUpperCase(); }
+    const edits = day.bookingEdits = day.bookingEdits || {};
+    const rec = edits[code] = edits[code] || { v: 0, orig: {}, history: [], notes: [] };
+    const changed = fields.filter(f => !sameVal(groupValue(g, f), want[f]));
+    const noteNew = note && !rec.notes.some(n => n.id === note.id);
+    // The same save arriving again (a retry after a lost reply) changes nothing.
+    if (!changed.length && !noteNew) return { result: 'already-saved', v: rec.v };
+    if (p.baseV != null && (rec.v || 0) !== p.baseV)
+      throw new HttpError(409, 'Someone changed this booking since you opened it. It now shows the latest; make your change again if it\'s still needed.', 'changed', { current: rec });
+    const at = Date.now();
+    for (const f of changed) {
+      const from = groupValue(g, f);
+      if (!(f in rec.orig)) rec.orig[f] = from;
+      rec.history.push({ field: f, from, to: want[f], at, by });
+      setBookingValue(day, g, f, want[f]);
+      if (sameVal(rec.orig[f], want[f])) delete rec.orig[f];
+    }
+    if (noteNew) rec.notes.push({ id: note.id, text: note.text, at, by });
+    rec.history = rec.history.slice(-100); rec.notes = rec.notes.slice(-50);
+    rec.v = (rec.v || 0) + 1;
+    return { result: 'saved', v: rec.v };
   },
   // Bikes left at a collection point (Dandelion) at the end of the hire: every bike still out is checked in
   // there and the group is closed. The bikes are moved to that location in the register.
@@ -1105,10 +1207,37 @@ const dayActions = {
     ctx.overdue = carriedGroups.filter(g => dayOfHire(g, manifestDate) > (g.hireDays || 1)).length;
     groups = [...carriedGroups, ...groups];
     contacts = [...carriedContacts, ...contacts.map(c => ({ ...c, startDate: manifestDate }))];
+    // v3.14: booking edits and notes are kept for every booking still on the list. On a reload of the same
+    // day, an edited value is put back over Rezdy's, unless Rezdy now says the same (then the marker clears).
+    // ctx.keptEdits lists what was kept, for Load Manifest to show.
+    const oldEdits = day.bookingEdits || {}, newEdits = {}, kept = [];
+    const sameDay = day.manifestDate === manifestDate;
+    for (const g of groups) {
+      const codes = g.kind === 'tour' ? (g.bookings || []).map(b => b.code) : [g.code];
+      for (const code of codes) {
+        const rec = code && oldEdits[code]; if (!rec) continue;
+        newEdits[code] = rec;
+        if (!sameDay || carriedCodes.has(code) || g.kind === 'tour') continue;
+        const old = (day.groups || []).find(x => x.code === code && x.kind !== 'tour');
+        for (const f of Object.keys(rec.orig || {})) {
+          const fresh = groupValue(g, f), edited = old ? groupValue(old, f) : undefined;
+          if (edited === undefined) continue;
+          if (sameVal(fresh, edited)) { delete rec.orig[f]; continue; }
+          rec.orig[f] = fresh;
+          // Return time isn't in the manifest, so it's kept without being listed.
+          kept.push({ code, name: g.name, field: f, value: edited, rezdy: fresh, quiet: f === 'retTime' });
+        }
+      }
+    }
+    for (const c of carriedCodes) if (oldEdits[c]) newEdits[c] = oldEdits[c];
+    day.bookingEdits = newEdits;
+    ctx.keptEdits = kept.filter(k => !k.quiet);
     day.groups = groups;
     day.deletedGroups = [];
     day.contacts = contacts;
     day.manifestDate = manifestDate;
+    for (const k of kept) { const g = groups.find(x => x.code === k.code && x.kind !== 'tour'); if (g) setBookingValue(day, g, k.field, k.value); }
+    for (const k of ctx.keptEdits) { const g = groups.find(x => x.code === k.code && x.kind !== 'tour'); if (g) k.name = g.name.replace(/\s*\(x\d+\)/i, ''); }
     day.manifestDateDisplay = str(p.manifestDateDisplay, 40, 'Manifest date label');
     day.loadId = p.loadId ? String(p.loadId).slice(0, 40) : '';
   },
@@ -1768,7 +1897,8 @@ export async function handleAction(store, body, ctx = {}) {
     if (out.alsoIn) res.alsoIn = out.alsoIn;
     if (action === 'addBike' && out.result === 'added') { res.inRegister = !!out.inRegister; if (out.disposed) res.disposed = out.disposed; }
     if (ctx.archiveKey) res.archiveKey = ctx.archiveKey;
-    if (action === 'loadManifest') { res.previous = ctx.previous; res.carried = ctx.carried || 0; res.overdue = ctx.overdue || 0; }
+    if (action === 'loadManifest') { res.previous = ctx.previous; res.carried = ctx.carried || 0; res.overdue = ctx.overdue || 0; res.keptEdits = ctx.keptEdits || []; }
+    if (action === 'editBooking') res.v = out.v;
     // Remember each product name and where it matched, so a name never seen before can be flagged
     // on Load Manifest. A retried load (already saved) isn't counted twice.
     if (action === 'loadManifest' && out.result !== 'already-saved') {

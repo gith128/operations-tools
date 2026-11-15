@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.13 · Load Manifest</title>
+<title>SA eBikes · Operations Tools v3.14 · Load Manifest</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -86,7 +86,7 @@ tr.flagged td.mono{color:var(--warn-text);font-weight:500}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.13</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.14</a>
 <a class="back-home" href="/help#load-manifest" style="margin-left:6px">? Help</a>
 <a class="back-home" href="/dashboard" style="margin-left:6px">📊 Dashboard</a>
 <a class="back-home" href="/admin" style="margin-left:6px">⚙️ Admin</a>
@@ -595,7 +595,7 @@ async function archiveAndPush(opts = {}) {
     const cur = await Ops.view('scanner');
     const scanned = (cur.groups || []).filter(g => (g.startDate || cur.manifestDate) === manifestDateISO).reduce((n, g) => n + (g.bikes || []).length, 0);
     if (cur.manifestDate === manifestDateISO && scanned && !confirm(Ops.displayDate(manifestDateISO) + ' is already loaded, with ' + scanned + ' bike' + (scanned > 1 ? 's' : '') + ' scanned.\n\n' +
-      'Loading it again replaces that day\'s groups, and those scans come off every scanner. (They are kept in the day\'s archive.)\n\nLoad it again anyway?')) {
+      'Loading it again replaces that day\'s groups, and those scans come off every scanner. (They are kept in the day\'s archive.) Booking edits and notes made today are kept.\n\nLoad it again anyway?')) {
       log('Cancelled: nothing was changed.'); btn.disabled = false; return;
     }
   } catch (e) { log('Could not check what is already loaded (' + e.message + '). Loading anyway.'); }
@@ -618,7 +618,15 @@ async function archiveAndPush(opts = {}) {
     log('  \u2713 Scanner + Contacts updated', 'ok');
     // Next job: issuing bikes. Go straight to the scanner, unless there's something on this page to
     // check first (a product with no location or two), in which case the button waits.
-    const toCheck = TODAYS_GROUPS.some(g => g.flags.some(f => !/^\d+× /.test(f)));
+    // v3.14: edits made today that differ from Rezdy are kept, and listed here so Rezdy can be checked.
+    const LBL = { ptime: 'pick-up time', site: 'pick-up location', dropoff: 'return location', qty: 'bikes booked', equip: 'equipment' };
+    const showV = v => Array.isArray(v) ? (v.join(', ') || 'none') : v === '' || v == null ? 'none' : String(v);
+    const kept = res.keptEdits || [];
+    if (kept.length) {
+      log('  ✎ ' + kept.length + ' change' + (kept.length > 1 ? 's' : '') + ' made today kept over Rezdy (update Rezdy if they\'re real):', 'warn');
+      kept.forEach(k => log('      ' + k.name + ': ' + (LBL[k.field] || k.field) + ' ' + showV(k.value) + ' (Rezdy says ' + showV(k.rezdy) + ')', 'warn'));
+    }
+    const toCheck = kept.length || TODAYS_GROUPS.some(g => g.flags.some(f => !/^\d+× /.test(f)));
     document.getElementById('goScanner').style.display = 'block';
     if (!opts.empty && !toCheck) {
       log('  Opening the Group Scanner…', 'ok');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SA eBikes · Operations Tools v3.13 · Help &amp; SOPs</title>
+<title>SA eBikes · Operations Tools v3.14 · Help &amp; SOPs</title>
 <!-- Built from docs/manual.md by tools/build_help.py. Edit the manual, not this file. -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -45,7 +45,7 @@ tr:last-child td{border-bottom:none}
 <header><div class="head-row">
   <div class="head-top">
     <div><div class="logo">SA <span>eBikes</span></div>
-    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.13</div></div>
+    <div class="logo-sub">Help &amp; SOPs · Operations Tools v3.14</div></div>
     <a class="back-home" href="/">← Tools</a>
   </div>
   <nav class="toc"><a href="#getting-started">Getting started</a><a href="#load-manifest">Load Manifest</a><a href="#todays-contacts">Today&#x27;s Contacts</a><a href="#group-scanner">Group Scanner</a><a href="#issue-reporter">Issue Reporter</a><a href="#asset-register">Asset Register</a><a href="#site-checklists">Site Checklists</a><a href="#tours">Tours</a><a href="#roster">Roster</a><a href="#lost-property">Lost Property</a><a href="#show-qr">Show QR</a><a href="#dashboard">Dashboard</a><a href="#fleet-report">Fleet report</a><a href="#admin">Admin</a><a href="#daily-routine-and-troubleshooting">Daily routine and troubleshooting</a></nav>
@@ -155,9 +155,33 @@ tr:last-child td{border-bottom:none}
 <li><strong>↶ Restore</strong> a bike removed from the register by mistake (Asset Register → Removed bikes): it comes back as it was, and past days count it as in the fleet all along.</li>
 </ul>
 </li>
-<li><strong>Just edit it.</strong> Asset details, contacts, a group's location or hire length, lost property details and notes are simply edited, as before.</li>
+<li><strong>Just edit it.</strong> Asset details, contacts, a booking's details (see Editing a booking), a group's hire length, lost property details and notes are simply edited, as before.</li>
 </ul>
 <p><strong>Not reversible here:</strong> loading a manifest (Load Manifest warns first), Reset day, a message already sent to a guest, and site checklist sign-offs (sign again instead). Anything else lost can be recovered from the nightly backups in Admin.</p>
+<h3 id="editing-a-booking">Editing a booking</h3>
+<p>A booking that changes on the day is changed in the app, so every phone shows the same thing. The change carries who made it and when, and what it was before. Rezdy isn't changed: if the change is real (a new time, an extra bike), change it in Rezdy too.</p>
+<ul>
+<li><strong>Where:</strong> <strong>✎ Edit booking</strong> on the group's card (Group Scanner → Groups), under the active group on the Scan tab, and <strong>✎ Edit</strong> on the customer's card in Today's Contacts. They open the same sheet.</li>
+<li><strong>What can be changed:</strong><ul>
+<li>pick-up time and pick-up location;</li>
+<li>return time and return location;</li>
+<li>bikes booked (the group's name changes to match, for example Smith (x3), and so does "1 of 3 scanned");</li>
+<li>equipment, separated by commas, for example "1× Child Seat, 1× Trailer".</li>
+</ul>
+</li>
+<li><strong>Notes:</strong> <strong>Add a note</strong> puts a short note on the booking, with your initials and the time, for example "Running 30 min late, rang 10:05". Notes can't be edited or removed, so the record stays complete. Add another note to correct one.</li>
+<li><strong>Your initials</strong> are needed to save. They're filled in from 👤 when someone is set on the phone.</li>
+<li><strong>What shows on the cards:</strong><ul>
+<li>an amber box lists each change, for example <strong>✎ Pick-up time 11:00 AM</strong> · was 9:30 AM · SO 10:12, and the notes;</li>
+<li>a return time or place shows as <strong>↩ Return 4:00 PM to Dandelion Wines</strong>;</li>
+<li>setting a field back to Rezdy's value takes its line away.</li>
+</ul>
+</li>
+</ul>
+<p>The sheet lists the last eight changes, with who and when.
+- <strong>A tour booking</strong> takes notes only (<strong>📝 Note</strong> on the booking, in the departure's card or in Today's Contacts). Its time is the departure's session; to move it to another session, change it in Rezdy and reload the manifest.
+- <strong>Two people at once:</strong> if someone else saved a change to the same booking after you opened it, yours isn't saved. The latest shows, so check it and make your change again if it's still needed.
+- <strong>Loading the manifest again the same day keeps the changes and notes.</strong> Load Manifest lists each change that differs from Rezdy (for example "Smith: pick-up time 11:00 AM (Rezdy says 9:30 AM)"), and waits on the page so it can be read. If Rezdy has since been changed to match, the line simply goes. A booking no longer in Rezdy drops off the list, and its changes stay in the day's archive.</p>
 </section><section><h2 id="load-manifest">Load Manifest</h2>
 <p>Load Manifest takes the day's Rezdy <strong>pickup manifest</strong> and sets up the scanner groups and the contact list on every phone. It is the first job of each hire day. It replaces the previous day's groups, except multi-day hires still running and groups with bikes still out, which carry over with their bikes.</p>
 <h3 id="how-it-works">How it works</h3>
@@ -181,7 +205,7 @@ tr:last-child td{border-bottom:none}
 </ul>
 <p>Every product name and where it went is kept in <strong>Admin → Rezdy products</strong>.
 - The date warning appears if the date is in the past, or more than a day ahead. The Contacts page only treats today's and tomorrow's manifest as current.
-- <strong>Push to Scanner + Contacts</strong> replaces the groups on every phone. If the same date is already loaded and bikes have been scanned for it, it asks first: loading it again takes those scans off every scanner (they stay in the day's archive). Before it replaces anything, the server archives the current groups and scans, and the page downloads them as <code>Group_File_&lt;date&gt;.csv</code>. Multi-day hires still running, and any group with bikes not yet checked in (marked Overdue), are carried into the new day with their bikes, and the log says how many. Then it opens the Group Scanner by itself, unless there's a product to check first.
+- <strong>Push to Scanner + Contacts</strong> replaces the groups on every phone. If the same date is already loaded and bikes have been scanned for it, it asks first: loading it again takes those scans off every scanner (they stay in the day's archive). Booking changes and notes made that day are kept, and any change that differs from Rezdy is listed in the log (see Getting started → Editing a booking). Before it replaces anything, the server archives the current groups and scans, and the page downloads them as <code>Group_File_&lt;date&gt;.csv</code>. Multi-day hires still running, and any group with bikes not yet checked in (marked Overdue), are carried into the new day with their bikes, and the log says how many. Then it opens the Group Scanner by itself, unless there's a product to check first.
 - <strong>No bookings today</strong> (under the upload box, with a date): loads a day with no bookings, after you confirm. Everything a real upload does still happens: the current day is archived and downloaded, its summary saved, and multi-day and overdue groups carried over. A file with no bookings in it shows a warning with <strong>Continue: no bookings</strong> or <strong>Choose another file</strong>.
 - <strong>📊 Dashboard</strong> and <strong>⚙️ Admin</strong> links sit at the top of the page.
 - <strong>Download Archive CSV Only</strong> saves the current groups without loading anything new.</p>
@@ -215,7 +239,8 @@ tr:last-child td{border-bottom:none}
 <h3 id="how-it-works_1">How it works</h3>
 <ul>
 <li>Each card shows the customer's name, order number, start time and agent, where the hire is (for example 📍 Visitor Centre or 📍 Beresford, or 🚚 Home Delivery with an amber border), the bikes booked and any equipment flags. The heading counts bookings at each location.</li>
-<li>A multi-day hire shows a badge such as <strong>Day 2 of 2</strong> beside the order number. Special requirements and any drop-off location appear in small grey text; tap to read all of it.</li>
+<li>A multi-day hire shows a badge such as <strong>Day 2 of 2</strong> beside the order number. Special requirements appear in small grey text; tap to read all of it. A return time or place shows as <strong>↩ Return</strong>.</li>
+<li><strong>✎ Edit</strong> changes the pick-up, return, bikes booked or equipment, or adds a note (<strong>📝 Note</strong> on a tour booking). Changes and notes show in an amber box on the card. See Getting started → Editing a booking.</li>
 <li>Tap a number to call, or use the SMS and WhatsApp buttons. The contact button saves that one customer to the phone as a vCard.</li>
 <li><strong>Save all to Contacts (.vcf)</strong> saves every customer at once. This helps WhatsApp show names in group chats.</li>
 <li>The heading shows the manifest date. If the loaded manifest isn't today's or tomorrow's, the page says it is out of date and shows no customers.</li>
@@ -379,6 +404,13 @@ tr:last-child td{border-bottom:none}
 <li>Add the contact's name and phone if you have them. If not, leave them for later.</li>
 <li>Tap <strong>Create Group</strong>, then scan the bikes as normal.</li>
 <li>Get a phone number before the group rides off if you can. Add it with <strong>+ Add contact</strong> on the group card, or <strong>+ Add phone</strong> on Today's Contacts, even after they've left.</li>
+</ol>
+<h3 id="sop-a-booking-changes-on-the-day">SOP: A booking changes on the day</h3>
+<ol>
+<li>Open the booking: <strong>✎ Edit booking</strong> on its group card, or <strong>✎ Edit</strong> on its card in Today's Contacts.</li>
+<li>Change what's different (pick-up time, location, return, bikes booked, equipment), or type a note.</li>
+<li>Check your initials and tap <strong>Save</strong>. Every phone shows the change within seconds.</li>
+<li>If the change is real, make it in Rezdy too (time, bikes, equipment), so the booking and the bill match.</li>
 </ol>
 <h3 id="sop-overdue-group">SOP: Overdue group</h3>
 <ol>
@@ -1146,6 +1178,10 @@ tr:last-child td{border-bottom:none}
 <tr>
 <td>A group was marked Returned by mistake</td>
 <td>Tap Undo Returned on the Groups tab.</td>
+</tr>
+<tr>
+<td>A booking change won't save: "Someone changed this booking"</td>
+<td>Another phone saved a change first. The card now shows the latest: check it, then make your change again if it's still needed.</td>
 </tr>
 <tr>
 <td>I tapped the wrong thing and the ↶ Undo has gone</td>

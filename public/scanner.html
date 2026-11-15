@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>SA eBikes · Operations Tools v3.13 · Group Scanner</title>
+<title>SA eBikes · Operations Tools v3.14 · Group Scanner</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -248,7 +248,7 @@ label.bike-row{cursor:pointer}
 <script src="/assets/theme.js"></script>
 </head>
 <body>
-<a class="back-home" href="/">← Back to Operations Tools v3.13</a>
+<a class="back-home" href="/">← Back to Operations Tools v3.14</a>
 <a class="back-home" href="/help#group-scanner" style="margin-left:6px">? Help</a>
 <a class="back-home" href="/qr" style="margin-left:6px">🔳 QR</a>
 <div class="app">
@@ -500,6 +500,9 @@ function applyOp(groups, op) {
     case 'createGroup': if (!g) groups.push({ id: p.groupId, name: p.name, status: '', bikes: [], walkin: true, site: p.site, ptime: p.ptime, startAt: p.startAt, startDate: server.manifestDate,
       hireLength: p.hireLength === '4h' ? '4h' : undefined, contactName: p.contact ? p.contact.name : undefined, contactPhone: p.contact ? p.contact.phoneDisplay || p.contact.phone : undefined }); break;
     case 'setGroupSite': if (g) g.site = p.site; break;
+    case 'editBooking': if (g && g.kind !== 'tour') for (const [f, v] of Object.entries(p.changes || {})) {
+      if (f === 'qty') { g.qty = v; if (/\(x\d+\)/i.test(g.name)) g.name = g.name.replace(/\(x\d+\)/i, '(x' + v + ')'); } else g[f] = v;
+    } break;
     case 'dropOff': if (g) {
       g.bikes.forEach(b => { if (!b.inAt) { b.inAt = p.at; b.droppedAt = p.location; } });
       g.status = 'returned'; g.droppedAt = p.location; g.exceptions = [];
@@ -650,7 +653,22 @@ function weatherWarning() {
 }
 function specialHTML(g) {
   return (g.special ? '<div class="special" onclick="this.classList.toggle(\'open\')">' + esc(g.special) + '</div>' : '') +
-    (g.dropoff ? '<div class="special">Drop-off: ' + esc(g.dropoff) + '</div>' : '');
+    (window.BookingEdit ? BookingEdit.returnHTML(g) + BookingEdit.summaryHTML(bookingRec(g.code), bookingCur(g)) : (g.dropoff ? '<div class="special">Drop-off: ' + esc(g.dropoff) + '</div>' : ''));
+}
+// ── v3.14: Edit booking (pick-up, return, bikes booked, equipment, notes) ────────────────
+const bookingRec = code => code ? (server.bookingEdits || {})[code] || null : null;
+const bookingCur = g => ({ ptime: g.ptime || '', site: g.site || '', retTime: g.retTime || '', dropoff: g.dropoff || '', qty: bookedQty(g), equip: g.equip || [] });
+// A hire group (no code: a walk-in, which gets one on its first edit), or one booking on a tour departure (notes only).
+function editBooking(groupId, code) {
+  const g = groupsView().find(x => x.id === groupId); if (!g || !window.BookingEdit) return;
+  const tour = g.kind === 'tour';
+  const b = tour ? (g.bookings || []).find(x => x.code === code) : null;
+  BookingEdit.open({ title: tour ? (b ? b.name || b.code : g.name) : g.name.replace(/\s*\(x\d+\)/i, ''), code: tour ? code : g.code, tour, cur: bookingCur(g), rec: bookingRec(tour ? code : g.code),
+    onSave: ({ changes, note, baseV, by }) => {
+      enqueue('editBooking', { ...(tour ? { code } : { groupId }), baseV, by, changes, ...(note ? { note } : {}) });
+      showToast('✓ ' + (Object.keys(changes).length ? 'Booking updated' : 'Note added') + ' · ' + (tour && b ? b.name || code : g.name.replace(/\s*\(x\d+\)/i, '')), 'success');
+      refreshSoon();
+    } });
 }
 function inCountHTML(g) {
   if (!g.bikes.length) return '';
@@ -945,7 +963,7 @@ function describeOp(op) {
   const gn = g ? ' (' + g.name + ')' : '';
   const names = { addBike: 'Scan ' + (p.bike && p.bike.code), removeBike: 'Take a bike off', checkIn: 'Check in ' + (p.code || ''), deleteGroup: 'Delete group', clearGroup: 'Clear all',
     resetDay: 'Reset day', setGroupStatus: 'Mark ' + (p.status || 'status'), createGroup: 'Add group ' + (p.name || ''), dropOff: 'Drop-off', setArrival: 'Arrival ' + (p.code || ''), mcheck: 'M-check ' + ((p.check && p.check.bike) || ''),
-    undoDropOff: 'Undo drop-off', restoreGroup: 'Restore group', voidMcheck: 'Void M-check' };
+    undoDropOff: 'Undo drop-off', restoreGroup: 'Restore group', voidMcheck: 'Void M-check', editBooking: 'Edit booking ' + (p.code || '') };
   return (names[op.action] || op.action) + gn;
 }
 function showRefused() {
@@ -1075,7 +1093,8 @@ function renderScan() {
   $('manualInput').placeholder = ret ? 'Enter returning bike ID…' : mc ? 'Enter bike ID to M-check…' : 'Enter bike ID manually…';
   $('issueBar').innerHTML = '';
   if (mc) { $('bikeList').innerHTML = mcheckListHTML(); return; }
-  $('activeInfo').innerHTML = active ? progressHTML(active) + siteHTML(active) + dayBadgeHTML(active) + (active.kind === 'tour' ? tourHTML(active) : specialHTML(active)) : '';
+  $('activeInfo').innerHTML = active ? progressHTML(active) + siteHTML(active) + dayBadgeHTML(active) + (active.kind === 'tour' ? tourHTML(active) : specialHTML(active) +
+    '<button class="bk-edit" onclick="editBooking(\'' + active.id + '\')">✎ Edit booking</button>') : '';
   if (ret) { renderPhoneLoc(); $('bikeList').innerHTML = returnListHTML(); return; }
   // Groups still waiting to go out, by start time; groups already out or back are behind Show all.
   const ordered = sectioned(groups).filter(it => it.g).map(it => it.g);
@@ -1141,8 +1160,10 @@ function tourHTML(g) {
     '<div class="tour-line">Arrived ' + came.reduce((n, b) => n + b.pax, 0) + ' of ' + bookedQty(g) + (waiting.length ? ' · waiting: ' + waiting.map(b => esc(String(b.name || b.code).split(' ').pop()) + ' (' + b.pax + ')').join(', ') : '') + '</div>' +
     bk.map(b => '<div class="tour-bk' + (b.arrival ? ' ' + b.arrival : '') + '"><span><b>' + esc(b.name || b.code) + '</b> · ' + b.pax + ' pax' + (b.agent ? ' · ' + esc(b.agent) : '') + '</span>' +
       '<span><button onclick="setArrival(\'' + g.id + '\',\'' + esc(b.code) + '\',\'' + (b.arrival === 'arrived' ? '' : 'arrived') + '\')">' + (b.arrival === 'arrived' ? '✓ Arrived' : 'Arrived') + '</button>' +
-      '<button class="ns" onclick="setArrival(\'' + g.id + '\',\'' + esc(b.code) + '\',\'' + (b.arrival === 'noshow' ? '' : 'noshow') + '\')">' + (b.arrival === 'noshow' ? '✗ No-show' : 'No-show') + '</button></span>' +
-      (b.special ? '<div class="special" style="width:100%">' + esc(b.special) + '</div>' : '') + '</div>').join('') + '</div>';
+      '<button class="ns" onclick="setArrival(\'' + g.id + '\',\'' + esc(b.code) + '\',\'' + (b.arrival === 'noshow' ? '' : 'noshow') + '\')">' + (b.arrival === 'noshow' ? '✗ No-show' : 'No-show') + '</button>' +
+      '<button onclick="editBooking(\'' + g.id + '\',\'' + esc(b.code) + '\')">📝 Note</button></span>' +
+      (b.special ? '<div class="special" style="width:100%">' + esc(b.special) + '</div>' : '') +
+      (window.BookingEdit ? '<div style="width:100%">' + BookingEdit.summaryHTML(bookingRec(b.code)) + '</div>' : '') + '</div>').join('') + '</div>';
 }
 function setArrival(groupId, code, state) { enqueue('setArrival', { groupId, code, state, at: Date.now() }); }
 function tourBack(groupId) {
@@ -1498,6 +1519,7 @@ function renderGroups() {
         ${g.kind === 'tour'
           ? (g.status === 'returned' ? `<button class="btn btn-returned btn-sm" onclick="setGroupStatus('${g.id}','returned')">↩ Undo Returned</button>` : `<button class="btn btn-returned btn-sm" onclick="tourBack('${g.id}')">🏁 Tour back</button>`)
           : `<button class="btn btn-returned btn-sm" onclick="setGroupStatus('${g.id}','returned')">${returnLabel}</button>
+        <button class="btn btn-secondary btn-sm" onclick="editBooking('${g.id}')">✎ Edit booking</button>
         <select class="hire-sel" aria-label="Hire length" onchange="setHireDays('${g.id}', this.value)">${[1, 2, 3, 4, 5, 6, 7].map(d => `<option value="${d}"${d === hireDaysOf(g) ? ' selected' : ''}>${d === 1 ? '1-day hire' : d + '-day hire'}</option>`).join('')}</select>`}
         <button class="btn btn-secondary btn-sm" onclick="setActive('${g.id}');switchTab('scan')">${isActive ? 'Go to Scanner' : 'Set Active'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">Delete</button>
